@@ -89,6 +89,20 @@ export const strings = {
     shortDate: (date: string) => dateFormat({ day: 'numeric', month: 'short' }, date),
     previousMonth: 'Previous month',
     nextMonth: 'Next month',
+    week: 'Week',
+    previousWeek: 'Previous week',
+    nextWeek: 'Next week',
+    /** `5 – 11 Oct`, `28 Sep – 4 Oct`. */
+    weekRange: (from: string, to: string) =>
+      from.slice(5, 7) === to.slice(5, 7)
+        ? `${dateFormat({ day: 'numeric' }, from)} – ${dateFormat({ day: 'numeric', month: 'short' }, to)}`
+        : `${dateFormat({ day: 'numeric', month: 'short' }, from)} – ${dateFormat({ day: 'numeric', month: 'short' }, to)}`,
+    weekTotal: (total: string, average: string) => `Total ${total} · ${average} / day`,
+    weekday: (date: string) => dateFormat({ weekday: 'short' }, date),
+    dayOfMonth: (date: string) => String(Number(date.slice(8))),
+    /** Accessible name of a day button: `Wednesday 7 October: 1h 42m, 3 sessions`. */
+    dayLabel: (date: string, time: string, sessions: number) =>
+      `${dateFormat({ weekday: 'long', day: 'numeric', month: 'long' }, date)}: ${time}, ${sessions} ${sessions === 1 ? 'session' : 'sessions'}`,
   },
   notice: {
     ok: 'OK',

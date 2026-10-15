@@ -34,7 +34,8 @@
   - `domain/stats/days.ts` + 15 tests (midnight, DST March/October Zurich, empty/current/past/future month, Mon vs Sun week, real minutes not the cap). No new dependency. ADR-037 (Proposed).
 - [x] 1.3 Stats tab: Overview
   - `screens/stats/{StatsScreen,Overview}.tsx`, `Stats.module.css`; duration/date strings + tests. E2E: average shown, → disabled on this month, ← / → navigate. Screenshots at 1280 and 390 with 6 weeks of sessions.
-- [ ] 1.4 Stats tab: Week
+- [x] 1.4 Stats tab: Week
+  - `WeekView` + shared `Nav`; week kept as "weeks back" so a week-start change keeps the view. Day buttons set the selected day; the sheet itself lands in 1.6. E2E: 7 day buttons, no future weeks, ← / →. 33/33 e2e (×2).
 - [ ] 1.5 Stats tab: Month calendar
 - [ ] 1.6 Day detail
 - [ ] 1.7 Settings

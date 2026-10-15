@@ -52,6 +52,51 @@
   font-variant-numeric: tabular-nums;
 }
 
+.section {
+  margin: var(--space-layout-lg) 0 var(--space-md);
+  color: var(--color-body-mid);
+}
+.sub {
+  margin: calc(-1 * var(--space-sm)) 0 var(--space-lg);
+  text-align: center;
+}
+
+/* Week: seven day buttons */
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-sm);
+}
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  padding: var(--space-sm) 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+.day:disabled {
+  color: var(--color-mute-soft);
+  cursor: default;
+}
+.day[data-today] {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+.dayBars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 96px;
+  border-bottom: 2px solid var(--color-hairline);
+}
+
 /* One bar per day of the month */
 .strip {
   display: flex;
@@ -69,6 +114,7 @@
 }
 .bar {
   width: 100%;
+  max-width: 24px;
   background: var(--color-primary);
   border-radius: var(--radius-xs) var(--radius-xs) 0 0;
 }

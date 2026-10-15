@@ -1,36 +1,48 @@
 import { useMemo, useState } from 'react';
-import { addMonths, aggregateByDay, localDate, monthRange, monthSummary } from '../../domain/stats/days';
+import { addDays, addMonths, aggregateByDay, localDate, monthRange, monthSummary, weekStart } from '../../domain/stats/days';
 import { useApp } from '../../store';
 import { strings } from '../../ui/strings';
-import { IconButton } from '../../ui/components/Button';
-import { NextIcon, PrevIcon } from '../../ui/components/Icons';
 import { TabPage } from '../TabPage';
+import { Nav } from './Nav';
 import { Overview } from './Overview';
+import { WeekView } from './WeekView';
 import styles from './Stats.module.css';
 
 /** Stats tab (DESIGN.md 7.6). Days are bucketed in the device's current time zone. */
 export function StatsScreen() {
   const sessions = useApp((s) => s.sessions);
+  const weekStartsOn = useApp((s) => s.settings.weekStartsOn);
   const timeZone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
   const today = localDate(Date.now(), timeZone);
+  const thisWeek = weekStart(today, weekStartsOn);
+
   const [month, setMonth] = useState(today.slice(0, 7));
-  const days = useMemo(() => aggregateByDay(sessions, { timeZone, ...monthRange(month) }), [sessions, timeZone, month]);
-  const summary = monthSummary(days, { today });
+  /** Weeks back from the current week (0 = this week), so a Week-starts-on change keeps the view. */
+  const [weeksBack, setWeeksBack] = useState(0);
+  const [, setSelected] = useState<string | null>(null);
+
+  const monthDays = useMemo(() => aggregateByDay(sessions, { timeZone, ...monthRange(month) }), [sessions, timeZone, month]);
+  const from = addDays(thisWeek, -7 * weeksBack);
+  const weekDays = useMemo(() => aggregateByDay(sessions, { timeZone, from, to: addDays(from, 6) }), [sessions, timeZone, from]);
 
   return (
     <TabPage title={strings.tabs.stats} wide={styles.wide}>
-      <div className={styles.nav}>
-        <IconButton aria-label={strings.stats.previousMonth} onClick={() => setMonth(addMonths(month, -1))}>
-          <PrevIcon />
-        </IconButton>
-        <h2 className={`${styles.navLabel} type-display-xs`} aria-live="polite">
-          {strings.stats.month(month)}
-        </h2>
-        <IconButton aria-label={strings.stats.nextMonth} disabled={month >= today.slice(0, 7)} onClick={() => setMonth(addMonths(month, 1))}>
-          <NextIcon />
-        </IconButton>
-      </div>
-      <Overview days={days} summary={summary} today={today} />
+      <Nav
+        label={strings.stats.month(month)}
+        previous={strings.stats.previousMonth}
+        next={strings.stats.nextMonth}
+        canGoNext={month < today.slice(0, 7)}
+        onShift={(by) => setMonth(addMonths(month, by))}
+      />
+      <Overview days={monthDays} summary={monthSummary(monthDays, { today })} today={today} />
+      <WeekView
+        days={weekDays}
+        summary={monthSummary(weekDays, { today })}
+        today={today}
+        canGoNext={weeksBack > 0}
+        onShift={(by) => setWeeksBack(weeksBack - by)}
+        onSelect={setSelected}
+      />
     </TabPage>
   );
 }
