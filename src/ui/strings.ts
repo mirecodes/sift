@@ -72,6 +72,7 @@ export const strings = {
     sessions: 'Sessions',
     animals: 'Animals',
     count: (n: number) => `×${n}`,
+    onIsland: (n: number) => `On island: ${n}`,
     unknownAnimal: 'Not collected yet',
   },
   stats: {
@@ -122,6 +123,15 @@ export const strings = {
     /** Accessible name of a day button: `Wednesday 7 October: 1h 42m, 3 sessions`. */
     dayLabel: (date: string, time: string, sessions: number) =>
       `${dateFormat({ weekday: 'long', day: 'numeric', month: 'long' }, date)}: ${time}, ${sessions} ${sessions === 1 ? 'session' : 'sessions'}`,
+  },
+  poke: {
+    /** Poke bubble (DESIGN.md 18): `7d left` from 36 hours, `20h left` below, then `<1h left`. */
+    timeLeft: (ms: number) => {
+      const hours = ms / 3_600_000;
+      if (hours >= 36) return `${Math.round(hours / 24)}d left`;
+      if (hours >= 1) return `${Math.floor(hours)}h left`;
+      return '<1h left';
+    },
   },
   hud: {
     /** Accessible names; the visible text is the number. */

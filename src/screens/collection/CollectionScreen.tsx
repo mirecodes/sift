@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { CATALOG } from '../../domain/animals/catalog';
+import { isActive } from '../../domain/animals/placed';
+import { runtimeConfig } from '../../app/runtimeConfig';
 import { computeStats, countBySpecies, formatDuration } from '../../domain/stats/stats';
 import { useApp } from '../../store';
 import { strings } from '../../ui/strings';
@@ -21,12 +23,15 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+const { features } = runtimeConfig;
+
 export function CollectionScreen() {
   const animals = useApp((s) => s.animals);
   const sessions = useApp((s) => s.sessions);
   const setView = useApp((s) => s.setView);
   const stats = useMemo(() => computeStats(sessions, animals), [sessions, animals]);
   const counts = useMemo(() => countBySpecies(animals), [animals]);
+  const onIsland = useMemo(() => countBySpecies(animals.filter(isActive)), [animals]);
 
   return (
     <div className={page.page}>
@@ -55,6 +60,7 @@ export function CollectionScreen() {
                     <p className={`${styles.name} type-display-xs`}>{species.name}</p>
                     <TierBadge rank={species.tierRank} />
                     {count > 1 && <p className={`${styles.count} type-caption`}>{strings.collection.count(count)}</p>}
+                    {features.economy && <p className={`${styles.count} type-caption`}>{strings.collection.onIsland(onIsland.get(species.id) ?? 0)}</p>}
                   </TierCard>
                 ) : (
                   <FeatureCard className={styles.card} aria-label={strings.collection.unknownAnimal}>

@@ -1,8 +1,8 @@
 # Sift — Project Status
 
 > Snapshot for planning discussions. Written for a product/planning reader, not for engineers.
-> As of 2026-10-07 (last code change 2026-09-30, version 0.1.0, not released).
-> Sources of truth: `ARCHITECTURE.md` (structure and settled decisions), `DESIGN.md` (look and feel), `CHANGELOG.md` (history by guidance file), `DECISIONS.md` (human-only ADR log). All built work so far is **guidance_v1**; the next plan arrives as `guidance_v2.md`.
+> As of 2026-10-07, after guidance_v2 Phase 2 (version 0.1.0, not released).
+> Sources of truth: `ARCHITECTURE.md` (structure and settled decisions), `DESIGN.md` (look and feel), `CHANGELOG.md` (history by guidance file), `DECISIONS.md` (human-only ADR log). guidance_v1 built the app; **guidance_v2** is in progress, step by step (`PROGRESS.md`): Phases 0 (foundations), 1 (tabs and Stats) and 2 (gold economy) are done. Each new phase ships behind a feature flag that stays off until the owner turns it on.
 
 ---
 
@@ -14,7 +14,7 @@ A Pomodoro-style focus timer with a collectible reward. You focus; if the sessio
 
 **Guiding rule:** nothing interrupts a focus session. No popups, badges, or animations while focusing; all the fun happens during the break.
 
-**Where it stands:** milestones M1–M6 (everything for the desktop web version) are done, and a lot of world detail was added on top. M7 (mobile apps) has not started. All data lives in the browser on one device.
+**Where it stands:** milestones M1–M6 (everything for the desktop web version) are done, and a lot of world detail was added on top. From guidance_v2: backup export/import, a Stats tab (M8) and the gold economy (M9) are built, the last two behind feature flags (`features.stats`, `features.economy`, both off). M7 (mobile apps) has not started. All data lives in the browser on one device.
 
 ---
 
@@ -107,13 +107,23 @@ Legend: **[+]** = not in the initial plan, added later at the owner's request.
 
 ### 3.4 Collection and stats
 - Grid of all 50 species with pixel-art sprites, tier badges and "×3"-style counts; unfound species are silhouettes with "???".
-- Stats: total focus time, completed sessions, species found (`n / 50`). All-time totals only.
+- Stats: total focus time, completed sessions, species found (`n / 50`). All-time totals; with the economy on, each card also shows how many of that species are on the island now.
+- **Stats tab** (guidance_v2 Phase 1, flag `stats`): bottom tab bar; daily average, month bar strip, month heatmap calendar, week view and a day sheet listing every session. Week can start on Monday or Sunday.
 
 ### 3.5 Developer-only switches **[+]**
-- `config/app.yaml` (bundled at build time):
-  - **Test mode** — fills the island with animals at startup (in memory, never saved). Can place every species at once.
-  - **Reset map on start** — new island and no saved animals on every launch.
-- Both are **currently ON** (see 6.1).
+- `config/app.yaml` → `testMode` (bundled at build time, honored only in development builds; production forces them off):
+  - **animals** — fills the island with animals at startup (in memory, never saved). Can place every species at once.
+  - **resetMapOnStart** — new island and no saved animals on every launch.
+  - **dummyData** — sample data in memory for reviewing new features: six weeks of sessions, Inbox notices, gold, and animals of every age (some leave right away).
+- All are **off** in the committed file.
+
+### 3.6 Gold economy (guidance_v2 Phase 2, flag `economy`)
+- Animals now stay **7 days**. Then they leave the island and leave gold: 1 / 3 / 8 / 25 by tier (Common → Legendary). The **Unicorn never leaves** (it will pay for island moves in Phase 4).
+- Departures never happen during Focus; they are applied at the next Home or Break, and on app start (a long absence settles all at once).
+- A small card on Home or Break says "4 animals left 9 gold." Only then do the animals puff away and coins fly into a **coin pile** next to the cabin, which grows in six sizes with the balance.
+- Top bar on Home: gold counter (counts up) and Unicorn count. Tapping gold explains it until the Shop exists (Phase 3). Every save gets **30 starter gold** once.
+- Poking an animal shows its time left ("3d left").
+- The island never shrinks when animals leave; the Collection keeps counting every animal ever earned.
 
 ---
 
@@ -127,13 +137,16 @@ All data is stored in the browser's IndexedDB on the user's device. Nothing leav
 | **World** | app | the island seed (a random number fixed once; it decides the island's shape, terrain and stream) |
 | **Active phase** | app | what is happening right now (idle / focusing since X / on break since X, with the pending reward). Lets a reload resume exactly where the user was |
 | **Focus session** | focus attempt | start time, planned length, end time, effective length, status (running / completed / abandoned), the reward it produced |
-| **Placed animal** | earned animal | species, tier, tile position on the island, when earned, which session earned it |
+| **Placed animal** | earned animal | species, tier, tile position on the island, when earned, which session earned it, status (on the island / departed / later: lost in a war / spent) |
+| **Gold ledger** | gold movement | amount (+ earned, − spent), why, when; the balance is the sum |
+| **Inbox notice** | thing to tell the user | e.g. "animals left N gold"; shown later on Home or Break, never during Focus |
 
 Notes for planning:
-- The island itself is **not stored**: it is recomputed from the seed plus the number of animals. Only animal positions are stored, and they stay valid as the island grows.
-- Ending a focus writes the session, the new animal and the switch to Break in **one atomic step**, so a crash cannot double-reward or lose a reward.
+- The island itself is **not stored**: it is recomputed from the seed plus the number of animals ever earned (so it never shrinks). Only animal positions are stored, and they stay valid as the island grows.
+- Ending a focus writes the session, the new animal and the switch to Break in **one atomic step**, so a crash cannot double-reward or lose a reward. Departures (statuses, gold, notice) and purchases (debit plus item) are atomic the same way.
 - IDs are UUIDs and times are UTC timestamps, so cloud sync can be added later without reshaping data.
-- The database schema is at **version 3**. Versions 2 and 3 only rename stored tier names (see 5.2).
+- The database schema is at **version 4** (guidance_v2: animal status, ledger, inbox and stores for later phases). Versions 2 and 3 only rename stored tier names (see 5.2).
+- **Backup**: Settings → Data exports everything to a JSON file and imports it back (replacing all local data after a confirmation).
 - The 50-species catalog is fixed data shipped with the app, not stored in the database.
 
 ---
@@ -176,20 +189,19 @@ Why: owner preference for "Legendary" as the top word. **Watch out:** older ADRs
 ## 6. Known issues, tech debt, unfinished parts
 
 ### 6.1 Must fix before any release
-- **Developer switches are ON.** `resetMapOnStart: true` **deletes all earned animals on every launch**, and test mode fills the island with every species. Both must be set to `false` before anyone uses the app for real (ADR-015, ADR-019).
-- **No backup or export.** Clearing browser data, switching browser, or switching device loses everything.
+- Fixed in guidance_v2 Phase 0: developer switches are off and can no longer reach production builds; backup export/import exists.
+- Before turning on `features.economy` for real users: confirm the starter gold (Q12) and that the Tiger expires (Q14), and review the departure look (`PROGRESS.md`, owner review queue).
 
 ### 6.2 Unfinished / not started
 - **Mobile (M7)**: no iOS/Android build, no native adapters, no scheduled notification for focus end. On the web the end chime only plays if the page is still open.
 - No accounts or cloud sync (data model is prepared).
 - No onboarding / first-run screen.
 - No localization (all text is in one file, English only).
-- Stats are all-time totals only; no daily/weekly view.
+- Gold can be earned but not spent yet: the Shop, skins and buildings come in Phase 3.
 
 ### 6.3 Gameplay and world limitations
 - **Short focus never pays**: focus can be set to 5–20 min, but rewards need 25 min, so short-session users never earn anything without overtime (ADR-012, owner should confirm).
 - **No pathfinding**: during Focus routines animals walk in straight lines and may pass through the cabin or across the stream.
-- **Old saves can overlap new features**: animals saved before the camp or stream existed may sit on the cabin, campfire or water tiles.
 - The butterfly can fly over water and the camp.
 - On the smallest island the stream can end up almost straight.
 - Adding species lowers each species' chance within its tier (pick is uniform), so the 25 Common species are slow to complete.
@@ -220,6 +232,6 @@ Open questions from the plan, with the current default (ADR-004):
 - The `footprint` field (animals larger than one tile) exists in the catalog but is unused.
 
 ### 6.6 Quality
-- 329 unit tests pass and type checking is clean (checked 2026-10-07).
-- One browser smoke test exists (`npm run e2e`); it needs a build and a one-time browser install and was not run for this snapshot.
-- 8 commits, all on `main`. Work started 2026-09-29; the first commit and all later ones are dated 2026-09-30.
+- 446 unit tests pass and type checking is clean (checked 2026-10-07, after Phase 2).
+- Browser smoke test `npm run e2e` (44 checks, including Stats and a week-long fast-forward to a departure) builds its own bundle with the finished phases' flags and passes.
+- guidance_v2 work is on branch `sift-v2`, one commit per step.

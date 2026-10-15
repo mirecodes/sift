@@ -53,7 +53,7 @@ export function App() {
     const animals = selectVisibleAnimals({ animals: allAnimals, revealPending }, leaving);
     // The pile shows the gold the user has been told about (Step 2.4).
     const goldPileLevel = features.economy ? goldPileLevelOf(gold - heldGold, balance.economy.pileThresholds) : 0;
-    const own = buildIslandModel({ world, islandLevel, animals, leaving, departing, goldPileLevel });
+    const own = buildIslandModel({ world, islandLevel, animals, leaving, departing, goldPileLevel, showExpiry: features.economy });
     const list: { model: IslandModel; mode: IslandMode }[] = [{ model: own, mode: 'own' }];
     if (DEV_TWO_ISLANDS !== null) list.push({ model: devSecondIsland(own, DEV_TWO_ISLANDS), mode: 'visit' });
     return list;

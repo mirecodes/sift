@@ -22,6 +22,8 @@ describe('stats', () => {
 
   it('counts animals per species', () => {
     expect(countBySpecies([animal('chick'), animal('chick'), animal('fox')]).get('chick')).toBe(2);
+    // All-time: departed animals still count (Step 2.6).
+    expect(countBySpecies([animal('chick'), { ...animal('chick'), status: 'departed' }]).get('chick')).toBe(2);
   });
 
   it('formats durations', () => {

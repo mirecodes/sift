@@ -55,7 +55,8 @@
   - `goldPileLevel` (tested at every threshold), `pileVoxels` (tested: empty at 0, grows per level, inside its tile, < 200 voxels), `CoinPile` instanced mesh. Dev server with dummy data (level 4): day and night at 1280 and 390, no console errors.
 - [x] 2.5 HUD counters
   - `Hud` + `useCountUp`; store `selectShownGold` / `selectActiveUnicorns` (tested: held gold until the notice shows, spent Unicorns not counted). Dev server: 170 → 208 counted up after the notice showed, info bubble opens over the notice card, Esc closes it, no console errors (390 and 1280). Top bar hidden on Focus as before.
-- [ ] 2.6 Collection and poke updates
+- [x] 2.6 Collection and poke updates
+  - `strings.poke.timeLeft` (tested), model `expiresAt` (tested, none for Unicorn), canvas-texture label in the bubble, Collection `On island: n` (all-time count test with a departed animal). Dev server: panda "6d left", Unicorn "!". E2E 44/44 (×4) incl. a week fast-forward: notice, count-up, `On island: 0`, persists after reload (rare Unicorn roll handled). **Phase 2 complete; awaiting owner gate.**
 
 ## Phase 3 — Content pipeline, cosmetics, buildings, shop (F10, F4)
 
@@ -143,6 +144,8 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 2.6 · Poke label size (same height as the `!` bubble, small at 0.25× scale) and wording `6d left`. Collection `On island: n` line.
+- 2 · Feature flag: Phase 2 ships only when you set `features.economy: true`. To review with sample data also set `testMode.dummyData: true` (dev only): 5 animals leave at start, 2 more within ~3 minutes.
 - 2.5 · HUD counters (pill look, coin and horn icons) and the gold info copy. Break has no top bar, so a departure shown on Break counts up out of sight (the Home counter shows the new total).
 - 2.4 · Coin pile look (dummy data shows level 4) and its night glow. The 0.7 spot review from Phase 0 is settled by this: it sits left of the cabin, camera side.
 - 2.3 · Departure animation (turn on `features.economy` + `testMode.dummyData`; dismiss the first notice): puff and coin sizes, timing, whether it reads as neutral. On desktop the coins land behind the notice card (the pile tile is at the back, next to the cabin).
@@ -161,6 +164,9 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 2.6 · Time left: whole days rounded from 36 h (`7d left` right after earning), hours below, `<1h left` last. · Floor would show `6d` for a brand-new animal.
+- 2.6 · `On island: n` shows only with the economy on. · Without departures it always equals the count.
+- 2.6 · `world/` may import `ui/strings` (layer rule updated). · UI text lives only in strings.ts and the scene now draws text.
 - 2.5 · HUD only on Home's top bar (not Break, Settings, Collection or tab pages). · The guidance places it in "the top bar", which only Home shows over the island.
 - 2.5 · Unicorn counter shown even at 0, display only (not a button). · Phase 4 will make it the island-move entry; a count of 0 tells the user the currency exists.
 - 2.4 · The pile shows `gold − heldGold` (gold the user has been told about), so it grows when a departure notice shows. · Matches §2.9: visuals play when the notice shows.

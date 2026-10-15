@@ -47,6 +47,14 @@ describe('buildIslandModel', () => {
     expect(buildIslandModel({ world, islandLevel: 4, animals: [fox, gone], leaving: new Set() }).animals.map((a) => a.id)).toEqual(['a1']);
   });
 
+  it('adds expiry times only when asked and never for a Unicorn (Step 2.6)', () => {
+    const unicorn = newPlacedAnimal('u', getSpecies('unicorn'), { x: 0, z: 2 }, 0, 's');
+    const fox5 = { ...fox, acquiredAt: 5 };
+    expect(buildIslandModel({ world, islandLevel: 2, animals: [fox5, unicorn] }).animals.every((a) => a.expiresAt === undefined)).toBe(true);
+    const m = buildIslandModel({ world, islandLevel: 2, animals: [fox5, unicorn], showExpiry: true });
+    expect(m.animals.map((a) => a.expiresAt)).toEqual([5 + 7 * 86_400_000, undefined]);
+  });
+
   it('is pure: the same input gives an equal model and inputs are not mutated', () => {
     const input = { world, islandLevel: 3, animals: [fox, cat] };
     const copy = structuredClone(input);

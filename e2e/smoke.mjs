@@ -78,12 +78,21 @@ await tabs.getByRole('button', { name: 'Island' }).click();
 await settle();
 check('back on Island the same canvas renders again', (await draws()) > before && (await page.locator('canvas[data-mark="kept"]').count()) === 1);
 
+// Economy HUD (Phase 2): the label carries the number.
+const goldButton = page.getByRole('button', { name: /gold\. What is gold\?$/ });
+const goldShown = async () => Number((await goldButton.getAttribute('aria-label')).split(' ')[0]);
+check('Home shows the 30 starter gold and no Unicorns', (await goldShown()) === 30 && (await page.getByRole('img', { name: '0 Unicorns on the island' }).isVisible()));
+await goldButton.click();
+check('tapping gold explains it', await page.getByText(/^Animals leave gold when they move on/).isVisible());
+await page.keyboard.press('Escape');
+
 await page.getByRole('button', { name: 'Start focus' }).click();
 await settle(500);
 await page.clock.fastForward('10:00');
 await settle();
 check('timer follows the clock after a 10 minute jump', /^1[45]:\d\d$/.test(await timer()));
 check('the tab bar is hidden during Focus', (await tabs.count()) === 0);
+check('the HUD is hidden during Focus', (await goldButton.count()) === 0);
 
 await page.reload();
 await settle(1500);
@@ -186,6 +195,28 @@ await page.getByRole('button', { name: 'Close' }).click();
 await page.reload();
 await settle(1500);
 check('settings persist across a reload', (await page.locator('p', { hasText: /30 min focus/i }).count()) > 0);
+
+// Expiry (Phase 2): a week later the animal leaves gold; it shows on Home and stays after a reload.
+const earnedUnicorn = (await page.getByRole('img', { name: '1 Unicorn on the island' }).count()) === 1;
+await page.clock.fastForward(7 * 24 * 3600_000 + 61_000); // one 60 s check fires after the jump
+await settle(2500); // the count-up runs after the notice shows
+const departure = page.getByRole('status').getByText(/^.+ left \d+ gold\.$/);
+if (earnedUnicorn) {
+  // A rare roll: Unicorns never leave, so there is nothing to show.
+  check('a Unicorn never leaves (rare roll)', (await departure.count()) === 0 && (await goldShown()) === 30);
+} else {
+  check('a week later the animal leaves gold, shown on Home', await departure.isVisible());
+  const earned = Number((await departure.innerText()).match(/(\d+) gold/)[1]);
+  check('the gold counter counts up to include it', earned > 0 && (await goldShown()) === 30 + earned);
+  await page.getByRole('button', { name: 'OK' }).click();
+  await page.getByRole('button', { name: 'Open collection' }).click();
+  await settle();
+  check('the collection still counts it, with none on the island', (await page.getByText(collected).isVisible()) && (await page.getByText('On island: 0').count()) === 1);
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.reload();
+  await settle(1500);
+  check('gold and the departure survive a reload', (await goldShown()) === 30 + earned && (await page.getByRole('status').count()) === 0);
+}
 
 // Backup: export, then import into a fresh context (same as cleared site data).
 const exportFrom = async (p) => {

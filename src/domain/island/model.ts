@@ -1,5 +1,7 @@
 import { DEFAULT_BLOCK_THEME, type TierRank } from '../config';
 import { isActive } from '../animals/placed';
+import { balance } from '../../../shared/balance/balance';
+import { expiresAt } from '../../../shared/rules/expiry';
 import type { Equipped, PlacedAnimal, PlacedBuilding, WorldState } from '../types';
 import type { Tile } from './island';
 
@@ -13,6 +15,8 @@ export interface IslandAnimal {
   skinId: string;
   /** Leaving now (Step 2.3): its order in the shown departure notice. */
   departure?: number;
+  /** When it will leave (epoch ms), for the poke bubble (Step 2.6). Absent for exempt species or with the economy off. */
+  expiresAt?: number;
 }
 
 export interface IslandBuilding {
@@ -53,6 +57,8 @@ export interface IslandModelInput {
   leaving?: ReadonlySet<string>;
   /** Animals whose departure plays now, in order. */
   departing?: readonly string[];
+  /** Add `expiresAt` to each animal (own island with the economy on). */
+  showExpiry?: boolean;
 }
 
 export function buildIslandModel(input: IslandModelInput): IslandModel {
@@ -65,14 +71,18 @@ export function buildIslandModel(input: IslandModelInput): IslandModel {
     blockThemeId: input.equipped?.blockThemeId ?? input.world.blockThemeId ?? DEFAULT_BLOCK_THEME,
     animals: input.animals
       .filter((a) => isActive(a) || input.leaving?.has(a.id))
-      .map((a) => ({
-        id: a.id,
-        speciesId: a.speciesId,
-        tierRank: a.tierRank,
-        tile: { x: a.tileX, z: a.tileZ },
-        skinId: skins[a.speciesId] ?? DEFAULT_SKIN,
-        ...(order.has(a.id) && { departure: order.get(a.id) }),
-      })),
+      .map((a) => {
+        const expires = input.showExpiry ? expiresAt({ speciesId: a.speciesId, acquiredAt: a.acquiredAt }, balance.economy) : null;
+        return {
+          id: a.id,
+          speciesId: a.speciesId,
+          tierRank: a.tierRank,
+          tile: { x: a.tileX, z: a.tileZ },
+          skinId: skins[a.speciesId] ?? DEFAULT_SKIN,
+          ...(order.has(a.id) && { departure: order.get(a.id) }),
+          ...(expires !== null && { expiresAt: expires }),
+        };
+      }),
     buildings: (input.buildings ?? []).map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation })),
     goldPileLevel: input.goldPileLevel ?? 0,
   };

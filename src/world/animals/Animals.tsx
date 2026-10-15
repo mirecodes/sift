@@ -1,6 +1,8 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { memo, useMemo, useRef } from 'react';
-import { CircleGeometry, Color, Group, Mesh, MeshBasicMaterial, MeshLambertMaterial, BoxGeometry } from 'three';
+import { memo, useEffect, useMemo, useRef } from 'react';
+import { CircleGeometry, Color, Group, Mesh, MeshBasicMaterial, MeshLambertMaterial, BoxGeometry, PlaneGeometry } from 'three';
+import { strings } from '../../ui/strings';
+import { labelTexture } from './label';
 import { config } from '../../domain/config';
 import { getSpecies } from '../../domain/animals/catalog';
 import type { IslandAnimal } from '../../domain/island/model';
@@ -23,6 +25,9 @@ const bubbleBox = new BoxGeometry(1, 1, 1);
 const bubbleWhite = new MeshBasicMaterial({ color: '#FFFFFF' });
 const bubbleInk = new MeshBasicMaterial({ color: '#1E1E1E' });
 const BUBBLE_MS = 1.2;
+// Time-left label (Step 2.6): same height as the "!" bubble, width from the text.
+const labelPlane = new PlaneGeometry(1, 1);
+const LABEL_H = 0.9;
 // Butterfly flight (DESIGN.md 18): altitude in model units (0.6 block at 0.25x), wander radius and speed in blocks.
 const FLY_Y = 2.4;
 const FLY_RANGE = 1.2;
@@ -165,11 +170,23 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     leaveT: -1,
   });
 
+  // With the economy on the bubble shows the time left (Step 2.6); exempt species keep the "!".
+  const timed = animal.expiresAt !== undefined;
+  const labelRef = useRef<Mesh>(null);
+  const labelMaterial = useMemo(() => (timed ? new MeshBasicMaterial({ transparent: true }) : null), [timed]);
+  useEffect(() => () => labelMaterial?.dispose(), [labelMaterial]);
+
   // Poke: cancel the current action and start a new one right away (picked in the idle block below).
   const poke = (e: ThreeEvent<MouseEvent>) => {
     const s = state.current;
     if (s.routine !== 'none' || s.returning || s.appear < 1 || animal.departure !== undefined) return;
     e.stopPropagation();
+    if (animal.expiresAt !== undefined && labelMaterial && labelRef.current) {
+      const { texture, aspect } = labelTexture(strings.poke.timeLeft(animal.expiresAt - Date.now()));
+      labelMaterial.map = texture;
+      labelMaterial.needsUpdate = true;
+      labelRef.current.scale.set(LABEL_H * aspect, LABEL_H, 1);
+    }
     s.action = 'none';
     s.nextAt = 0;
     s.bubbleUntil = s.clock + BUBBLE_MS;
@@ -382,10 +399,16 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
       {/* Invisible hit box: animals are tiny (0.25x), so the model alone is hard to click. */}
       <mesh ref={hitRef} material={hitMaterial} geometry={bubbleBox} position={[0, bodyH / 2, 0]} scale={[Math.max(bodyW, 1), bodyH + 0.2, Math.max(bodyW, 1)]} onClick={poke} />
       <group ref={bubbleRef} visible={false} rotation={[0, Math.PI / 4, 0]} scale={1.2}>
-        <mesh geometry={bubbleBox} material={bubbleWhite} scale={[0.9, 0.9, 0.1]} />
+        {labelMaterial ? (
+          <mesh ref={labelRef} geometry={labelPlane} material={labelMaterial} />
+        ) : (
+          <>
+            <mesh geometry={bubbleBox} material={bubbleWhite} scale={[0.9, 0.9, 0.1]} />
+            <mesh geometry={bubbleBox} material={bubbleInk} scale={[0.14, 0.36, 0.04]} position={[0, 0.12, 0.07]} />
+            <mesh geometry={bubbleBox} material={bubbleInk} scale={[0.14, 0.14, 0.04]} position={[0, -0.25, 0.07]} />
+          </>
+        )}
         <mesh geometry={bubbleBox} material={bubbleWhite} scale={[0.2, 0.2, 0.1]} position={[0, -0.55, 0]} />
-        <mesh geometry={bubbleBox} material={bubbleInk} scale={[0.14, 0.36, 0.04]} position={[0, 0.12, 0.07]} />
-        <mesh geometry={bubbleBox} material={bubbleInk} scale={[0.14, 0.14, 0.04]} position={[0, -0.25, 0.07]} />
       </group>
       <group ref={inner}>
         {parts ? (

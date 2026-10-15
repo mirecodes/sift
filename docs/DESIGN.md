@@ -307,7 +307,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 ### 7.5 Collection
 - Canvas, `display-md` title, card grid (1 / 3 / 4-up).
 - Collected: `card-tier`. Not collected: `card-feature` with silhouette and `???`.
-- **Card contents.** A 96px pixel-art sprite of the animal (front view, nearest-neighbor scaled), the name in `display-xs`, `badge-tier`, and a `caption` count `×3` when more than one is owned. Silhouettes are solid `--color-mute-soft` shapes.
+- **Card contents.** A 96px pixel-art sprite of the animal (front view, nearest-neighbor scaled), the name in `display-xs`, `badge-tier`, and a `caption` count `×3` when more than one is owned (all-time: departed animals still count). With the economy on, a second `caption` line `On island: 2` (0 when all have left). Silhouettes are solid `--color-mute-soft` shapes.
 - **Stats strip** above the grid: three `card-feature`s (`FOCUS TIME` as `12 h 40 min`, `SESSIONS`, `ANIMALS` as `7 / 50`), each with an `eyebrow` label and a `display-sm` value. Stacked 1-up on Mobile, 3-up from Tablet.
 
 ### 7.6 Stats (tab)
@@ -537,6 +537,7 @@ export const chick: VoxelModel = {
 - Island bobbing: 4–6s cycle, amplitude ≤ 0.15 block.
 - Animal idle: turn in place, short hop, move one tile; randomized intervals 3–8s.
 - **Poke:** clicking an animal (Home and Break only, never Focus) cancels its current idle action, shows a white voxel speech bubble with a dark `!` (`#1E1E1E`) above its head for 1.2s, and immediately plays exactly one idle action (turn, hop, shuffle, or flop for the fish). The bubble faces the camera and follows hops. Reduced motion: bubble only, no action.
+  - With the economy on, the bubble shows the animal's time left instead of `!`: a white label (rounded corners, `#1E1E1E` bold sans text, same height as the `!` bubble, as wide as the text) reading `7d left` (whole days, rounded, from 36 hours), `20h left` (under 36 hours) or `<1h left`. Unicorns never expire and keep the `!`.
 - **Fish:** flops in place (squash-and-stretch hop, side tilt every 2–4s).
 - **Butterfly (`flutter`):** flat design. The model is a 2-wide body plus flat wings spread in the horizontal plane (the isometric camera sees it from above). In the world the wings are separate meshes hinged at the body: they flap continuously (about 3 Hz, angle 0.15 to 0.85 rad, folded up when asleep) while the butterfly flies 0.6 block above the ground along random waypoints within 1.2 tiles of its tile (0.8 blocks/s, facing its heading, altitude bobbing), its blob shadow staying on the ground. Poke: new waypoint at once and faster flapping for 1.2s. Focus slows it by `focusAnimalTimeScale` like every animal. Reduced motion: wings static at 0.3 rad, no wandering. The Break card and Collection show the rest pose (wings flat).
 - **Legendary (Unicorn, Tiger):** sparkle particles (max 8), shared by every Legendary species. The unicorn also has a rainbow mane and, every 2 to 5 seconds, a rainbow burst (`rainbow` idle): 14 small cubes in the rainbow colors (`#FF5A5F`, `#FFA24D`, `#FFE14D`, `#5ED67A`, `#4DA6FF`, `#8E6BFF`, `#FF8AD8`) pop out around its body, arc up and fall back while shrinking over about 0.9s. Slowed by `focusAnimalTimeScale` like every animal; none with reduced motion. Gradients allowed here only.
