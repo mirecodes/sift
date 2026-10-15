@@ -1,5 +1,5 @@
 import { createStore } from 'zustand/vanilla';
-import { config } from '../domain/config';
+import { config, DEFAULT_BLOCK_THEME } from '../domain/config';
 import type { FocusSession, PlacedAnimal, Settings, WorldState } from '../domain/types';
 import {
   IDLE,
@@ -12,6 +12,7 @@ import {
 } from '../domain/timer/phase';
 import type { AnimalSpecies } from '../domain/animals/catalog';
 import { rollReward } from '../domain/reward/reward';
+import { newPlacedAnimal } from '../domain/animals/placed';
 import { islandSide, islandTiles, pickPlacementTile } from '../domain/island/island';
 import { clamp, type Rng } from '../domain/random';
 import { createBackup, type Backup } from '../domain/backup';
@@ -61,6 +62,9 @@ export const DEFAULT_SETTINGS: Settings = {
   breakMinutes: config.settings.breakMinutes.default,
   soundEnabled: config.settings.soundEnabled,
   theme: 'light',
+  weekStartsOn: config.settings.weekStartsOn,
+  showFocusPresence: config.settings.showFocusPresence,
+  liveProgress: config.settings.liveProgress,
 };
 
 export function sanitizeSettings(input: Partial<Settings> | undefined): Settings {
@@ -75,6 +79,9 @@ export function sanitizeSettings(input: Partial<Settings> | undefined): Settings
     breakMinutes: minutes(merged.breakMinutes, b),
     soundEnabled: Boolean(merged.soundEnabled),
     theme: merged.theme === 'dark' ? 'dark' : 'light',
+    weekStartsOn: merged.weekStartsOn === 0 ? 0 : 1,
+    showFocusPresence: Boolean(merged.showFocusPresence),
+    liveProgress: Boolean(merged.liveProgress),
   };
 }
 
@@ -122,7 +129,7 @@ export function createAppStore(initialDeps: AppDeps) {
     let world = loaded.world;
     let stored = loaded.animals;
     if (resetMap || !world) {
-      world = { seed: Math.floor(deps.rng() * 2 ** 31) };
+      world = { seed: Math.floor(deps.rng() * 2 ** 31), blockThemeId: DEFAULT_BLOCK_THEME };
       if (resetMap) stored = [];
       await deps.storage.resetWorld(world).catch(() => undefined);
     }
@@ -135,7 +142,7 @@ export function createAppStore(initialDeps: AppDeps) {
     for (const species of devSwitches ? (deps.testSpecies ?? []) : []) {
       const occupied = animals.map((a) => ({ x: a.tileX, z: a.tileZ }));
       const tile = pickPlacementTile(islandTiles(world.seed, islandSide(animals.length + 1)), occupied, deps.rng);
-      if (tile) animals.push({ id: deps.uuid(), speciesId: species.id, tier: species.tier, tileX: tile.x, tileZ: tile.z, acquiredAt: 0, sessionId: 'test-mode' });
+      if (tile) animals.push(newPlacedAnimal(deps.uuid(), species, tile, 0, 'test-mode'));
     }
 
     return { ready: true, settings, world, animals, sessions: loaded.sessions, phase, revealPending };
@@ -144,7 +151,7 @@ export function createAppStore(initialDeps: AppDeps) {
   return createStore<AppState>()((set, get) => ({
     ready: false,
     settings: DEFAULT_SETTINGS,
-    world: { seed: 0 },
+    world: { seed: 0, blockThemeId: DEFAULT_BLOCK_THEME },
     animals: [],
     sessions: [],
     phase: IDLE,
@@ -169,7 +176,7 @@ export function createAppStore(initialDeps: AppDeps) {
       if (phase.kind === 'focus') return;
       const now = deps.now();
       const plannedMs = minutesToMs(settings.focusMinutes);
-      const session: FocusSession = { id: deps.uuid(), startedAt: now, plannedFocusMs: plannedMs, status: 'running' };
+      const session: FocusSession = { id: deps.uuid(), startedAt: now, plannedFocusMs: plannedMs, status: 'running', togetherRoomId: null };
       const next = startFocus(now, plannedMs, session.id);
       await commit({ session, phase: next });
       set({ phase: next, sessions: [...sessions, session], revealPending: null, view: 'home' });
@@ -187,6 +194,7 @@ export function createAppStore(initialDeps: AppDeps) {
         id: resolved.sessionId,
         startedAt: resolved.startedAt,
         plannedFocusMs: resolved.plannedMs,
+        togetherRoomId: null,
         ...existing,
         status: 'completed',
         endedAt: now,
@@ -201,15 +209,7 @@ export function createAppStore(initialDeps: AppDeps) {
           pickPlacementTile(islandTiles(world.seed, islandSide(animals.length)), occupied, deps.rng) ??
           pickPlacementTile(islandTiles(world.seed, islandSide(animals.length + 1)), occupied, deps.rng);
         if (tile) {
-          animal = {
-            id: deps.uuid(),
-            speciesId: species.id,
-            tier: species.tier,
-            tileX: tile.x,
-            tileZ: tile.z,
-            acquiredAt: now,
-            sessionId: session.id,
-          };
+          animal = newPlacedAnimal(deps.uuid(), species, tile, now, session.id);
           session.rewardAnimalId = animal.id;
         }
       }
@@ -236,6 +236,7 @@ export function createAppStore(initialDeps: AppDeps) {
         id: resolved.sessionId,
         startedAt: resolved.startedAt,
         plannedFocusMs: resolved.plannedMs,
+        togetherRoomId: null,
         ...existing,
         status: 'abandoned',
         endedAt: now,

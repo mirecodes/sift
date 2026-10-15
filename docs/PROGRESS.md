@@ -11,7 +11,8 @@
   - `resolveRuntimeConfig(file, import.meta.env.DEV)` gates both switches; unit-tested. Accept verified: prod build with both `true` → e2e animal survives reload.
 - [x] 0.2 Export / import backup
   - `domain/backup.ts` + generic `exportAll`/`importAll` on both adapters, `FilesAdapter`, Settings → Data. E2E: export → new browser context → import → re-export identical.
-- [ ] 0.3 Schema v4 migration (§4.1)
+- [x] 0.3 Schema v4 migration (§4.1)
+  - Dexie v4 + pure `db/migrations.ts` (also used by memory adapter and backup import). v3 fixture DB test: animals active/verified, other values unchanged.
 - [ ] 0.4 Tier rank everywhere (§2.8)
 - [ ] 0.5 Shared module + seeded RNG + balance config (§2.6, §2.7)
 - [ ] 0.6 Monotonic island level (§2.2)
@@ -131,6 +132,9 @@
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
 - 0.1 · Guidance says next ADR is ADR-028, but ADR-028/029 already exist in `DECISIONS.md`; new ADRs start at ADR-030. · Avoid duplicate numbers.
+- 0.3 · Kept existing field names (`tileX/tileZ`, epoch-ms `acquiredAt`, epoch-ms `endedAt`/`at`) instead of the §2.3 sketch (`tile`, ISO `earnedAt`). · "Adapt names to the existing tree" (§3); avoids rewriting every stored row.
+- 0.3 · `equipped` is a kv singleton row, not its own table. · It is a singleton like settings and world.
+- 0.3 · `tier` (name) is still stored next to `tierRank`. · Removing it would rewrite every row; 0.4 moves logic onto the rank.
 - 0.2 · Backups carry `schemaVersion`; a backup from a newer schema or format is rejected with "newer version" copy. · Old apps must never write rows they cannot read.
 - 0.2 · Developer switches (`resetMapOnStart`, `testMode`) are not re-applied after an import. · An import must restore data exactly.
 - 0.1 · Updated the stale e2e collection check (`/ 20` → `/ 50`). · The catalog grew to 50 in guidance_v1; this was not a weakened test.

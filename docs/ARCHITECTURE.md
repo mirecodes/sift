@@ -145,18 +145,26 @@ Capability APIs only through `src/platform/<name>/` (interface `index.ts`, web `
 
 ```ts
 type Tier = 'common' | 'mythic' | 'epic' | 'legendary';
-interface Settings { focusMinutes: number; breakMinutes: number; soundEnabled: boolean; theme: 'light' | 'dark' }
+type TierRank = 0 | 1 | 2 | 3;
+interface Settings { focusMinutes; breakMinutes; soundEnabled; theme: 'light' | 'dark'; weekStartsOn: 0 | 1; showFocusPresence; liveProgress }
 interface FocusSession {
   id: string; startedAt: number; plannedFocusMs: number; endedAt?: number;
   effectiveFocusMs?: number; status: 'running' | 'completed' | 'abandoned'; rewardAnimalId?: string;
+  togetherRoomId: string | null;
 }
-interface PlacedAnimal { id: string; speciesId: string; tier: Tier; tileX: number; tileZ: number; acquiredAt: number; sessionId: string }
-interface WorldState { seed: number }   // generated once
+interface PlacedAnimal {
+  id; speciesId; tier: Tier; tierRank: TierRank; tileX; tileZ; acquiredAt; sessionId;
+  status: 'active' | 'departed' | 'vanished' | 'spent'; endedAt: number | null;
+  endReason: 'expired' | 'war' | 'island_move' | null; verified: boolean; pinned: boolean;
+}
+interface WorldState { seed: number; blockThemeId: string }   // generated once
 interface ActivePhase { phase: Phase }  // restores an in-progress session
 ```
 
-- Dexie tables: `kv` (settings, world, phase), `sessions`, `animals`. Schema **v3** (v2, v3 rename stored tiers).
-- Every change adds a new `db.version(n)` with an `upgrade`; never edit old versions.
+- Dexie tables: `kv` (settings, world, phase, equipped), `sessions`, `animals`, `ledger`, `cosmetics`, `placedBuildings`, `islandHistory`, `inbox`, `contentPacks` (types in `domain/types.ts`). Schema **v4** (v2, v3 rename stored tiers; v4 = guidance_v2 §4.1).
+- Animals are never deleted: they change `status`. Only `active` animals are on the island; the Collection counts all.
+- Every change adds a new `db.version(n)` with an `upgrade`; never edit old versions. From v4 on, row upgrades are pure functions in `db/migrations.ts`, shared by every storage adapter and the backup import.
+- Field names follow the existing tree (`tileX/tileZ`, epoch-ms `acquiredAt`), not the guidance sketch (`tile`, ISO `earnedAt`).
 - UUID ids and UTC epoch-ms times, ready for future sync. The island itself is never stored (derived from seed + count).
 - **Backup** (Settings → Data): `{ format: 'sift-backup', version: 1, exportedAt, schemaVersion, data: { <store>: rows[] } }` with every store. `StorageAdapter.exportAll` / `importAll` are generic over stores; import validates (`domain/backup.ts`), then replaces all stores in one transaction. Backups from an older `schemaVersion` are upgraded with the same row migrations as the database.
 

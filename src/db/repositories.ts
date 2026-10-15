@@ -2,6 +2,7 @@ import type { Settings, WorldState } from '../domain/types';
 import type { StoredPhase } from '../domain/timer/phase';
 import type { Commit, PersistedState, StorageAdapter } from '../platform/storage';
 import { SiftDB } from './schema';
+import { migrateRows } from './migrations';
 
 export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
   return {
@@ -30,7 +31,8 @@ export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
       );
     },
 
-    async importAll(data) {
+    async importAll(backupData, schemaVersion) {
+      const data = migrateRows(backupData, schemaVersion);
       await db.transaction('rw', db.tables, async () => {
         for (const table of db.tables) {
           await table.clear();

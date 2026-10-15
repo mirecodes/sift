@@ -8,6 +8,12 @@ export type Tier = 'common' | 'mythic' | 'epic' | 'legendary';
 /** Lowest to highest rank: Common, Mythic, Epic, Legendary (ADR-027). */
 export const TIERS: readonly Tier[] = ['common', 'mythic', 'epic', 'legendary'];
 
+/** Position in `TIERS`. Logic keys off the rank, never the name (guidance_v2 §2.8). */
+export type TierRank = 0 | 1 | 2 | 3;
+export const tierRank = (tier: Tier): TierRank => TIERS.indexOf(tier) as TierRank;
+
+export const DEFAULT_BLOCK_THEME = 'default';
+
 const MINUTE = 60_000;
 
 export const config = {
@@ -24,6 +30,9 @@ export const config = {
     focusMinutes: { default: 25, min: 5, max: 60, step: 5 },
     breakMinutes: { default: 5, min: 1, max: 30, step: 1 },
     soundEnabled: true,
+    weekStartsOn: 1 as 0 | 1,
+    showFocusPresence: true,
+    liveProgress: true,
   },
   island: {
     minSide: 7,

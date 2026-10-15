@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { FocusSession, PlacedAnimal } from '../types';
 import { computeStats, countBySpecies, formatDuration } from './stats';
+import { getSpecies } from '../animals/catalog';
+import { newPlacedAnimal } from '../animals/placed';
 
 const session = (status: FocusSession['status'], ms?: number): FocusSession => ({
-  id: String(Math.random()), startedAt: 0, plannedFocusMs: 0, status,
+  id: String(Math.random()), startedAt: 0, plannedFocusMs: 0, status, togetherRoomId: null,
   ...(ms === undefined ? {} : { effectiveFocusMs: ms }),
 });
-const animal = (speciesId: string): PlacedAnimal => ({
-  id: speciesId + Math.random(), speciesId, tier: 'common', tileX: 0, tileZ: 0, acquiredAt: 0, sessionId: 's',
-});
+const animal = (speciesId: string): PlacedAnimal =>
+  newPlacedAnimal(speciesId + Math.random(), getSpecies(speciesId), { x: 0, z: 0 }, 0, 's');
 
 describe('stats', () => {
   it('counts only completed sessions and unique species', () => {
