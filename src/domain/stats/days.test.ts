@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FocusSession } from '../types';
-import { addDays, addMonths, aggregateByDay, localDate, monthRange, monthSummary, weekStart } from './days';
+import { addDays, addMonths, aggregateByDay, heatLevel, localDate, monthRange, monthSummary, weekStart } from './days';
 
 const MIN = 60_000;
 const ZH = 'Europe/Zurich';
@@ -105,6 +105,13 @@ describe('aggregateByDay', () => {
     const sun = aggregateByDay(sessions, { timeZone: ZH, from: weekStart('2026-10-11', 0), to: addDays(weekStart('2026-10-11', 0), 6) });
     expect(mon[6]).toMatchObject({ date: '2026-10-11', sessionCount: 1 });
     expect(sun[0]).toMatchObject({ date: '2026-10-11', sessionCount: 1 });
+  });
+});
+
+describe('heatLevel', () => {
+  it('counts the thresholds a day reaches', () => {
+    const steps = [1, 30, 60, 120];
+    expect([0, 0.5, 1, 29, 30, 59, 60, 119, 120, 600].map((m) => heatLevel(m, steps))).toEqual([0, 0, 1, 1, 2, 2, 3, 3, 4, 4]);
   });
 });
 

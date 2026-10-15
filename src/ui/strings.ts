@@ -77,6 +77,12 @@ export const strings = {
       const h = Math.floor(total / 60);
       return h === 0 ? `${total}m` : `${h}h ${String(total % 60).padStart(2, '0')}m`;
     },
+    /** Calendar cells: `42m`, `1h38`. */
+    durationShort: (minutes: number) => {
+      const total = Math.floor(Math.max(0, minutes));
+      const h = Math.floor(total / 60);
+      return h === 0 ? `${total}m` : `${h}h${String(total % 60).padStart(2, '0')}`;
+    },
     perDay: '/ day',
     dailyAverage: 'Daily average',
     total: 'Total',
@@ -89,6 +95,7 @@ export const strings = {
     shortDate: (date: string) => dateFormat({ day: 'numeric', month: 'short' }, date),
     previousMonth: 'Previous month',
     nextMonth: 'Next month',
+    monthSection: 'Month',
     week: 'Week',
     previousWeek: 'Previous week',
     nextWeek: 'Next week',

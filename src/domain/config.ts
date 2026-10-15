@@ -83,6 +83,8 @@ export const config = {
     tickMs: 250,
     /** A chime is only played if the threshold was crossed this recently. */
     chimeFreshMs: 3000,
+    /** Month calendar heatmap: a day reaches level i+1 at `heatMinutes[i]` focus minutes (levels 1–4). */
+    heatMinutes: [1, 30, 60, 120],
   },
   render: {
     /** Frame rate cap on the Focus screen. */

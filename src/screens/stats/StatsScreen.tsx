@@ -3,6 +3,7 @@ import { addDays, addMonths, aggregateByDay, localDate, monthRange, monthSummary
 import { useApp } from '../../store';
 import { strings } from '../../ui/strings';
 import { TabPage } from '../TabPage';
+import { MonthCalendar } from './MonthCalendar';
 import { Nav } from './Nav';
 import { Overview } from './Overview';
 import { WeekView } from './WeekView';
@@ -35,6 +36,7 @@ export function StatsScreen() {
         onShift={(by) => setMonth(addMonths(month, by))}
       />
       <Overview days={monthDays} summary={monthSummary(monthDays, { today })} today={today} />
+      <MonthCalendar days={monthDays} today={today} weekStartsOn={weekStartsOn} onSelect={setSelected} />
       <WeekView
         days={weekDays}
         summary={monthSummary(weekDays, { today })}

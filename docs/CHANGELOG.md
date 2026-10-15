@@ -8,6 +8,7 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Added** — Step 1.5: Stats Month calendar: heatmap grid (5 grey steps from existing tokens, thresholds `config.ui.heatMinutes`), each day showing date, time and count; future days greyed; follows the month selector.
 - 2026-10-07 · **Added** — Step 1.4: Stats Week view: seven day buttons (week start from Settings) with bar, time and session count, today outlined, future days greyed; week navigation with total and daily average.
 - 2026-10-07 · **Added** — Step 1.3: Stats tab Overview: month selector (no future months), daily average (`1h 42m / day`), total, active days, best day and a bar per day of the month (plain CSS) (DESIGN.md 7.6).
 - 2026-10-07 · **Added** — Step 1.2: `domain/stats/days.ts` (`aggregateByDay`, `monthSummary`, calendar helpers) with `balance.stats.includeAbandoned = false` (`BALANCE_VERSION` 2026-10-07.2). Tested across midnight, both Zurich DST weeks, empty/current/past months and Monday vs Sunday weeks (ADR-037).

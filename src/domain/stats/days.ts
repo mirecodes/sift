@@ -96,6 +96,11 @@ export function aggregateByDay(
   return days;
 }
 
+/** Heatmap level 0…steps.length: how many thresholds (ascending, in minutes) the day reaches. */
+export function heatLevel(minutes: number, steps: readonly number[]): number {
+  return steps.filter((s) => minutes >= s).length;
+}
+
 /**
  * Summary of one month's `dayStats`. Daily average = total ÷ days elapsed: through `today`
  * (inclusive) in the current month, every day in past months, 0 for future months.
