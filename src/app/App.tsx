@@ -15,6 +15,7 @@ import { CollectionScreen } from '../screens/collection/CollectionScreen';
 import { FocusScreen } from '../screens/focus/FocusScreen';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
+import { ShopScreen } from '../screens/shop/ShopScreen';
 import { StatsScreen } from '../screens/stats/StatsScreen';
 import { TabPage } from '../screens/TabPage';
 import { Scene } from '../world/Scene';
@@ -101,6 +102,9 @@ export function App() {
   } else if (view === 'collection') {
     mode = 'paused';
     screen = <CollectionScreen />;
+  } else if (view === 'shop' && features.cosmetics) {
+    mode = 'paused';
+    screen = <ShopScreen />;
   } else {
     mode = 'home';
     screen = <HomeScreen />;

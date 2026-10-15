@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "VITE_FEATURES=stats,economy vite build --outDir dist-e2e --emptyOutDir && node e2e/smoke.mjs",
+    "e2e": "VITE_FEATURES=stats,economy,cosmetics vite build --outDir dist-e2e --emptyOutDir && node e2e/smoke.mjs",
     "content:build": "node tools/run.mjs tools/content-build/build.ts",
     "content:vox": "node tools/run.mjs tools/vox-import/main.ts",
     "content:validate": "node tools/run.mjs tools/content-build/validate.ts",

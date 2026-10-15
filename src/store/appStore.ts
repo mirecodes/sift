@@ -27,7 +27,7 @@ import { createBackup, type Backup } from '../domain/backup';
 import type { StorageAdapter } from '../platform/storage';
 import { createMemoryStorage } from '../platform/storage/memory';
 
-export type View = 'home' | 'settings' | 'collection';
+export type View = 'home' | 'settings' | 'collection' | 'shop';
 /** Top-level tabs (guidance_v2 §2.10). `view` is the page inside the Island tab. */
 export type Tab = 'island' | 'stats' | 'friends' | 'group';
 

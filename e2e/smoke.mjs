@@ -81,13 +81,15 @@ await tabs.getByRole('button', { name: 'Island' }).click();
 await settle();
 check('back on Island the same canvas renders again', (await draws()) > before && (await page.locator('canvas[data-mark="kept"]').count()) === 1);
 
-// Economy HUD (Phase 2): the label carries the number.
-const goldButton = page.getByRole('button', { name: /gold\. What is gold\?$/ });
+// Economy HUD (Phase 2): the label carries the number. With cosmetics (Phase 3) gold opens the Shop.
+const goldButton = page.getByRole('button', { name: /gold\. Open shop$/ });
 const goldShown = async () => Number((await goldButton.getAttribute('aria-label')).split(' ')[0]);
 check('Home shows the 30 starter gold and no Unicorns', (await goldShown()) === 30 && (await page.getByRole('img', { name: '0 Unicorns on the island' }).isVisible()));
 await goldButton.click();
-check('tapping gold explains it', await page.getByText(/^Animals leave gold when they move on/).isVisible());
-await page.keyboard.press('Escape');
+await settle(500);
+check('tapping gold opens the shop', await page.getByRole('heading', { name: 'Shop' }).isVisible());
+await page.getByRole('button', { name: 'Close' }).click();
+await settle(500);
 
 await page.getByRole('button', { name: 'Start focus' }).click();
 await settle(500);
@@ -220,6 +222,27 @@ if (earnedUnicorn) {
   await settle(1500);
   check('gold and the departure survive a reload', (await goldShown()) === 30 + earned && (await page.getByRole('status').count()) === 0);
 }
+
+// Shop (Phase 3): buy a fence; gold drops by its price and the purchase survives a reload.
+const goldBefore = await goldShown();
+await goldButton.click();
+await settle(500);
+await page.getByRole('button', { name: 'Buy Fence' }).click();
+await settle(500);
+const sheet3 = page.getByRole('dialog');
+check('the confirm sheet shows price and balance', await sheet3.getByText(`10 gold · you have ${goldBefore}`).isVisible());
+await sheet3.getByRole('button', { name: 'Buy', exact: true }).click();
+await settle(500);
+check('buying says it is yours and points to build mode', (await sheet3.getByText("It's yours.").isVisible()) && (await sheet3.getByText('Place it in build mode.').isVisible()));
+await sheet3.getByRole('button', { name: 'Done' }).click();
+await settle(300);
+check('the card shows the owned fence', (await page.getByText('Owned ×1').count()) >= 1);
+await page.getByRole('button', { name: 'Close' }).click();
+await settle(500);
+check('the gold counter drops by the price', (await goldShown()) === goldBefore - 10);
+await page.reload();
+await settle(1500);
+check('the purchase survives a reload', (await goldShown()) === goldBefore - 10);
 
 // Backup: export, then import into a fresh context (same as cleared site data).
 const exportFrom = async (p) => {

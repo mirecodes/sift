@@ -1,0 +1,157 @@
+/* Shop (DESIGN.md 7.7). */
+.wide {
+  max-width: 1120px;
+}
+.section {
+  margin-top: var(--space-3xl);
+}
+.section h2 {
+  margin: 0 0 var(--space-lg);
+}
+.eyebrow {
+  margin: var(--space-lg) 0 var(--space-sm);
+  color: var(--color-body-mid);
+}
+.note {
+  margin: 0;
+  color: var(--color-body-mid);
+}
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+/* Featured: one row that scrolls sideways on narrow screens. */
+.row {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 var(--space-xs);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(160px, 1fr);
+  gap: var(--space-md);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+.row > li {
+  scroll-snap-align: start;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  height: 100%;
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+}
+.card > button {
+  margin-top: auto;
+  width: 100%;
+}
+.name,
+.badges,
+.price,
+.owned {
+  margin: 0;
+}
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+.badge {
+  padding: var(--space-xxs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  color: var(--color-on-primary);
+  white-space: nowrap;
+}
+.new {
+  background: var(--color-accent-blue-info);
+}
+.limited {
+  background: var(--color-accent-orange);
+}
+.price {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-variant-numeric: tabular-nums;
+}
+.owned {
+  color: var(--color-body-mid);
+}
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 992px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Confirm sheet: the Day-detail dialog (DESIGN.md 7.6). */
+.sheet {
+  width: min(420px, calc(100% - 2 * var(--gutter)));
+  max-height: 90%;
+  margin: auto auto calc(var(--space-lg) + var(--safe-bottom));
+  padding: var(--card-padding);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  box-shadow: var(--elevation-4);
+  overflow-y: auto;
+}
+.sheet[open] {
+  animation: sheet-in var(--motion-base) var(--ease) both;
+}
+.sheet::backdrop {
+  background: var(--color-backdrop);
+}
+.sheet p {
+  margin: var(--space-md) 0 0;
+}
+@media (min-width: 768px) {
+  .sheet {
+    margin: auto;
+  }
+}
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+.sheetHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.sheetHead h2 {
+  margin: 0;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
+}
+.error {
+  color: var(--color-accent-red);
+}
