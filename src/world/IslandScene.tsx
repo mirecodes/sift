@@ -3,6 +3,7 @@ import { useMemo, useRef, type MutableRefObject, type ReactNode } from 'react';
 import type { Group } from 'three';
 import { config } from '../domain/config';
 import { generateIsland } from '../domain/island/island';
+import { getOccupancy } from '../domain/island/occupancy';
 import type { IslandMode, IslandModel } from '../domain/island/model';
 import { Animals } from './animals/Animals';
 import { Island } from './island/Island';
@@ -58,6 +59,8 @@ export function IslandScene({ model, mode, worldMode, night, dark, reducedMotion
   const { seed, islandLevel } = model;
   const { tiles, streams, side } = useMemo(() => generateIsland(seed, islandLevel), [seed, islandLevel]);
   const heights = useMemo(() => new Map(tiles.map((t) => [`${t.x},${t.z}`, t.top])), [tiles]);
+  // Where animals can walk (Step 3.12): buildings, water and camp block; other animals do not.
+  const walkGrid = useMemo(() => getOccupancy({ seed, islandLevel, animals: [], buildings: model.buildings }), [seed, islandLevel, model.buildings]);
   const timeScale = worldMode === 'focus' ? config.render.focusAnimalTimeScale : 1;
   const blocks = themePalette(model.blockThemeId);
   const ambient = themeDef(model.blockThemeId)?.ambient as keyof typeof FIELD_PRESETS | undefined;
@@ -68,7 +71,7 @@ export function IslandScene({ model, mode, worldMode, night, dark, reducedMotion
       <Camp night={night} reducedMotion={reducedMotion} blocks={blocks} />
       <CoinPile level={model.goldPileLevel} night={night} sparkle={!reducedMotion && worldMode !== 'focus'} />
       <Buildings buildings={model.buildings} heights={heights} night={night} timeScale={timeScale} reducedMotion={reducedMotion} />
-      <Animals animals={model.animals} tiles={tiles} mode={worldMode} dark={dark} timeScale={timeScale} reducedMotion={reducedMotion} />
+      <Animals animals={model.animals} tiles={tiles} walkGrid={walkGrid} mode={worldMode} dark={dark} timeScale={timeScale} reducedMotion={reducedMotion} />
       {/* Theme weather drifts over the island on Home and Break only, like the clouds. */}
       {ambient && FIELD_PRESETS[ambient] && worldMode !== 'focus' && (
         <group position={[0, 0.5, 0]}>

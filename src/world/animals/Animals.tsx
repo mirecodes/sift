@@ -11,6 +11,8 @@ import { palette } from '../palette';
 import { animalGeometry, flutterParts, skinnedModel, VOXEL_SIZE } from '../voxel/geometry';
 import { HUT_APPROACH, HUT_DOOR } from '../props/Camp';
 import { CAMP_RESERVED, COIN_PILE_TILE, HUT_TILE } from '../../domain/island/island';
+import type { TileInfo, TileKey } from '../../domain/island/occupancy';
+import { findPath } from '../../domain/island/path';
 import { DEPART_SHRINK_S, DEPART_STAGGER_S, DepartureEffects } from './Departures';
 import type { WorldMode } from '../types';
 
@@ -61,6 +63,9 @@ type Action = 'none' | 'turn' | 'hop' | 'shuffle' | 'flop';
 interface AnimState {
   /** `"x,z"` of the home tile last seen. */
   home: string;
+  /** Waypoints left to the current walk target, and that target's key. */
+  route: Spot[];
+  routeTo: string;
   time: number;
   nextAt: number;
   action: Action;
@@ -110,9 +115,13 @@ interface AnimalProps {
   spawn: boolean;
   routine: Routine;
   slot: Spot;
+  /** Tiles to walk through from one tile to another (A*, Step 3.12), or null when there is no way. */
+  route: RouteFn;
 }
 
-const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale, reducedMotion, spawn, routine, slot }: AnimalProps) {
+export type RouteFn = (from: Spot, to: Spot) => readonly Spot[] | null;
+
+const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale, reducedMotion, spawn, routine, slot, route }: AnimalProps) {
   const species = getSpecies(animal.speciesId);
   const geometry = useMemo(() => animalGeometry(species.modelId, animal.skinId), [species.modelId, animal.skinId]);
   const model = skinnedModel(species.modelId, animal.skinId);
@@ -169,7 +178,11 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     bubbleUntil: -1,
     leaveT: -1,
     home: `${animal.tile.x},${animal.tile.z}`,
+    route: [],
+    routeTo: '',
   });
+  const routeRef = useRef(route);
+  routeRef.current = route;
 
   // With the economy on the bubble shows the time left (Step 2.6); exempt species keep the "!".
   const timed = animal.expiresAt !== undefined;
@@ -206,6 +219,7 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     const home = `${animal.tile.x},${animal.tile.z}`;
     if (s.home !== home) {
       s.home = home;
+      s.routeTo = '';
       if (s.routine === 'none' && !reducedMotion) {
         s.returning = true;
         s.routineAt = s.clock;
@@ -227,6 +241,7 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
       s.arrived = false;
       s.action = 'none';
       s.returning = wanted === 'none' && from !== 'none';
+      s.routeTo = '';
       if (reducedMotion) {
         const to = wanted === 'hut' ? HUT_DOOR : wanted === 'sleep' ? slotRef.current : { x: animal.tile.x + s.offX, z: animal.tile.z + s.offZ };
         s.px = to.x;
@@ -257,24 +272,40 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
       moving = true;
       return false;
     };
+    // Walks around buildings, water and cliffs along an A* route of tile centers, ending exactly at the
+    // target; straight there when there is no route (Step 3.12).
+    const walkTo = (tx: number, tz: number, speed: number) => {
+      const key = `${tx.toFixed(3)},${tz.toFixed(3)}`;
+      if (s.routeTo !== key) {
+        s.routeTo = key;
+        const tiles = routeRef.current({ x: Math.round(s.px), z: Math.round(s.pz) }, { x: Math.round(tx), z: Math.round(tz) });
+        s.route = [...(tiles ?? []).slice(0, -1).map((t) => ({ x: t.x, z: t.z })), { x: tx, z: tz }];
+      }
+      const next = s.route[0];
+      if (!next) return true;
+      if (moveTo(next.x, next.z, speed)) s.route.shift();
+      if (s.route.length) return false;
+      s.routeTo = '';
+      return true;
+    };
     const active = s.clock - s.routineAt >= s.delay;
     const idle = s.routine === 'none' && !s.returning;
 
     if (s.routine === 'hut') {
       if (active && !s.inside) {
         if (s.leg === 0) {
-          if (moveTo(HUT_APPROACH.x, HUT_APPROACH.z, RUN)) s.leg = 1;
+          if (walkTo(HUT_APPROACH.x, HUT_APPROACH.z, RUN)) s.leg = 1;
         } else if (moveTo(HUT_DOOR.x, HUT_DOOR.z, RUN)) s.inside = true;
       }
       if (s.inside) s.appear = Math.max(0, s.appear - dt / 0.25);
     } else {
       s.appear = Math.min(1, s.appear + dt / 0.25);
       if (s.routine === 'sleep') {
-        if (active && !s.arrived && moveTo(slotRef.current.x, slotRef.current.z, WALK)) s.arrived = true;
+        if (active && !s.arrived && walkTo(slotRef.current.x, slotRef.current.z, WALK)) s.arrived = true;
         s.lie += ((s.arrived ? 1 : 0) - s.lie) * Math.min(1, dt * 3);
       } else {
         s.lie += (0 - s.lie) * Math.min(1, dt * 5);
-        if (s.returning && active && s.lie < 0.05 && moveTo(animal.tile.x + s.offX, animal.tile.z + s.offZ, WALK)) s.returning = false;
+        if (s.returning && active && s.lie < 0.05 && walkTo(animal.tile.x + s.offX, animal.tile.z + s.offZ, WALK)) s.returning = false;
       }
     }
 
@@ -448,6 +479,8 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
 interface AnimalsProps {
   animals: readonly IslandAnimal[];
   tiles: readonly (Spot & { top: number; water?: boolean })[];
+  /** Occupancy for walking (buildings, water, camp); animals do not block each other. */
+  walkGrid: ReadonlyMap<TileKey, TileInfo>;
   mode: WorldMode;
   dark: boolean;
   timeScale: number;
@@ -469,7 +502,8 @@ function sleepSpots(tiles: readonly (Spot & { water?: boolean })[]): Spot[] {
     .flatMap((t) => SLOT_OFFSETS.map(([dx, dz]) => ({ x: t.x + dx, z: t.z + dz })));
 }
 
-export function Animals({ animals, tiles, mode, dark, timeScale, reducedMotion }: AnimalsProps) {
+export function Animals({ animals, tiles, walkGrid, mode, dark, timeScale, reducedMotion }: AnimalsProps) {
+  const route = useMemo<RouteFn>(() => (from, to) => findPath(walkGrid, from, to), [walkGrid]);
   const routine: Routine = mode === 'focus' ? (dark ? 'sleep' : 'hut') : 'none';
   const slots = useMemo(() => {
     const spots = sleepSpots(tiles);
@@ -488,7 +522,7 @@ export function Animals({ animals, tiles, mode, dark, timeScale, reducedMotion }
   return (
     <group>
       {animals.map((a) => (
-        <AnimalInstance ground={ground} key={a.id} animal={a} timeScale={timeScale} reducedMotion={reducedMotion} spawn={!initial.current!.has(a.id)} routine={routine} slot={slots.get(a.id)!} />
+        <AnimalInstance ground={ground} key={a.id} animal={a} timeScale={timeScale} reducedMotion={reducedMotion} spawn={!initial.current!.has(a.id)} routine={routine} slot={slots.get(a.id)!} route={route} />
       ))}
       {departing.length > 0 && !reducedMotion && mode !== 'focus' && (
         <DepartureEffects

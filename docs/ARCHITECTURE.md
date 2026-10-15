@@ -128,6 +128,7 @@ type Phase =
 - `domain/island/occupancy.ts` `getOccupancy({ seed, islandLevel, animals, buildings })` → `Map<"x,z", TileInfo>` with `height, water, campReserved, buildingId?, animalIds, walkable, buildable`. Animal placement and save repair use it; building placement, routines, war formation and island moves must too.
 - Save repair runs on every load (`repairPlacements`): an active animal on water, camp, a building or off the island moves to the nearest free tile and is saved. Idempotent.
 - Focus routines picked by theme at focus start: day = animals walk into the cabin; night = they sleep near it. They return on Break. Reload into Focus shows the end state; reduced motion snaps.
+- **Walking** (Step 3.12): `domain/island/path.ts` `findPath(grid, from, to)`, grid A* with 4-neighbor steps over walkable tiles (no buildings, camp or water except footbridges), at most one terrain level per step; the start and goal may be blocked. `IslandScene` builds the walk grid from the model's buildings (animals do not block each other); `Animals` walks routine legs (to the cabin door's front tile, to sleep spots, back home, to a new home tile) along tile centers, ending exactly at the target, and straight when there is no route.
 
 **Stream** (ADR-020, ADR-021)
 - One winding stream per island, from the seed only: best-scoring wobbling chord, avoids the camp, starts at a spring, falls off the rim outward. Cached per seed (~500 path traces).

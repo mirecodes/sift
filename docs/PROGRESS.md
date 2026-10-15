@@ -84,7 +84,8 @@
   - `skinChoices` / `ownedThemes` (tested), `screens/collection/Cosmetics.tsx` (`ThemePicker`, `SpeciesSheet`), cards become buttons with cosmetics on. Dev server with dummy data at 1280/390: picked Cherry Blossom → pink roof and petals on Home, Dog back to Default → brown dog, no console errors. E2E 51/51 (theme picker, species sheet).
 - [x] 3.11 Build mode (placing buildings)
   - Store `placeBuilding` / `storeBuilding` + `selectOccupancy`, `suggestTile`, `buildState`, `BuildScreen`, `BuildLayer`, `BuildIslandLayer`, hammer icon, animals walk to a changed home tile. Tests: place + persist, none left, camp refused, move, rotate, store, displaced animal moved and saved in the same write, Home only. Dev server with dummy data at 1280/390: tray, ghost with green tint, arrows, rotate, Enter places, tray updates, no console errors. E2E 55/55: place the bought fence, empty tray, survives reload, Esc leaves.
-- [ ] 3.12 Pathfinding for walking animals
+- [x] 3.12 Pathfinding for walking animals
+  - `findPath` (tests: straight, around buildings/camp/water, bridge crossing, one level per step, blocked start/goal, walled in, off the island) + `walkTo` in `Animals` for every routine leg; walk grid in `IslandScene`. E2E 55/55 (Focus routines run without errors).
 - [ ] 3.13 Animal placement with buildings
 
 ## Phase 4 — Island move with a Unicorn (F5)
@@ -156,6 +157,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 3.12 · Watch animals walk to the cabin at the start of a day Focus with buildings in the way: routes follow tile centers (4 directions), so paths look grid-like. Animals cut off by the stream (no footbridge) still walk straight across it.
 - 3.11 · Build mode feel on a phone: tap a tile to move the ghost, then Place (no dragging the ghost itself, because a drag turns the camera). Arrow keys step along the island axes (Up = up-right on screen). The ghost is 60% opaque; check that red/green reads well on every theme.
 - 3.10 · Collection theme picker and species sheet (rows with Equip / price + Open shop). `Open shop` lands at the top of the Shop, not at that skin.
 - 3.9 · Shop look (cards, badges, confirm sheet) at phone and desktop width. With many animals the skin section is long (5 families × every earned species) and pushes themes and buildings far down; consider grouping skins by species or a filter. Release dates are read as UTC midnight, so the Featured row and New badges start at 02:00 in Zurich.
@@ -182,6 +184,7 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 3.12 · 4-neighbor A* (no diagonals); the day routine's goal is the tile in front of the cabin door, then the last short step into the door is straight. · Diagonals would cut building corners; the door itself is on a camp tile.
 - 3.11 · Touch: a tap moves the ghost and Place confirms; the ghost is not dragged. · Drag already turns the camera (DESIGN.md 7.1); two gestures on one finger would conflict.
 - 3.11 · Build mode keeps the Home camera (drag to turn ±30°, zoom) and hides the Home panel, HUD and notices. · "Camera stays isometric; rotation allowed."
 - 3.11 · Moving a building hides the original and shows only the ghost; Rotate on a placed building rotates it in place or reports why it does not fit. · Simplest consistent model.
