@@ -8,6 +8,7 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Added** — Step 0.5: `shared/` layer (ADR-031) with the seeded RNG (moved from `domain/random.ts`), tier rank, reward roll and placement rules; `shared/balance/balance.ts` with `BALANCE_VERSION`, reward odds, timer limits and placement bias (ADR-030). A test keeps `shared/` free of platform globals, `Math.random()` and outside imports. Reward odds unchanged; all existing tests pass unmodified.
 - 2026-10-07 · **Changed** — Step 0.4: tier logic uses `tierRank` everywhere. Catalog defined by rank; reward odds are rank-indexed arrays; species pools, reveal chimes (`reveal:0…3`), tier styles (`data-tier="0…3"`) and display names (`strings.tiers[rank]`) key off the rank. Removed unused `tierFill`.
 - 2026-10-07 · **Changed** — Step 0.3: schema v4 in one migration. Animals get `tierRank`, `status='active'`, `endedAt`, `endReason`, `verified=true`, `pinned=false`; sessions `togetherRoomId`; world `blockThemeId`; settings `weekStartsOn`, `showFocusPresence`, `liveProgress`; new stores ledger, cosmetics, placedBuildings, islandHistory, inbox, contentPacks, kv `equipped`. Row upgrades in `db/migrations.ts` also upgrade v3 backups on import. Tested against a v3 fixture database.
 - 2026-10-07 · **Added** — Step 0.2: Settings → Data exports a versioned JSON backup of every store and imports one after validation, a summary and confirmation, replacing all local data in one transaction. New `FilesAdapter` (download / file picker). E2E covers export → fresh profile → import.

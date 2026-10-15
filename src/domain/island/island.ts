@@ -1,13 +1,9 @@
 import { config } from '../config';
 import { clamp, hash01, type Rng } from '../random';
 import { streamRuns, type StreamContext, type StreamTile } from './stream';
+import { pickPlacementTile as placeOnTiles, type Tile } from '../../../shared/rules/placement';
 
-export type { StreamTile };
-
-export interface Tile {
-  x: number;
-  z: number;
-}
+export type { StreamTile, Tile };
 
 export type BlockKind = 'grass' | 'dirt' | 'stone';
 
@@ -198,27 +194,15 @@ export function generateIsland(seed: number, animalCount: number): IslandLayout 
   return { side, tiles, blocks, streams: runsOf(seed, side), depth, rise };
 }
 
-/**
- * Picks a random empty tile, weighted toward the center. Returns `undefined`
- * only if the island is completely full.
- */
 /** Campfire (center) and hut (one empty tile away along -x, door facing the fire). Animals are never placed here. */
 export const FIRE_TILE: Tile = { x: 0, z: 0 };
 export const HUT_TILE: Tile = { x: -2, z: 0 };
 const RESERVED: readonly Tile[] = [FIRE_TILE, HUT_TILE];
 
+/**
+ * Picks a random empty tile, weighted toward the center (shared placement rule). Returns
+ * `undefined` only if the island is completely full.
+ */
 export function pickPlacementTile(tiles: readonly (Tile & { water?: boolean })[], occupied: readonly Tile[], rng: Rng): Tile | undefined {
-  const taken = new Set([...occupied, ...RESERVED].map(key));
-  const free = tiles.filter((t) => !t.water && !taken.has(key(t)));
-  if (free.length === 0) return undefined;
-
-  const bias = config.island.placementCenterBias;
-  const weights = free.map((t) => 1 / (1 + bias * (t.x * t.x + t.z * t.z)));
-  const total = weights.reduce((a, b) => a + b, 0);
-  let r = rng() * total;
-  for (let i = 0; i < free.length; i++) {
-    r -= weights[i] as number;
-    if (r < 0) return free[i];
-  }
-  return free[free.length - 1];
+  return placeOnTiles(tiles, [...occupied, ...RESERVED], rng);
 }

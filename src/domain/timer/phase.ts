@@ -1,4 +1,4 @@
-import { config } from '../config';
+import { balance } from '../../../shared/balance/balance';
 import { clamp } from '../random';
 
 export type Phase =
@@ -73,7 +73,7 @@ export function formatTimer(display: Countdown): string {
 }
 
 /** Planned time plus overtime, capped. `elapsedMs` is `now - startedAt`. */
-export function effectiveFocusMs(elapsedMs: number, capMs: number = config.reward.maxFocusMs): number {
+export function effectiveFocusMs(elapsedMs: number, capMs: number = balance.reward.maxFocusMs): number {
   return clamp(elapsedMs, 0, capMs);
 }
 

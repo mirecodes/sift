@@ -15,7 +15,8 @@
   - Dexie v4 + pure `db/migrations.ts` (also used by memory adapter and backup import). v3 fixture DB test: animals active/verified, other values unchanged.
 - [x] 0.4 Tier rank everywhere (§2.8)
   - Grep for tier-name comparisons in logic is empty except the frozen Dexie v2/v3 upgrades. Reward/catalog tests moved to the rank API with identical assertions; mapping tests added.
-- [ ] 0.5 Shared module + seeded RNG + balance config (§2.6, §2.7)
+- [x] 0.5 Shared module + seeded RNG + balance config (§2.6, §2.7)
+  - `shared/{rng,balance,rules}`; domain binds generic rules to the catalog/terrain. Existing tests untouched and green (the guidance's "329" is now 354 + 11 new shared tests). ADR-030, ADR-031.
 - [ ] 0.6 Monotonic island level (§2.2)
 - [ ] 0.7 Occupancy grid + save repair (§2.5)
 - [ ] 0.8 `IslandModel` + `<IslandScene model mode>` (§2.4)
@@ -133,6 +134,8 @@
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
 - 0.1 · Guidance says next ADR is ADR-028, but ADR-028/029 already exist in `DECISIONS.md`; new ADRs start at ADR-030. · Avoid duplicate numbers.
+- 0.5 · `shared/` is a plain top-level folder in the same tsconfig, not a workspace package. · Simplest option; Deno bundling only needs relative imports.
+- 0.5 · Placement center bias moved to balance (server places animals in Step 5.5); island shape numbers stay in `config.ts`. · Only outcome-affecting numbers are balance.
 - 0.3 · Kept existing field names (`tileX/tileZ`, epoch-ms `acquiredAt`, epoch-ms `endedAt`/`at`) instead of the §2.3 sketch (`tile`, ISO `earnedAt`). · "Adapt names to the existing tree" (§3); avoids rewriting every stored row.
 - 0.3 · `equipped` is a kv singleton row, not its own table. · It is a singleton like settings and world.
 - 0.3 · `tier` (name) is still stored next to `tierRank`. · Removing it would rewrite every row; 0.4 moves logic onto the rank.

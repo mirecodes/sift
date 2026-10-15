@@ -34,7 +34,7 @@
 | Mobile (later) | Capacitor |
 
 - All code, comments, docs, commits and UI text in English. UI strings only in `src/ui/strings.ts`.
-- All tunable numbers live in `src/domain/config.ts`. Visual values come from `DESIGN.md`; never inline new ones.
+- **Gameplay** tunables (reward odds, timer limits, placement, and later gold, scoring, war) live in `shared/balance/balance.ts` (frozen, with `BALANCE_VERSION`; bump it on every value change). Client-only tunables (render, UI, island shape) live in `src/domain/config.ts`. Visual values come from `DESIGN.md`; never inline new ones (ADR-030).
 
 ## 3. Screens and flow
 
@@ -81,7 +81,7 @@ type Phase =
 - **Effective focus** = planned + overtime, capped at 60 min. **Minimum 25 min**. Abandon = no reward.
 - Focus can be set below 25 min; such sessions earn only with overtime, and the no-reward message explains it (ADR-012) `[ASSUMPTION]`.
 - **Tiers**, lowest to highest: Common < Mythic < Epic < Legendary (`TIERS` in `config.ts`; ADR-026/027).
-- Tier is rolled; odds interpolate linearly from 25 to 60 min (`[ASSUMPTION]`); species is then uniform within the tier. Pure functions with an injectable RNG.
+- Tier is rolled; odds interpolate linearly from 25 to 60 min (`[ASSUMPTION]`); species is then uniform within the tier. Pure functions with an injectable RNG: `shared/rules/reward.ts` (generic over the catalog), bound to `CATALOG` in `domain/reward/reward.ts`.
 
 | Tier | 25 min | 60 min | Species |
 |---|---|---|---|
@@ -181,6 +181,10 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 docs/            ARCHITECTURE, DESIGN, DECISIONS (human log), CHANGELOG, PROJECT_STATUS, guidance_vN
 config/app.yaml  runtime config
 e2e/             Playwright smoke test
+shared/          pure rules that must run identically on client and server (ADR-031)
+├── balance/     balance.ts: gameplay tunables + BALANCE_VERSION
+├── rng/         the one seeded PRNG (mulberry32) + hash01, clamp, lerp
+└── rules/       tier.ts, reward.ts, placement.ts (later expiry, scoring, war, …)
 src/
 ├── app/         App, routing, runtimeConfig.ts
 ├── screens/     home, focus, break, settings, collection
@@ -193,7 +197,8 @@ src/
 └── ui/          tokens.css/ts, strings.ts, hooks, components/
 ```
 
-- `domain/` imports nothing outside itself. `world/` and `screens/` may use `domain/` and `store/`. Capability APIs only in `platform/`.
+- `shared/` imports only `shared/` (relative paths), uses no browser/Node/Deno globals, never calls `Math.random()` or `Date.now()` (inject `Rng` and `now`); `shared/shared.test.ts` enforces this.
+- `domain/` imports only itself and `shared/` (`domain/random.ts` re-exports `shared/rng`). `world/` and `screens/` may use `domain/`, `shared/` and `store/`. Capability APIs only in `platform/`.
 
 ## 11. Milestones
 

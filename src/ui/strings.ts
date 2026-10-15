@@ -1,6 +1,7 @@
-import { config, type TierRank } from '../domain/config';
+import type { TierRank } from '../domain/config';
+import { balance } from '../../shared/balance/balance';
 
-const minimumMinutes = Math.round(config.reward.minFocusMs / 60_000);
+const minimumMinutes = Math.round(balance.reward.minFocusMs / 60_000);
 
 /** Every user-visible string. Add a locale by swapping this module's content. */
 export const strings = {

@@ -168,3 +168,13 @@
 - Date: 2026-10-07 · Status: Accepted (owner request)
 - Decision: The plan arrives as `docs/guidance_vN.md` and is implemented step by step; all work so far is guidance_v1. `ARCHITECTURE.md` was condensed and now contains every settled decision, so the agent reads only it and `DESIGN.md`. This file becomes a human-only log the agent appends to. `CHANGELOG.md` is grouped by guidance file instead of `[Unreleased]`.
 - Consequences: ADR tags in code and docs are pointers for humans; the rule itself must be stated in `ARCHITECTURE.md`.
+
+## ADR-030: One balance config for gameplay numbers
+- Date: 2026-10-07 · Status: Accepted (guidance_v2 §2.6)
+- Decision: `shared/balance/balance.ts` exports a deeply frozen `balance` object and a `BALANCE_VERSION` string. It holds every number that changes game outcomes and must match on the server: reward odds and the 25/60 min thresholds, timer limits, the placement center bias; later phases add economy, scoring, missions and war sections (§8). Client-only tunables (render, UI timings, island shape) stay in `src/domain/config.ts`.
+- Consequences: The server will import the same file and store `BALANCE_VERSION` with every war and weekly settlement, so replays stay reproducible; every value change must bump the version. Odds became rank-indexed arrays (ADR on tier rank, step 0.4).
+
+## ADR-031: `shared/` layer for deterministic rules
+- Date: 2026-10-07 · Status: Accepted (guidance_v2 §2.7)
+- Decision: A top-level `shared/` folder holds rules that must run identically on client and server: the seeded RNG (the existing mulberry32 was moved, not duplicated), tier rank, reward roll, placement, balance. Code there is plain TypeScript: relative imports inside `shared/` only, no browser/Node/Deno globals, no `Math.random()` or `Date.now()`; a test scans the folder to enforce it. Rules are generic (the reward roll takes the species catalog, placement takes candidate tiles and blocked tiles); `src/domain` binds them to the app's data. `src/domain/random.ts` re-exports `shared/rng` so existing imports stay.
+- Consequences: Supabase Edge Functions (Deno) can bundle `shared/` unchanged (Phase 5). Island terrain generation is not shared yet; it moves when the server needs to place animals (Step 5.5). Rejected: a separate npm workspace package (more tooling for one folder).
