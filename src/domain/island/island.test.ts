@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { config } from '../config';
 import { seededRng } from '../random';
-import { FIRE_TILE, generateIsland, HUT_TILE, islandSide, islandTiles, pickPlacementTile } from './island';
+import { CAMP_RESERVED, COIN_PILE_TILE, FIRE_TILE, generateIsland, HUT_TILE, islandSide, islandTiles, pickPlacementTile } from './island';
 
 describe('islandSide', () => {
   it('starts at 7 and grows with animal count, always odd', () => {
@@ -105,8 +105,8 @@ describe('pickPlacementTile', () => {
   it('never picks an occupied tile and returns undefined when full', () => {
     const rng = seededRng(1);
     const occupied: { x: number; z: number }[] = [];
-    // Every tile except the campfire, the hut and the stream is free.
-    for (let i = 0; i < tiles.filter((t) => !t.water).length - 2; i++) {
+    // Every tile except the camp (campfire, hut, coin pile) and the stream is free.
+    for (let i = 0; i < tiles.filter((t) => !t.water).length - CAMP_RESERVED.length; i++) {
       const t = pickPlacementTile(tiles, occupied, rng);
       expect(t).toBeDefined();
       expect(occupied.some((o) => o.x === t!.x && o.z === t!.z)).toBe(false);
@@ -115,11 +115,11 @@ describe('pickPlacementTile', () => {
     expect(pickPlacementTile(tiles, occupied, rng)).toBeUndefined();
   });
 
-  it('never uses the campfire or hut tile', () => {
+  it('never uses the campfire, hut or coin pile tile', () => {
     const rng = seededRng(3);
     for (let i = 0; i < 200; i++) {
       const t = pickPlacementTile(tiles, [], rng)!;
-      expect([FIRE_TILE, HUT_TILE].some((r) => r.x === t.x && r.z === t.z)).toBe(false);
+      expect([FIRE_TILE, HUT_TILE, COIN_PILE_TILE].some((r) => r.x === t.x && r.z === t.z)).toBe(false);
     }
   });
 

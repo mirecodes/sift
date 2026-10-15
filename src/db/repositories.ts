@@ -62,6 +62,7 @@ export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
       await db.transaction('rw', db.kv, db.sessions, db.animals, async () => {
         if (change.session) await db.sessions.put(change.session);
         if (change.animal) await db.animals.put(change.animal);
+        if (change.animals?.length) await db.animals.bulkPut(change.animals);
         if (change.phase) {
           if (change.phase.kind === 'idle') await db.kv.delete('phase');
           else await db.kv.put({ key: 'phase', value: change.phase });

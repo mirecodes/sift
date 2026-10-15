@@ -197,12 +197,15 @@ export function generateIsland(seed: number, level: number): IslandLayout {
 /** Campfire (center) and hut (one empty tile away along -x, door facing the fire). Animals are never placed here. */
 export const FIRE_TILE: Tile = { x: 0, z: 0 };
 export const HUT_TILE: Tile = { x: -2, z: 0 };
-const RESERVED: readonly Tile[] = [FIRE_TILE, HUT_TILE];
+/** Next to the cabin on the camera side, kept free for the coin pile (F3). Inside the stream's camp clearance, so always flat and dry. */
+export const COIN_PILE_TILE: Tile = { x: -2, z: 1 };
+/** Camp tiles: never used by animals or buildings. */
+export const CAMP_RESERVED: readonly Tile[] = [FIRE_TILE, HUT_TILE, COIN_PILE_TILE];
 
 /**
  * Picks a random empty tile, weighted toward the center (shared placement rule). Returns
  * `undefined` only if the island is completely full.
  */
 export function pickPlacementTile(tiles: readonly (Tile & { water?: boolean })[], occupied: readonly Tile[], rng: Rng): Tile | undefined {
-  return placeOnTiles(tiles, [...occupied, ...RESERVED], rng);
+  return placeOnTiles(tiles, [...occupied, ...CAMP_RESERVED], rng);
 }

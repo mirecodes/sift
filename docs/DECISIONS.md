@@ -183,3 +183,8 @@
 - Date: 2026-10-07 · Status: Accepted (guidance_v2 §2.2)
 - Decision: Island generation takes `islandLevel` = the number of animals ever earned on this save, whatever their status (`active`, `departed`, `vanished`, `spent`), instead of the current animal count. The growth function is unchanged; only its input changed. Only `active` animals render and occupy tiles. An island move (F5) keeps the level and changes only the seed.
 - Consequences: Departures (F3), war losses (F8) and island moves (F5) never shrink the island or invalidate stored tiles. Saves where every animal is active produce exactly the same island as before. Freed tiles of departed animals are reused by new animals. Rejected: storing the level (it is derived, §4.1).
+
+## ADR-033: One occupancy grid and save repair
+- Date: 2026-10-07 · Status: Accepted (guidance_v2 §2.5, Step 0.7)
+- Decision: `getOccupancy` derives per-tile `height, water, campReserved, buildingId, animalIds, walkable, buildable` from seed, island level, animals and buildings. The camp reserve gains a third tile, (-2,1) beside the cabin on the camera side, for the coin pile (F3); it is inside the stream's 1.5-tile camp clearance, so it is flat and dry on every seed (tested for 300 seeds). On load, `repairPlacements` moves every active animal that stands on water, camp, a building or off the island to the nearest free tile (distance, then x, then z) and saves it. Buildings occupy only their anchor tile until footprints arrive (Step 3.1).
+- Consequences: Old saves no longer overlap the camp or stream. Animals no longer sleep on the pile tile at night. If an island were completely full, an overlapping animal stays put until tile sharing (Step 3.13). Rejected: putting the pile on (-1,0) (the cabin's walk-in path).

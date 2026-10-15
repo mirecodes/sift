@@ -8,6 +8,7 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Fixed** — Step 0.7: one occupancy grid (`getOccupancy`) for placement; a third camp tile is reserved next to the cabin for the coin pile; on load, active animals on water, camp, buildings or off the island move to the nearest free tile and are saved (fixes old saves overlapping the camp and stream). Night sleep spots skip the pile tile (ADR-033).
 - 2026-10-07 · **Changed** — Step 0.6: the island is sized by `islandLevel` = lifetime earned animals (any status), so it never shrinks (ADR-032). Only `active` animals are drawn and block tiles for new animals. Existing saves produce the same island.
 - 2026-10-07 · **Added** — Step 0.5: `shared/` layer (ADR-031) with the seeded RNG (moved from `domain/random.ts`), tier rank, reward roll and placement rules; `shared/balance/balance.ts` with `BALANCE_VERSION`, reward odds, timer limits and placement bias (ADR-030). A test keeps `shared/` free of platform globals, `Math.random()` and outside imports. Reward odds unchanged; all existing tests pass unmodified.
 - 2026-10-07 · **Changed** — Step 0.4: tier logic uses `tierRank` everywhere. Catalog defined by rank; reward odds are rank-indexed arrays; species pools, reveal chimes (`reveal:0…3`), tier styles (`data-tier="0…3"`) and display names (`strings.tiers[rank]`) key off the rank. Removed unused `tierFill`.

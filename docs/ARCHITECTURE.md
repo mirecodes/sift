@@ -109,7 +109,11 @@ type Phase =
 
 **Camp and night mode** (ADR-016, ADR-017)
 - `Settings.theme` `light | dark`, toggled from the top bar, locked during Focus.
-- Campfire on (0,0), log cabin on (-2,0) with its door facing the fire. Both tiles are reserved (never used for placement) and flat.
+- Campfire on (0,0), log cabin on (-2,0) with its door facing the fire, coin pile tile (-2,1) beside the cabin (empty until F3). All three are `CAMP_RESERVED` (never used by animals or buildings) and flat; the pile tile lies inside the stream's camp clearance, so it is always dry.
+
+**Occupancy** (ADR-033)
+- `domain/island/occupancy.ts` `getOccupancy({ seed, islandLevel, animals, buildings })` → `Map<"x,z", TileInfo>` with `height, water, campReserved, buildingId?, animalIds, walkable, buildable`. Animal placement and save repair use it; building placement, routines, war formation and island moves must too.
+- Save repair runs on every load (`repairPlacements`): an active animal on water, camp, a building or off the island moves to the nearest free tile and is saved. Idempotent.
 - Focus routines picked by theme at focus start: day = animals walk into the cabin; night = they sleep near it. They return on Break. Reload into Focus shows the end state; reduced motion snaps.
 
 **Stream** (ADR-020, ADR-021)
@@ -233,4 +237,4 @@ src/
 | Q10 | Accounts / sync | Local only, schema ready |
 | Q11 | Mobile approach | Capacitor |
 
-**Known limits**: no pathfinding (routine walks may cross the cabin or stream); animals saved before the camp/stream may overlap them; the butterfly may fly over water and the camp.
+**Known limits**: no pathfinding (routine walks may cross the cabin or stream); the butterfly may fly over water and the camp.

@@ -15,6 +15,8 @@ export interface PersistedState {
 export interface Commit {
   session?: FocusSession;
   animal?: PlacedAnimal;
+  /** Several animals at once (e.g. save repair). */
+  animals?: PlacedAnimal[];
   /** The new active phase; `idle` clears the stored one. */
   phase?: StoredPhase;
 }

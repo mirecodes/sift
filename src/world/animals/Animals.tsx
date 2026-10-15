@@ -7,7 +7,7 @@ import type { PlacedAnimal } from '../../domain/types';
 import { palette } from '../palette';
 import { animalGeometry, flutterParts, modelById, VOXEL_SIZE } from '../voxel/geometry';
 import { HUT_APPROACH, HUT_DOOR } from '../props/Camp';
-import { FIRE_TILE, HUT_TILE } from '../../domain/island/island';
+import { CAMP_RESERVED, HUT_TILE } from '../../domain/island/island';
 import type { WorldMode } from '../types';
 
 const material = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
@@ -492,11 +492,11 @@ const SLOT_OFFSETS = [
   [0, 0.25],
 ] as const;
 
-/** Sleeping spots: the tiles nearest the hut (front first), up to three animals per tile. */
+/** Sleeping spots: the tiles nearest the hut (front first), up to three animals per tile; never water or camp. */
 function sleepSpots(tiles: readonly (Spot & { water?: boolean })[]): Spot[] {
   const dist = (t: Spot) => Math.hypot(t.x - HUT_TILE.x, t.z - HUT_TILE.z);
   return tiles
-    .filter((t) => !t.water && !(t.x === HUT_TILE.x && t.z === HUT_TILE.z) && !(t.x === FIRE_TILE.x && t.z === FIRE_TILE.z))
+    .filter((t) => !t.water && !CAMP_RESERVED.some((c) => c.x === t.x && c.z === t.z))
     .sort((a, b) => dist(a) - dist(b) || b.z - a.z || a.x - b.x)
     .flatMap((t) => SLOT_OFFSETS.map(([dx, dz]) => ({ x: t.x + dx, z: t.z + dz })));
 }

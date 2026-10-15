@@ -19,7 +19,8 @@
   - `shared/{rng,balance,rules}`; domain binds generic rules to the catalog/terrain. Existing tests untouched and green (the guidance's "329" is now 354 + 11 new shared tests). ADR-030, ADR-031.
 - [x] 0.6 Monotonic island level (§2.2)
   - `domain/island/level.ts` (`islandLevel`, `pickNewAnimalTile`); `selectIslandCount` → `selectIslandLevel`; only active animals render/occupy. Tests: departures keep terrain identical; all-active saves unchanged. ADR-032.
-- [ ] 0.7 Occupancy grid + save repair (§2.5)
+- [x] 0.7 Occupancy grid + save repair (§2.5)
+  - `domain/island/occupancy.ts`; coin pile reserve (-2,1); repair on every load, persisted via `Commit.animals`. Tests: grid flags, pile tile dry/flat on 300 seeds, overlapping fixture repaired, idempotent (domain + store). ADR-033.
 - [ ] 0.8 `IslandModel` + `<IslandScene model mode>` (§2.4)
 - [ ] 0.9 Inbox infrastructure (§2.9)
 
@@ -129,12 +130,15 @@
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
 - 0.2 · Settings → Data section and import confirmation card: layout and copy.
+- 0.7 · Coin pile tile at (-2,1) (beside the cabin, camera side): confirm the spot before the pile prop is built (Step 2.4). Night sleeping arrangement shifts slightly because that tile is skipped.
 
 ## Decisions taken by the agent
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
 - 0.1 · Guidance says next ADR is ADR-028, but ADR-028/029 already exist in `DECISIONS.md`; new ADRs start at ADR-030. · Avoid duplicate numbers.
+- 0.7 · Updated two placement tests that hard-coded two camp tiles to use `CAMP_RESERVED` (now three). · The spec adds a reserved tile; the tests got stricter, not weaker.
+- 0.7 · Repair target = nearest free walkable tile by Euclidean distance, ties by x then z. · Deterministic and simplest.
 - 0.5 · `shared/` is a plain top-level folder in the same tsconfig, not a workspace package. · Simplest option; Deno bundling only needs relative imports.
 - 0.5 · Placement center bias moved to balance (server places animals in Step 5.5); island shape numbers stay in `config.ts`. · Only outcome-affecting numbers are balance.
 - 0.3 · Kept existing field names (`tileX/tileZ`, epoch-ms `acquiredAt`, epoch-ms `endedAt`/`at`) instead of the §2.3 sketch (`tile`, ISO `earnedAt`). · "Adapt names to the existing tree" (§3); avoids rewriting every stored row.

@@ -59,6 +59,7 @@ export function createMemoryStorage(): StorageAdapter {
     async commit(change: Commit) {
       if (change.session) put('sessions', change.session);
       if (change.animal) put('animals', change.animal);
+      for (const a of change.animals ?? []) put('animals', a);
       if (change.phase) {
         if (change.phase.kind === 'idle') tables.kv.delete('phase');
         else kv('phase', change.phase);

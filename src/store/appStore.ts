@@ -14,6 +14,7 @@ import type { AnimalSpecies } from '../domain/animals/catalog';
 import { rollReward } from '../domain/reward/reward';
 import { isActive, newPlacedAnimal } from '../domain/animals/placed';
 import { islandLevel, pickNewAnimalTile } from '../domain/island/level';
+import { repairPlacements } from '../domain/island/occupancy';
 import { clamp, type Rng } from '../domain/random';
 import { createBackup, type Backup } from '../domain/backup';
 import type { StorageAdapter } from '../platform/storage';
@@ -132,6 +133,14 @@ export function createAppStore(initialDeps: AppDeps) {
       world = { seed: Math.floor(deps.rng() * 2 ** 31), blockThemeId: DEFAULT_BLOCK_THEME };
       if (resetMap) stored = [];
       await deps.storage.resetWorld(world).catch(() => undefined);
+    }
+
+    // Save repair (Step 0.7): active animals on water, camp or reserved tiles move to the nearest free tile.
+    const repaired = repairPlacements({ seed: world.seed, islandLevel: islandLevel(stored), buildings: [] }, stored.filter(isActive));
+    if (repaired.length) {
+      const byId = new Map(repaired.map((a) => [a.id, a]));
+      stored = stored.map((a) => byId.get(a.id) ?? a);
+      await commit({ animals: repaired });
     }
 
     const phase = loaded.phase ?? IDLE;

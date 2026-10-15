@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { seededRng } from '../domain/random';
-import { generateIsland, islandSide, islandTiles } from '../domain/island/island';
+import { FIRE_TILE, generateIsland, islandSide, islandTiles } from '../domain/island/island';
 import { pickNewAnimalTile } from '../domain/island/level';
 import { resolvePhase } from '../domain/timer/phase';
 import type { PlacedAnimal } from '../domain/types';
@@ -131,6 +131,30 @@ describe('focus cycle', () => {
     expect(islandSide(selectIslandLevel(h.get()))).toBe(7);
     await h.get().goHome();
     expect(islandSide(selectIslandLevel(h.get()))).toBe(9);
+  });
+});
+
+describe('save repair on load (Step 0.7)', () => {
+  it('moves animals off the camp and saves the new positions', async () => {
+    const storage = createMemoryStorage();
+    const a = harness(storage);
+    await a.get().init();
+    await a.get().startFocus();
+    a.clock.t += 30 * MIN;
+    await a.get().endFocus();
+    await a.get().goHome();
+    const earned = a.get().animals[0]!;
+    await storage.commit({ animal: { ...earned, tileX: FIRE_TILE.x, tileZ: FIRE_TILE.z } }); // an old save on the campfire
+
+    const b = harness(storage);
+    await b.get().init();
+    const fixed = b.get().animals[0]!;
+    expect([fixed.tileX, fixed.tileZ]).not.toEqual([FIRE_TILE.x, FIRE_TILE.z]);
+    expect((await storage.load()).animals[0]).toEqual(fixed);
+
+    const c = harness(storage);
+    await c.get().init();
+    expect(c.get().animals[0]).toEqual(fixed); // idempotent across loads
   });
 });
 
