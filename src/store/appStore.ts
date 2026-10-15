@@ -1,6 +1,7 @@
 import { createStore } from 'zustand/vanilla';
 import { config, DEFAULT_BLOCK_THEME } from '../domain/config';
-import type { FocusSession, PlacedAnimal, Settings, WorldState } from '../domain/types';
+import type { FocusSession, InboxRow, PlacedAnimal, Settings, WorldState } from '../domain/types';
+import { canShowNotices, currentNotice, type Notice } from '../domain/inbox/inbox';
 import {
   IDLE,
   effectiveFocusMs,
@@ -44,6 +45,8 @@ export interface AppState {
   view: View;
   /** Animal earned this break that has not been revealed yet; hidden from the island until then. */
   revealPending: string | null;
+  /** Deferred notices (ADR-035), oldest first. Shown one at a time on Home and Break only. */
+  inbox: InboxRow[];
 
   init(): Promise<void>;
   exportBackup(): Promise<Backup>;
@@ -56,6 +59,10 @@ export interface AppState {
   finishReveal(): void;
   setView(view: View): void;
   updateSettings(patch: Partial<Settings>): Promise<void>;
+  /** Queues a notice at any time, including during Focus; it is shown later. */
+  enqueueNotice(notice: Notice): Promise<void>;
+  /** Removes the shown notice. Ignored while focusing: nothing is dequeued during Focus. */
+  dismissNotice(id: string): Promise<void>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -95,6 +102,11 @@ export function selectVisibleAnimals(s: Pick<AppState, 'animals' | 'revealPendin
  * Island level (lifetime earned animals, ADR-032). During a break the reward is not counted, so
  * the island grows only once the user is back on Home (ADR-013).
  */
+/** The notice to show now, or `undefined` (always while focusing). */
+export function selectCurrentNotice(s: Pick<AppState, 'inbox' | 'phase'>): InboxRow | undefined {
+  return currentNotice(s.inbox, s.phase);
+}
+
 export function selectIslandLevel(s: Pick<AppState, 'animals' | 'phase'>): number {
   const holdBack = s.phase.kind === 'break' && s.phase.rewardId !== undefined ? 1 : 0;
   return Math.max(0, islandLevel(s.animals) - holdBack);
@@ -153,7 +165,7 @@ export function createAppStore(initialDeps: AppDeps) {
       if (tile) animals.push(newPlacedAnimal(deps.uuid(), species, tile, 0, 'test-mode'));
     }
 
-    return { ready: true, settings, world, animals, sessions: loaded.sessions, phase, revealPending };
+    return { ready: true, settings, world, animals, sessions: loaded.sessions, phase, revealPending, inbox: loaded.inbox };
   }
 
   return createStore<AppState>()((set, get) => ({
@@ -165,6 +177,7 @@ export function createAppStore(initialDeps: AppDeps) {
     phase: IDLE,
     view: 'home',
     revealPending: null,
+    inbox: [],
 
     async init() {
       set(await hydrate(true));
@@ -274,6 +287,19 @@ export function createAppStore(initialDeps: AppDeps) {
       const settings = sanitizeSettings({ ...get().settings, ...patch });
       set({ settings });
       await deps.storage.saveSettings(settings).catch((e) => console.warn('Sift: could not save settings.', e));
+    },
+
+    async enqueueNotice(notice) {
+      const row: InboxRow = { id: deps.uuid(), createdAt: deps.now(), notice };
+      await commit({ inboxAdd: [row] });
+      set({ inbox: [...get().inbox, row] });
+    },
+
+    async dismissNotice(id) {
+      const { inbox, phase } = get();
+      if (!canShowNotices(phase) || !inbox.some((n) => n.id === id)) return;
+      await commit({ inboxRemove: [id] });
+      set({ inbox: get().inbox.filter((n) => n.id !== id) });
     },
   }));
 }

@@ -1,4 +1,4 @@
-import type { FocusSession, PlacedAnimal, Settings, WorldState } from '../../domain/types';
+import type { FocusSession, InboxRow, PlacedAnimal, Settings, WorldState } from '../../domain/types';
 import type { StoredPhase } from '../../domain/timer/phase';
 import type { BackupData } from '../../domain/backup';
 
@@ -9,6 +9,8 @@ export interface PersistedState {
   phase?: StoredPhase;
   animals: PlacedAnimal[];
   sessions: FocusSession[];
+  /** Queued notices, oldest first. */
+  inbox: InboxRow[];
 }
 
 /** Everything that must change together. An implementation applies it in one transaction. */
@@ -19,6 +21,9 @@ export interface Commit {
   animals?: PlacedAnimal[];
   /** The new active phase; `idle` clears the stored one. */
   phase?: StoredPhase;
+  inboxAdd?: InboxRow[];
+  /** Ids of notices that were shown and dismissed. */
+  inboxRemove?: string[];
 }
 
 export interface StorageAdapter {

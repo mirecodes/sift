@@ -9,13 +9,14 @@ export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
     schemaVersion: db.verno,
 
     async load(): Promise<PersistedState> {
-      const [kv, animals, sessions] = await Promise.all([
+      const [kv, animals, sessions, inbox] = await Promise.all([
         db.kv.toArray(),
         db.animals.orderBy('acquiredAt').toArray(),
         db.sessions.orderBy('startedAt').toArray(),
+        db.inbox.orderBy('createdAt').toArray(),
       ]);
       const get = <T>(key: string): T | undefined => kv.find((r) => r.key === key)?.value as T | undefined;
-      const state: PersistedState = { animals, sessions };
+      const state: PersistedState = { animals, sessions, inbox };
       const settings = get<Settings>('settings');
       const world = get<WorldState>('world');
       const phase = get<StoredPhase>('phase');
@@ -57,9 +58,11 @@ export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
       });
     },
 
-    /** Session, animal, and active phase are written in ONE transaction (ARCHITECTURE.md 7.3). */
+    /** Session, animals, active phase and inbox changes are written in ONE transaction (ARCHITECTURE.md 7.3). */
     async commit(change: Commit) {
-      await db.transaction('rw', db.kv, db.sessions, db.animals, async () => {
+      await db.transaction('rw', [db.kv, db.sessions, db.animals, db.inbox], async () => {
+        if (change.inboxAdd?.length) await db.inbox.bulkPut(change.inboxAdd);
+        if (change.inboxRemove?.length) await db.inbox.bulkDelete(change.inboxRemove);
         if (change.session) await db.sessions.put(change.session);
         if (change.animal) await db.animals.put(change.animal);
         if (change.animals?.length) await db.animals.bulkPut(change.animals);

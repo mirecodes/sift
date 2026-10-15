@@ -6,7 +6,7 @@ import { resolvePhase } from '../domain/timer/phase';
 import type { PlacedAnimal } from '../domain/types';
 import { createMemoryStorage } from '../platform/storage/memory';
 import type { StorageAdapter } from '../platform/storage';
-import { createAppStore, selectIslandLevel, selectVisibleAnimals } from './appStore';
+import { createAppStore, selectCurrentNotice, selectIslandLevel, selectVisibleAnimals } from './appStore';
 
 const MIN = 60_000;
 
@@ -131,6 +131,64 @@ describe('focus cycle', () => {
     expect(islandSide(selectIslandLevel(h.get()))).toBe(7);
     await h.get().goHome();
     expect(islandSide(selectIslandLevel(h.get()))).toBe(9);
+  });
+});
+
+describe('inbox (Step 0.9)', () => {
+  const departed = (gold: number) => ({ kind: 'animals_departed' as const, animalIds: ['x'], gold });
+
+  it('notices queued during Focus are held back and show after Focus ends', async () => {
+    const h = harness();
+    await h.get().init();
+    await h.get().startFocus();
+    await h.get().enqueueNotice(departed(3));
+    h.clock.t += 1;
+    await h.get().enqueueNotice(departed(5));
+    expect(h.get().inbox).toHaveLength(2);
+    expect(selectCurrentNotice(h.get())).toBeUndefined();
+
+    // Nothing is dequeued during Focus, even if asked.
+    await h.get().dismissNotice(h.get().inbox[0]!.id);
+    expect(h.get().inbox).toHaveLength(2);
+
+    h.clock.t += 30 * MIN; // overtime is still Focus
+    expect(selectCurrentNotice(h.get())).toBeUndefined();
+    await h.get().endFocus();
+    expect(h.get().phase.kind).toBe('break');
+    const first = selectCurrentNotice(h.get())!;
+    expect(first.notice).toEqual(departed(3));
+
+    await h.get().dismissNotice(first.id);
+    await h.get().goHome();
+    expect(selectCurrentNotice(h.get())?.notice).toEqual(departed(5));
+  });
+
+  it('survives a reload and dismissals are saved', async () => {
+    const storage = createMemoryStorage();
+    const a = harness(storage);
+    await a.get().init();
+    await a.get().enqueueNotice(departed(1));
+    await a.get().enqueueNotice(departed(2));
+    await a.get().dismissNotice(selectCurrentNotice(a.get())!.id);
+
+    const b = harness(storage);
+    await b.get().init();
+    expect(b.get().inbox.map((n) => n.notice)).toEqual([departed(2)]);
+    expect(selectCurrentNotice(b.get())?.notice).toEqual(departed(2));
+  });
+
+  it('a reload into Focus still holds notices back', async () => {
+    const storage = createMemoryStorage();
+    const a = harness(storage);
+    await a.get().init();
+    await a.get().startFocus();
+    await a.get().enqueueNotice(departed(1));
+
+    const b = harness(storage);
+    await b.get().init();
+    expect(b.get().phase.kind).toBe('focus');
+    expect(b.get().inbox).toHaveLength(1);
+    expect(selectCurrentNotice(b.get())).toBeUndefined();
   });
 });
 

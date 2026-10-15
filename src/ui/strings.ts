@@ -57,6 +57,13 @@ export const strings = {
     count: (n: number) => `×${n}`,
     unknownAnimal: 'Not collected yet',
   },
+  notice: {
+    ok: 'OK',
+    /** "Fox left 1 gold." / "4 animals left 9 gold." */
+    animalsDeparted: (count: number, gold: number, name?: string) => `${count === 1 && name ? name : `${count} animals`} left ${gold} gold.`,
+    /** Kinds whose copy arrives with their phase. */
+    generic: 'Something happened while you were away.',
+  },
   /** Tier names by rank (0 lowest). Renaming a tier only changes this list. */
   tiers: ['Common', 'Mythic', 'Epic', 'Legendary'] satisfies Record<TierRank, string>,
   aria: {

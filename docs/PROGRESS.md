@@ -23,7 +23,8 @@
   - `domain/island/occupancy.ts`; coin pile reserve (-2,1); repair on every load, persisted via `Commit.animals`. Tests: grid flags, pile tile dry/flat on 300 seeds, overlapping fixture repaired, idempotent (domain + store). ADR-033.
 - [x] 0.8 `IslandModel` + `<IslandScene model mode>` (§2.4)
   - Screenshot harness (seeded Math.random, paused clock, imported fixture) vs the pre-refactor build: 6 states pixel-identical within run-to-run noise; Math.random call counts identical. `?twoIslands=99` dev view renders two independent islands, no errors; absent from the production bundle. E2E 18/18. ADR-034.
-- [ ] 0.9 Inbox infrastructure (§2.9)
+- [x] 0.9 Inbox infrastructure (§2.9)
+  - `domain/inbox`, store `inbox` + guard, `NoticeCard` (DESIGN.md 7.2a). Tests: queued during Focus → shown after; dismiss ignored during Focus; reload into Focus; persistence. E2E 21/21 (×3). ADR-035. **Phase 0 complete; awaiting owner gate.**
 
 ## Phase 1 — Tabs and Stats (F1, F2)
 
@@ -131,6 +132,7 @@
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
 - 0.2 · Settings → Data section and import confirmation card: layout and copy.
+- 0.9 · Notice card look (top center, OK button). On desktop it covers the back of the island; the camera does not avoid it. Copy for non-departure kinds is a neutral placeholder until their phases.
 - 0.8 · Open `npm run dev` with `?twoIslands` once: two islands side by side (camera fit, clouds cover both). Single-island parity was verified automatically.
 - 0.7 · Coin pile tile at (-2,1) (beside the cabin, camera side): confirm the spot before the pile prop is built (Step 2.4). Night sleeping arrangement shifts slightly because that tile is skipped.
 

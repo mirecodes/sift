@@ -1,4 +1,4 @@
-import type { FocusSession, PlacedAnimal } from '../../domain/types';
+import type { FocusSession, InboxRow, PlacedAnimal } from '../../domain/types';
 import type { BackupData } from '../../domain/backup';
 import { migrateRows, SCHEMA_VERSION } from '../../db/migrations';
 import type { Commit, PersistedState, StorageAdapter } from './index';
@@ -32,6 +32,7 @@ export function createMemoryStorage(): StorageAdapter {
       const state: PersistedState = {
         animals: rows<PlacedAnimal>('animals').sort((a, b) => a.acquiredAt - b.acquiredAt),
         sessions: rows<FocusSession>('sessions').sort((a, b) => a.startedAt - b.startedAt),
+        inbox: rows<InboxRow>('inbox').sort((a, b) => a.createdAt - b.createdAt),
       };
       for (const { key, value } of rows<{ key: 'settings' | 'world' | 'phase'; value: never }>('kv')) state[key] = value;
       return state;
@@ -60,6 +61,8 @@ export function createMemoryStorage(): StorageAdapter {
       if (change.session) put('sessions', change.session);
       if (change.animal) put('animals', change.animal);
       for (const a of change.animals ?? []) put('animals', a);
+      for (const n of change.inboxAdd ?? []) put('inbox', n);
+      for (const id of change.inboxRemove ?? []) tables.inbox.delete(id);
       if (change.phase) {
         if (change.phase.kind === 'idle') tables.kv.delete('phase');
         else kv('phase', change.phase);

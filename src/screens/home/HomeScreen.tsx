@@ -6,6 +6,7 @@ import { Button, IconButton } from '../../ui/components/Button';
 import { CollectionIcon, SettingsIcon } from '../../ui/components/Icons';
 import { Panel } from '../../ui/components/Surfaces';
 import { TopBar } from '../../ui/components/TopBar';
+import { NoticeCard } from '../NoticeCard';
 import layer from '../Screen.module.css';
 import styles from './HomeScreen.module.css';
 
@@ -32,6 +33,7 @@ export function HomeScreen() {
           </IconButton>
         </TopBar>
       </div>
+      <NoticeCard />
       <Panel className={styles.panel}>
         <p className={`${styles.cycle} type-eyebrow`}>{strings.home.cycle(settings.focusMinutes, settings.breakMinutes)}</p>
         <Button block onClick={start}>

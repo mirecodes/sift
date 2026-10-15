@@ -10,6 +10,7 @@ import { TierBadge } from '../../ui/components/Badge';
 import { Button } from '../../ui/components/Button';
 import { FeatureCard, Panel, TierCard } from '../../ui/components/Surfaces';
 import { RewardModel } from '../../world/preview/RewardModel';
+import { NoticeCard } from '../NoticeCard';
 import layer from '../Screen.module.css';
 import styles from './BreakScreen.module.css';
 
@@ -59,6 +60,7 @@ export function BreakScreen() {
 
   return (
     <div className={layer.layer}>
+      <NoticeCard />
       <Panel className={styles.panel}>
         {animal && species ? (
           <TierCard

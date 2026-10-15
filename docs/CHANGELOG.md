@@ -8,6 +8,7 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Added** — Step 0.9: Inbox of deferred notices (persisted store, `enqueueNotice` / `dismissNotice`, `NoticeCard` on Home and Break). Notices queued during Focus wait until Focus ends; nothing is dequeued while focusing (ADR-035). E2E covers showing, order and dismissal.
 - 2026-10-07 · **Changed** — Step 0.8: the world renders `IslandModel` data (`buildIslandModel`) through `<IslandScene model mode>`; `Scene` takes a list of islands and fits them side by side. Dev-only `?twoIslands` view. No visible change (screenshot parity verified for Home, Focus and Break, day and night) (ADR-034).
 - 2026-10-07 · **Fixed** — Step 0.7: one occupancy grid (`getOccupancy`) for placement; a third camp tile is reserved next to the cabin for the coin pile; on load, active animals on water, camp, buildings or off the island move to the nearest free tile and are saved (fixes old saves overlapping the camp and stream). Night sleep spots skip the pile tile (ADR-033).
 - 2026-10-07 · **Changed** — Step 0.6: the island is sized by `islandLevel` = lifetime earned animals (any status), so it never shrinks (ADR-032). Only `active` animals are drawn and block tiles for new animals. Existing saves produce the same island.

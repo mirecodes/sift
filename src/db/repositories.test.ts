@@ -39,7 +39,7 @@ const V4_ANIMAL_FIELDS = { status: 'active', endedAt: null, endReason: null, ver
 describe('dexie storage', () => {
   it('starts empty', async () => {
     const s = createDexieStorage(new SiftDB('empty'));
-    expect(await s.load()).toEqual({ animals: [], sessions: [] });
+    expect(await s.load()).toEqual({ animals: [], sessions: [], inbox: [] });
   });
 
   it('round-trips settings, world, and the active phase', async () => {
@@ -105,7 +105,16 @@ describe('dexie storage', () => {
     expect(await s.load()).toEqual(before);
 
     await s.importAll({ kv: [], sessions: [], animals: [] }, s.schemaVersion);
-    expect(await s.load()).toEqual({ animals: [], sessions: [] });
+    expect(await s.load()).toEqual({ animals: [], sessions: [], inbox: [] });
+  });
+
+  it('adds and removes inbox notices inside the commit transaction', async () => {
+    const s = createDexieStorage(new SiftDB('inbox'));
+    const notice = { kind: 'animals_departed' as const, animalIds: ['a1'], gold: 1 };
+    await s.commit({ inboxAdd: [{ id: 'n2', createdAt: 20, notice }, { id: 'n1', createdAt: 10, notice }] });
+    expect((await s.load()).inbox.map((n) => n.id)).toEqual(['n1', 'n2']);
+    await s.commit({ inboxRemove: ['n1'] });
+    expect((await s.load()).inbox.map((n) => n.id)).toEqual(['n2']);
   });
 
   it('reports the schema version', () => {

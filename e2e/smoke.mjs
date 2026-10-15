@@ -137,6 +137,32 @@ await fresh.waitForTimeout(1500);
 await fresh.getByRole('button', { name: 'Open collection' }).click();
 await fresh.waitForTimeout(700);
 check('imported island survives a reload', await fresh.getByText(collected).isVisible());
+await fresh.getByRole('button', { name: 'Close' }).click();
+
+// Inbox: a queued notice shows on Home, one at a time, and OK dismisses it for good.
+const withNotices = structuredClone(original);
+const departed = (id, at, gold) => ({ id, createdAt: at, notice: { kind: 'animals_departed', animalIds: ['x', 'y'], gold } });
+withNotices.data.inbox = [departed('n1', 1, 4), departed('n2', 2, 9)];
+const { writeFile } = await import('node:fs/promises');
+const noticeFile = `${backupFile}.notices.json`;
+await writeFile(noticeFile, JSON.stringify(withNotices));
+await fresh.getByRole('button', { name: 'Open settings' }).click();
+const [chooser2] = await Promise.all([fresh.waitForEvent('filechooser'), fresh.getByRole('button', { name: 'Import…' }).click()]);
+await chooser2.setFiles(noticeFile);
+await fresh.waitForTimeout(300);
+await fresh.getByRole('button', { name: 'Replace data' }).click();
+await fresh.waitForTimeout(300);
+await fresh.getByRole('button', { name: 'Close' }).click();
+await fresh.waitForTimeout(700);
+check('the oldest notice shows on Home', await fresh.getByRole('status').getByText('2 animals left 4 gold.').isVisible());
+await fresh.getByRole('button', { name: 'OK' }).click();
+await fresh.waitForTimeout(400);
+check('OK shows the next notice', await fresh.getByRole('status').getByText('2 animals left 9 gold.').isVisible());
+await fresh.getByRole('button', { name: 'OK' }).click();
+await fresh.waitForTimeout(400);
+await fresh.reload();
+await fresh.waitForTimeout(1500);
+check('dismissed notices stay gone after a reload', (await fresh.getByRole('status').count()) === 0);
 
 check('no page errors', errors.length === 0);
 if (errors.length) console.log(errors.join('\n'));

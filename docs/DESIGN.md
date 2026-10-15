@@ -261,6 +261,11 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - Hidden control: `button-hold` `Hold to stop`, shown at 50% opacity on pointer move / tap, fades after 3s.
 - **Nothing else**: no top bar, shadows, toasts, or modals.
 
+### 7.2a Notice card (Inbox)
+- Deferred news (departures, weekly results, war reports, …) is shown one at a time on Home and Break only, never on Focus.
+- A `panel` at the top center, below the top bar (`--space-layout-xl` + `--space-lg` + safe area from the top), width `min(400px, 100% − 2 × gutter)`, `body-md` message and a `button-secondary` `OK` that dismisses it; the next notice follows.
+- Enters with a `--motion-base` fade and an 8px downward settle; reduced motion: fade only. `role="status"` so screen readers announce it without stealing focus.
+
 ### 7.3 Break
 - Background: Part II scene, bright.
 - Reward: `card-tier` with `badge-tier`, name in `display-lg`, rotating voxel model inside. Level 2.
