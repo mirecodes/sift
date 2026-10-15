@@ -17,7 +17,8 @@
   - Grep for tier-name comparisons in logic is empty except the frozen Dexie v2/v3 upgrades. Reward/catalog tests moved to the rank API with identical assertions; mapping tests added.
 - [x] 0.5 Shared module + seeded RNG + balance config (§2.6, §2.7)
   - `shared/{rng,balance,rules}`; domain binds generic rules to the catalog/terrain. Existing tests untouched and green (the guidance's "329" is now 354 + 11 new shared tests). ADR-030, ADR-031.
-- [ ] 0.6 Monotonic island level (§2.2)
+- [x] 0.6 Monotonic island level (§2.2)
+  - `domain/island/level.ts` (`islandLevel`, `pickNewAnimalTile`); `selectIslandCount` → `selectIslandLevel`; only active animals render/occupy. Tests: departures keep terrain identical; all-active saves unchanged. ADR-032.
 - [ ] 0.7 Occupancy grid + save repair (§2.5)
 - [ ] 0.8 `IslandModel` + `<IslandScene model mode>` (§2.4)
 - [ ] 0.9 Inbox infrastructure (§2.9)

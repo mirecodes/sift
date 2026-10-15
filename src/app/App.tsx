@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { selectIslandCount, selectVisibleAnimals, useApp } from '../store';
+import { selectIslandLevel, selectVisibleAnimals, useApp } from '../store';
 import { usePrefersReducedMotion } from '../ui/hooks';
 import { BreakScreen } from '../screens/break/BreakScreen';
 import { CollectionScreen } from '../screens/collection/CollectionScreen';
@@ -17,7 +17,7 @@ export function App() {
   const seed = useApp((s) => s.world.seed);
   const allAnimals = useApp((s) => s.animals);
   const revealPending = useApp((s) => s.revealPending);
-  const islandCount = useApp((s) => selectIslandCount(s));
+  const islandLevel = useApp((s) => selectIslandLevel(s));
   const theme = useApp((s) => s.settings.theme);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -47,7 +47,7 @@ export function App() {
 
   return (
     <>
-      <Scene mode={mode} seed={seed} islandCount={islandCount} animals={animals} reducedMotion={reducedMotion} theme={theme} />
+      <Scene mode={mode} seed={seed} islandLevel={islandLevel} animals={animals} reducedMotion={reducedMotion} theme={theme} />
       {screen}
     </>
   );

@@ -22,13 +22,13 @@ interface KindMesh {
 
 interface Props {
   seed: number;
-  animalCount: number;
+  level: number;
   animate: boolean;
 }
 
 /** The floating island: one InstancedMesh per block type. Grows with a scale-in of the new blocks. */
-export function Island({ seed, animalCount, animate }: Props) {
-  const layout = useMemo(() => generateIsland(seed, animalCount), [seed, animalCount]);
+export function Island({ seed, level, animate }: Props) {
+  const layout = useMemo(() => generateIsland(seed, level), [seed, level]);
   const meshes = useRef<Record<BlockKind, InstancedMesh | null>>({ grass: null, dirt: null, stone: null });
   const previous = useRef<Set<string> | null>(null);
   const growth = useRef<{ active: boolean; start: number | null }>({ active: false, start: null });
@@ -119,7 +119,7 @@ export function Island({ seed, animalCount, animate }: Props) {
 }
 
 /** Extent used by the camera to fit the island. */
-export function islandExtent(seed: number, animalCount: number): { side: number; depth: number; rise: number } {
-  const { side, depth, rise } = generateIsland(seed, animalCount);
+export function islandExtent(seed: number, level: number): { side: number; depth: number; rise: number } {
+  const { side, depth, rise } = generateIsland(seed, level);
   return { side, depth, rise };
 }

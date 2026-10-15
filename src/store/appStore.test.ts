@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { seededRng } from '../domain/random';
-import { islandSide, islandTiles } from '../domain/island/island';
+import { generateIsland, islandSide, islandTiles } from '../domain/island/island';
+import { pickNewAnimalTile } from '../domain/island/level';
 import { resolvePhase } from '../domain/timer/phase';
+import type { PlacedAnimal } from '../domain/types';
 import { createMemoryStorage } from '../platform/storage/memory';
 import type { StorageAdapter } from '../platform/storage';
-import { createAppStore, selectIslandCount, selectVisibleAnimals } from './appStore';
+import { createAppStore, selectIslandLevel, selectVisibleAnimals } from './appStore';
 
 const MIN = 60_000;
 
@@ -43,7 +45,7 @@ describe('focus cycle', () => {
     expect(s.sessions[0]).toMatchObject({ status: 'completed', effectiveFocusMs: 30 * MIN, rewardAnimalId: s.animals[0]?.id });
     expect(s.revealPending).toBe(s.animals[0]?.id);
     expect(selectVisibleAnimals(s)).toHaveLength(0);
-    expect(selectIslandCount(s)).toBe(0);
+    expect(selectIslandLevel(s)).toBe(0);
   });
 
   it('gives no reward below 25 effective minutes', async () => {
@@ -113,7 +115,7 @@ describe('focus cycle', () => {
     expect(h.get().phase.kind).toBe('focus');
     expect(h.get().revealPending).toBeNull();
     expect(h.get().sessions).toHaveLength(2);
-    expect(selectIslandCount(h.get())).toBe(1);
+    expect(selectIslandLevel(h.get())).toBe(1);
   });
 
   it('holds the island size back during the break, then grows on Home', async () => {
@@ -126,9 +128,57 @@ describe('focus cycle', () => {
       if (i < 16) await h.get().goHome();
     }
     expect(h.get().animals).toHaveLength(17);
-    expect(islandSide(selectIslandCount(h.get()))).toBe(7);
+    expect(islandSide(selectIslandLevel(h.get()))).toBe(7);
     await h.get().goHome();
-    expect(islandSide(selectIslandCount(h.get()))).toBe(9);
+    expect(islandSide(selectIslandLevel(h.get()))).toBe(9);
+  });
+});
+
+describe('monotonic island level (ADR-032)', () => {
+  async function earn(n: number) {
+    const h = harness();
+    await h.get().init();
+    for (let i = 0; i < n; i++) {
+      await h.get().startFocus();
+      h.clock.t += 30 * MIN;
+      await h.get().endFocus();
+      await h.get().goHome();
+    }
+    return h;
+  }
+  const depart = (a: PlacedAnimal): PlacedAnimal => ({ ...a, status: 'departed', endedAt: 1, endReason: 'expired' });
+
+  it('departed animals never change the generated terrain', async () => {
+    const h = await earn(20);
+    const { animals, world, phase } = h.get();
+    const before = generateIsland(world.seed, selectIslandLevel({ animals, phase }));
+    for (const k of [1, 5, 20]) {
+      const after = animals.map((a, i) => (i < k ? depart(a) : a));
+      expect(selectIslandLevel({ animals: after, phase })).toBe(20);
+      expect(generateIsland(world.seed, selectIslandLevel({ animals: after, phase }))).toEqual(before);
+    }
+  });
+
+  it('the same save produces the same island as before the change (level = animal count when all are active)', async () => {
+    const h = await earn(18);
+    const { animals, world, phase } = h.get();
+    expect(selectIslandLevel(h.get())).toBe(animals.length);
+    expect(generateIsland(world.seed, selectIslandLevel({ animals, phase }))).toEqual(generateIsland(world.seed, animals.length));
+  });
+
+  it('only active animals are drawn and occupy tiles', async () => {
+    const h = await earn(3);
+    const [gone, ...rest] = h.get().animals;
+    h.store.setState({ animals: [depart(gone!), ...rest] });
+    expect(selectVisibleAnimals(h.get()).map((a) => a.id)).toEqual(rest.map((a) => a.id));
+    // The departed animal's tile is free again; an active animal's tile never is.
+    const { seed } = h.get().world;
+    const onTile = (animals: PlacedAnimal[]) => {
+      const rng = seededRng(3);
+      return Array.from({ length: 2000 }, () => pickNewAnimalTile(seed, animals, rng)).some((t) => t?.x === gone!.tileX && t?.z === gone!.tileZ);
+    };
+    expect(onTile([depart(gone!), ...rest])).toBe(true);
+    expect(onTile([gone!, ...rest])).toBe(false);
   });
 });
 

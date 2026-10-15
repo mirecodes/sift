@@ -101,11 +101,11 @@ type Phase =
 - Render modes: Home full (60 fps, interaction). Focus dimmed: fixed camera, 24 fps cap, animals at 0.25 speed, no clouds, 1 s camera pull-back. Break full, fixed camera.
 
 **Island**
-- Deterministic: same seed + same animal count = same island. Shapes are **monotone** (growth only adds tiles), so stored animal coordinates (relative to center) stay valid.
-- Size: side = `max(7, ceil(sqrt(animals × 3)))`, odd. Near-circular outline (Euclidean + seeded jitter) (ADR-017).
+- Deterministic: same seed + same **island level** = same island. `islandLevel` = lifetime earned animals on this save, whatever their status (`domain/island/level.ts`), so departures never shrink the island (ADR-032). Shapes are **monotone** (growth only adds tiles), so stored animal coordinates (relative to center) stay valid. An island move keeps the level and changes only the seed.
+- Size: side = `max(7, ceil(sqrt(level × 3)))`, odd. Near-circular outline (Euclidean + seeded jitter) (ADR-017).
 - Terrain levels 1–3, each 0.5 block. Domain-warped noise + weak back-high tilt, terraced (mostly plains, some hills/lowlands), flat around the camp (ADR-018).
 - Underside: inverted pyramid with random gaps. Blocks are flat-colored cubes, one `InstancedMesh` per type, ±4% tint (ADR-008).
-- During Break with a reward, the island is sized from `animals - 1`; the growth (700 ms scale-in) shows when returning Home (ADR-013).
+- During Break with a reward, the island is sized from `level - 1`; the growth (700 ms scale-in) shows when returning Home (ADR-013).
 
 **Camp and night mode** (ADR-016, ADR-017)
 - `Settings.theme` `light | dark`, toggled from the top bar, locked during Focus.

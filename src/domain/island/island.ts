@@ -35,9 +35,9 @@ export interface IslandLayout {
   rise: number;
 }
 
-/** Top side length: max(7, ceil(sqrt(animals × 3))), rounded up to odd. */
-export function islandSide(animalCount: number): number {
-  const required = Math.max(0, animalCount) * config.island.tilesPerAnimal;
+/** Top side length for an island level (lifetime earned animals): max(7, ceil(sqrt(level × 3))), rounded up to odd. */
+export function islandSide(level: number): number {
+  const required = Math.max(0, level) * config.island.tilesPerAnimal;
   const side = Math.max(config.island.minSide, Math.ceil(Math.sqrt(required)));
   return side % 2 === 0 ? side + 1 : side;
 }
@@ -152,9 +152,9 @@ function buildTerrain(seed: number, side: number): Cell[] {
   });
 }
 
-/** Deterministic: same seed and animal count always give the same island. */
-export function generateIsland(seed: number, animalCount: number): IslandLayout {
-  const side = islandSide(animalCount);
+/** Deterministic: same seed and island level always give the same island. */
+export function generateIsland(seed: number, level: number): IslandLayout {
+  const side = islandSide(level);
   const h = (side - 1) / 2;
   const tiles = buildTerrain(seed, side);
   const blocks: Block[] = [];

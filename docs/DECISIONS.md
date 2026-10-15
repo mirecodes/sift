@@ -178,3 +178,8 @@
 - Date: 2026-10-07 · Status: Accepted (guidance_v2 §2.7)
 - Decision: A top-level `shared/` folder holds rules that must run identically on client and server: the seeded RNG (the existing mulberry32 was moved, not duplicated), tier rank, reward roll, placement, balance. Code there is plain TypeScript: relative imports inside `shared/` only, no browser/Node/Deno globals, no `Math.random()` or `Date.now()`; a test scans the folder to enforce it. Rules are generic (the reward roll takes the species catalog, placement takes candidate tiles and blocked tiles); `src/domain` binds them to the app's data. `src/domain/random.ts` re-exports `shared/rng` so existing imports stay.
 - Consequences: Supabase Edge Functions (Deno) can bundle `shared/` unchanged (Phase 5). Island terrain generation is not shared yet; it moves when the server needs to place animals (Step 5.5). Rejected: a separate npm workspace package (more tooling for one folder).
+
+## ADR-032: Island size follows a monotonic island level
+- Date: 2026-10-07 · Status: Accepted (guidance_v2 §2.2)
+- Decision: Island generation takes `islandLevel` = the number of animals ever earned on this save, whatever their status (`active`, `departed`, `vanished`, `spent`), instead of the current animal count. The growth function is unchanged; only its input changed. Only `active` animals render and occupy tiles. An island move (F5) keeps the level and changes only the seed.
+- Consequences: Departures (F3), war losses (F8) and island moves (F5) never shrink the island or invalidate stored tiles. Saves where every animal is active produce exactly the same island as before. Freed tiles of departed animals are reused by new animals. Rejected: storing the level (it is derived, §4.1).

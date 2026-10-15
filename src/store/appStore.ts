@@ -12,8 +12,8 @@ import {
 } from '../domain/timer/phase';
 import type { AnimalSpecies } from '../domain/animals/catalog';
 import { rollReward } from '../domain/reward/reward';
-import { newPlacedAnimal } from '../domain/animals/placed';
-import { islandSide, islandTiles, pickPlacementTile } from '../domain/island/island';
+import { isActive, newPlacedAnimal } from '../domain/animals/placed';
+import { islandLevel, pickNewAnimalTile } from '../domain/island/level';
 import { clamp, type Rng } from '../domain/random';
 import { createBackup, type Backup } from '../domain/backup';
 import type { StorageAdapter } from '../platform/storage';
@@ -85,18 +85,18 @@ export function sanitizeSettings(input: Partial<Settings> | undefined): Settings
   };
 }
 
-/** Animals that should be drawn right now (the pending reward is held back until the reveal). */
+/** Animals that should be drawn right now: active ones, minus the pending reward until the reveal. */
 export function selectVisibleAnimals(s: Pick<AppState, 'animals' | 'revealPending'>): PlacedAnimal[] {
-  return s.revealPending ? s.animals.filter((a) => a.id !== s.revealPending) : s.animals;
+  return s.animals.filter((a) => isActive(a) && a.id !== s.revealPending);
 }
 
 /**
- * Animal count that sizes the island. During a break the reward is not counted, so the
- * island grows only once the user is back on Home (ADR-013).
+ * Island level (lifetime earned animals, ADR-032). During a break the reward is not counted, so
+ * the island grows only once the user is back on Home (ADR-013).
  */
-export function selectIslandCount(s: Pick<AppState, 'animals' | 'phase'>): number {
+export function selectIslandLevel(s: Pick<AppState, 'animals' | 'phase'>): number {
   const holdBack = s.phase.kind === 'break' && s.phase.rewardId !== undefined ? 1 : 0;
-  return Math.max(0, s.animals.length - holdBack);
+  return Math.max(0, islandLevel(s.animals) - holdBack);
 }
 
 export function createAppStore(initialDeps: AppDeps) {
@@ -140,8 +140,7 @@ export function createAppStore(initialDeps: AppDeps) {
 
     const animals = [...stored];
     for (const species of devSwitches ? (deps.testSpecies ?? []) : []) {
-      const occupied = animals.map((a) => ({ x: a.tileX, z: a.tileZ }));
-      const tile = pickPlacementTile(islandTiles(world.seed, islandSide(animals.length + 1)), occupied, deps.rng);
+      const tile = pickNewAnimalTile(world.seed, animals, deps.rng);
       if (tile) animals.push(newPlacedAnimal(deps.uuid(), species, tile, 0, 'test-mode'));
     }
 
@@ -204,10 +203,7 @@ export function createAppStore(initialDeps: AppDeps) {
       let animal: PlacedAnimal | undefined;
       const species = rollReward(effective, deps.rng);
       if (species) {
-        const occupied = animals.map((a) => ({ x: a.tileX, z: a.tileZ }));
-        const tile =
-          pickPlacementTile(islandTiles(world.seed, islandSide(animals.length)), occupied, deps.rng) ??
-          pickPlacementTile(islandTiles(world.seed, islandSide(animals.length + 1)), occupied, deps.rng);
+        const tile = pickNewAnimalTile(world.seed, animals, deps.rng);
         if (tile) {
           animal = newPlacedAnimal(deps.uuid(), species, tile, now, session.id);
           session.rewardAnimalId = animal.id;

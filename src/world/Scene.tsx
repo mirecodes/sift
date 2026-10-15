@@ -19,8 +19,8 @@ import styles from './Scene.module.css';
 interface SceneProps {
   mode: WorldMode;
   seed: number;
-  /** Animals that size the island. */
-  islandCount: number;
+  /** Island level (lifetime earned animals); sizes the island. */
+  islandLevel: number;
   animals: readonly PlacedAnimal[];
   reducedMotion: boolean;
   theme: 'light' | 'dark';
@@ -79,12 +79,12 @@ function Bob({ children, timeScale, reducedMotion }: { children: ReactNode; time
 }
 
 /** The one persistent canvas shared by Home, Focus, and Break. It is never remounted. */
-export function Scene({ mode, seed, islandCount, animals, reducedMotion, theme }: SceneProps) {
+export function Scene({ mode, seed, islandLevel, animals, reducedMotion, theme }: SceneProps) {
   const dark = theme === 'dark';
   const night = useRef(dark ? 1 : 0);
-  const { tiles, streams } = useMemo(() => generateIsland(seed, islandCount), [seed, islandCount]);
+  const { tiles, streams } = useMemo(() => generateIsland(seed, islandLevel), [seed, islandLevel]);
   const controls = useRef<CameraControls>({ azimuth: 0, zoom: 1 });
-  const { side, depth, rise } = useMemo(() => islandExtent(seed, islandCount), [seed, islandCount]);
+  const { side, depth, rise } = useMemo(() => islandExtent(seed, islandLevel), [seed, islandLevel]);
   const timeScale = mode === 'focus' ? config.render.focusAnimalTimeScale : 1;
 
   return (
@@ -109,7 +109,7 @@ export function Scene({ mode, seed, islandCount, animals, reducedMotion, theme }
         <RenderDriver mode={mode} />
         <CameraRig mode={mode} side={side} depth={depth} rise={rise} reducedMotion={reducedMotion} controls={controls} />
         <Bob timeScale={timeScale} reducedMotion={reducedMotion}>
-          <Island seed={seed} animalCount={islandCount} animate={!reducedMotion} />
+          <Island seed={seed} level={islandLevel} animate={!reducedMotion} />
           <Stream streams={streams} tiles={tiles}timeScale={timeScale} reducedMotion={reducedMotion} />
           <Camp night={night} reducedMotion={reducedMotion} />
           <Animals animals={animals} tiles={tiles} mode={mode} dark={dark} timeScale={timeScale} reducedMotion={reducedMotion} />

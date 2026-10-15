@@ -2,6 +2,9 @@ import type { Tile } from '../island/island';
 import type { PlacedAnimal } from '../types';
 import type { AnimalSpecies } from './catalog';
 
+/** Only active animals are on the island (rendered, occupying a tile). */
+export const isActive = (a: PlacedAnimal): boolean => a.status === 'active';
+
 /** A newly earned, active animal on `tile`. */
 export function newPlacedAnimal(id: string, species: AnimalSpecies, tile: Tile, acquiredAt: number, sessionId: string): PlacedAnimal {
   return {
