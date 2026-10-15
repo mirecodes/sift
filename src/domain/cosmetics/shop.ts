@@ -46,6 +46,38 @@ export function shopView(ctx: Pick<ShopContext, 'now' | 'clientVersion' | 'disco
   };
 }
 
+export interface ShopFilter {
+  show: 'all' | 'skins' | 'themes' | 'buildings';
+  /** Species id, or '' for any. */
+  species: string;
+  /** Family id, `handcrafted`, or '' for any. */
+  family: string;
+  hideOwned: boolean;
+  /** Price at most this much gold (the balance), or null for no limit. */
+  maxPrice: number | null;
+}
+
+export const NO_FILTER: ShopFilter = { show: 'all', species: '', family: '', hideOwned: false, maxPrice: null };
+
+export const isFiltered = (f: ShopFilter) => f.show !== 'all' || !!f.species || !!f.family || f.hideOwned || f.maxPrice !== null;
+
+/**
+ * Applies the shop filters (owner request) to a view: section, species and style for skins, owned
+ * (skins and themes owned once are hidden; buildings never count as owned), affordability.
+ */
+export function filterShop(view: ShopView, f: ShopFilter, isOwned: (id: string) => boolean): ShopView {
+  const keep = (i: ItemDef) => !(f.hideOwned && i.kind !== 'building' && isOwned(i.id)) && (f.maxPrice === null || (i.price ?? 0) <= f.maxPrice);
+  const skins = view.skins.filter(
+    (s) => keep(s) && (!f.species || s.speciesId === f.species) && (!f.family || (f.family === 'handcrafted' ? !s.family : s.family === f.family)),
+  );
+  return {
+    featured: isFiltered(f) ? null : view.featured,
+    skins: f.show === 'all' || f.show === 'skins' ? skins : [],
+    themes: f.show === 'all' || f.show === 'themes' ? view.themes.filter(keep) : [],
+    buildings: f.show === 'all' || f.show === 'buildings' ? view.buildings.map((g) => ({ ...g, items: g.items.filter(keep) })).filter((g) => g.items.length) : [],
+  };
+}
+
 export interface ItemBadges {
   /** Released within `balance.shop.newBadgeDays`. */
   isNew: boolean;

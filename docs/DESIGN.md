@@ -325,6 +325,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 
 ### 7.7 Shop (cosmetics)
 - A page of the Island tab like Collection, opened by tapping the gold counter (Home only; never on Focus). Top bar: the gold counter (display only) on the left, close on the right. `display-md` title `Shop`, content max width 1120px.
+- **Filters** (owner request), under the title: a `segmented` control `All · Skins · Themes · Buildings` (shows only that section); with All or Skins, two selects `Any animal` (earned species) and `Any style` (skin families plus `Handcrafted`); and two checkboxes `Hide owned` and `Only what I can afford`. The Featured row shows only with no filter set. When nothing matches: `body-md` `--color-body-mid` `Nothing matches these filters.` with a `Clear filters` text button.
 - **Featured**: `eyebrow` `FEATURED · <release name>` over one row of item cards from the newest release that has started; the row scrolls sideways on phones.
 - **Sections** (`display-xs` headings): `Animal skins` (only species the user has earned at least once, by catalog order), `Island themes`, `Decorations & buildings` with `eyebrow-sm` sub-headings per category (`Structures`, `Nature`, `Lights`, `Decorations`). Items not for sale (not purchasable, outside their window, retired, too new for the app) are not shown.
 - **Item card** (`card-feature`, centered, like a Collection card): the 96px sprite (16.5), name `body-md-strong`, a row of badges, the price (`gold` icon + `body-sm-strong` number), then one button:

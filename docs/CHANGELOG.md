@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-10-08 · **Added** — Owner feedback on Phase 3: Shop filters: All / Skins / Themes / Buildings, animal and skin style (family or Handcrafted), Hide owned and Only what I can afford; Featured hides while a filter is on; `Clear filters` when nothing matches (`filterShop`, DESIGN.md 7.7).
+
 - 2026-10-08 · **Added** — Owner feedback on Phase 3: build mode lists the buildings on the island under the tray, each with `Store`, plus `Store all`, so placed buildings go back to the inventory without finding them on the island (DESIGN.md 7.8).
 - 2026-10-08 · **Changed** — Owner feedback on Phase 3: Home and build mode turn the island up to ±135° (was ±30°); the sun and clouds turn with the camera, so shading and the cloud backdrop look the same from every side (DESIGN.md 13).
 

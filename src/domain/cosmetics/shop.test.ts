@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { BuildingDef } from '../../../shared/content/schema';
 import { content } from '../content';
-import { itemBadges, newestRelease, shopView } from './shop';
+import { filterShop, itemBadges, newestRelease, NO_FILTER, shopView, type ShopFilter } from './shop';
 
 const LAUNCH = Date.parse('2026-10-08T00:00:00Z');
 const DAY = 86_400_000;
@@ -25,6 +25,23 @@ describe('shop view (Step 3.9)', () => {
     expect(shopView(ctx([])).skins).toEqual([]);
     // Featured skins of unknown species are left out.
     expect(shopView(ctx([])).featured?.items.map((i) => i.id)).toEqual(['windmill', 'cherry', 'lantern']);
+  });
+
+  it('filters by section, animal, style, owned and price (owner request)', () => {
+    const view = shopView(ctx(['fox', 'tiger']));
+    const none = () => false;
+    const only = (f: Partial<ShopFilter>) => filterShop(view, { ...NO_FILTER, ...f }, none);
+    expect(only({}).featured).not.toBeNull();
+    const themes = only({ show: 'themes' });
+    expect([themes.skins.length, themes.buildings.length, themes.themes.length, themes.featured]).toEqual([0, 0, 4, null]);
+    expect(only({ species: 'tiger' }).skins.every((s) => s.speciesId === 'tiger')).toBe(true);
+    expect(only({ family: 'golden' }).skins.map((s) => s.id)).toEqual(['golden:fox', 'golden:tiger']);
+    expect(only({ family: 'handcrafted' }).skins.map((s) => s.id)).toEqual(['white-tiger']);
+    const cheap = only({ maxPrice: 30 });
+    expect([...cheap.skins, ...cheap.themes, ...cheap.buildings.flatMap((g) => g.items)].every((i) => (i.price ?? 0) <= 30)).toBe(true);
+    const owned = filterShop(view, { ...NO_FILTER, hideOwned: true }, (id) => id === 'cherry' || id === 'lantern');
+    expect(owned.themes.map((t) => t.id)).not.toContain('cherry');
+    expect(owned.buildings.flatMap((g) => g.items.map((b) => b.id))).toContain('lantern'); // buildings can be bought again
   });
 
   it('a release in the future is not featured yet', () => {

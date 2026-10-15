@@ -3,7 +3,10 @@ import type { ItemDef } from '../../../shared/content/schema';
 import { APP_VERSION } from '../../app/version';
 import { DEFAULT_SKIN } from '../../domain/island/model';
 import { ownedCount } from '../../domain/cosmetics/inventory';
-import { itemBadges, shopView } from '../../domain/cosmetics/shop';
+import { filterShop, isFiltered, itemBadges, NO_FILTER, shopView, type ShopFilter } from '../../domain/cosmetics/shop';
+import { getSpecies } from '../../domain/animals/catalog';
+import { content } from '../../domain/content';
+import { Segmented } from '../../ui/components/Controls';
 import { selectDiscoveredSpecies, useApp } from '../../store';
 import { strings } from '../../ui/strings';
 import { usePrefersReducedMotion } from '../../ui/hooks';
@@ -17,6 +20,12 @@ import { GoldBalance } from '../home/Hud';
 import page from '../Screen.module.css';
 import styles from './Shop.module.css';
 
+/** A skin family's display name (families are content files, not pack items). */
+const familyName = (id: string) => {
+  const skin = content.all('animalSkin').find((s) => s.family === id);
+  return skin ? skin.name.en.split(' ')[0]! : id;
+};
+
 /** The Shop (guidance_v2 Step 3.9, DESIGN.md 7.7): featured, skins, themes, buildings; buy with gold. */
 export function ShopScreen() {
   const setView = useApp((s) => s.setView);
@@ -25,7 +34,19 @@ export function ShopScreen() {
   // The clock is read once per visit: badges and availability do not tick while the page is open.
   const now = useMemo(() => Date.now(), []);
   const discovered = useMemo(() => selectDiscoveredSpecies({ animals }), [animals]);
-  const view = useMemo(() => shopView({ now, clientVersion: APP_VERSION, discovered }), [now, discovered]);
+  const all = useMemo(() => shopView({ now, clientVersion: APP_VERSION, discovered }), [now, discovered]);
+  const gold = useApp((s) => s.gold);
+  const cosmetics = useApp((s) => s.cosmetics);
+  const [filter, setFilter] = useState<ShopFilter>(NO_FILTER);
+  const [affordable, setAffordable] = useState(false);
+  const view = useMemo(
+    () => filterShop(all, { ...filter, maxPrice: affordable ? gold : null }, (id) => cosmetics.some((c) => c.defId === id)),
+    [all, filter, affordable, gold, cosmetics],
+  );
+  const empty = !view.featured && !view.skins.length && !view.themes.length && !view.buildings.length;
+  const speciesOptions = useMemo(() => [...new Set(all.skins.map((s) => s.speciesId))], [all]);
+  const familyOptions = useMemo(() => [...new Set(all.skins.map((s) => s.family ?? 'handcrafted'))], [all]);
+  const showSkins = filter.show === 'all' || filter.show === 'skins';
 
   const grid = (items: readonly ItemDef[]) => (
     <ul className={styles.grid}>
@@ -47,6 +68,59 @@ export function ShopScreen() {
       <main className={`${page.content} ${styles.wide}`}>
         <h1 className={`${page.title} type-display-md`}>{strings.shop.title}</h1>
 
+        <div className={styles.filters} role="group" aria-label={strings.shop.filters}>
+          <Segmented
+            label={strings.shop.filters}
+            options={(['all', 'skins', 'themes', 'buildings'] as const).map((v) => ({ value: v, label: strings.shop.show[v] }))}
+            value={filter.show}
+            onChange={(show) => setFilter({ ...filter, show })}
+          />
+          {showSkins && (
+            <>
+              <select className={styles.select} aria-label={strings.shop.anyAnimal} value={filter.species} onChange={(e) => setFilter({ ...filter, species: e.target.value })}>
+                <option value="">{strings.shop.anyAnimal}</option>
+                {speciesOptions.map((id) => (
+                  <option key={id} value={id}>
+                    {getSpecies(id).name}
+                  </option>
+                ))}
+              </select>
+              <select className={styles.select} aria-label={strings.shop.anyStyle} value={filter.family} onChange={(e) => setFilter({ ...filter, family: e.target.value })}>
+                <option value="">{strings.shop.anyStyle}</option>
+                {familyOptions.map((id) => (
+                  <option key={id} value={id}>
+                    {id === 'handcrafted' ? strings.shop.handcrafted : familyName(id)}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          <label className={`${styles.check} type-body-sm`}>
+            <input type="checkbox" checked={filter.hideOwned} onChange={(e) => setFilter({ ...filter, hideOwned: e.target.checked })} />
+            {strings.shop.hideOwned}
+          </label>
+          <label className={`${styles.check} type-body-sm`}>
+            <input type="checkbox" checked={affordable} onChange={(e) => setAffordable(e.target.checked)} />
+            {strings.shop.affordable}
+          </label>
+        </div>
+
+        {empty && (
+          <p className={`${styles.note} type-body-md`}>
+            {strings.shop.noMatch}{' '}
+            <button
+              type="button"
+              className={styles.link}
+              onClick={() => {
+                setFilter(NO_FILTER);
+                setAffordable(false);
+              }}
+            >
+              {strings.shop.clearFilters}
+            </button>
+          </p>
+        )}
+
         {view.featured && view.featured.items.length > 0 && (
           <section className={styles.section} aria-labelledby="shop-featured">
             <h2 id="shop-featured" className={`${styles.eyebrow} type-eyebrow`}>
@@ -62,25 +136,31 @@ export function ShopScreen() {
           </section>
         )}
 
-        <section className={styles.section} aria-labelledby="shop-skins">
-          <h2 id="shop-skins" className="type-display-xs">{strings.shop.skins}</h2>
-          {view.skins.length ? grid(view.skins) : <p className={`${styles.note} type-body-md`}>{strings.shop.noSkins}</p>}
-        </section>
+        {(view.skins.length > 0 || !isFiltered(filter)) && (
+          <section className={styles.section} aria-labelledby="shop-skins">
+            <h2 id="shop-skins" className="type-display-xs">{strings.shop.skins}</h2>
+            {view.skins.length ? grid(view.skins) : <p className={`${styles.note} type-body-md`}>{strings.shop.noSkins}</p>}
+          </section>
+        )}
 
-        <section className={styles.section} aria-labelledby="shop-themes">
-          <h2 id="shop-themes" className="type-display-xs">{strings.shop.themes}</h2>
-          {grid(view.themes)}
-        </section>
+        {view.themes.length > 0 && (
+          <section className={styles.section} aria-labelledby="shop-themes">
+            <h2 id="shop-themes" className="type-display-xs">{strings.shop.themes}</h2>
+            {grid(view.themes)}
+          </section>
+        )}
 
-        <section className={styles.section} aria-labelledby="shop-buildings">
-          <h2 id="shop-buildings" className="type-display-xs">{strings.shop.buildings}</h2>
-          {view.buildings.map((g) => (
-            <div key={g.category}>
-              <h3 className={`${styles.eyebrow} type-eyebrow-sm`}>{strings.shop.categories[g.category]}</h3>
-              {grid(g.items)}
-            </div>
-          ))}
-        </section>
+        {view.buildings.length > 0 && (
+          <section className={styles.section} aria-labelledby="shop-buildings">
+            <h2 id="shop-buildings" className="type-display-xs">{strings.shop.buildings}</h2>
+            {view.buildings.map((g) => (
+              <div key={g.category}>
+                <h3 className={`${styles.eyebrow} type-eyebrow-sm`}>{strings.shop.categories[g.category]}</h3>
+                {grid(g.items)}
+              </div>
+            ))}
+          </section>
+        )}
       </main>
       {buying && <BuySheet item={buying} onClose={() => setBuying(null)} />}
     </div>
