@@ -535,6 +535,14 @@ export const chick: VoxelModel = {
 - Rounded silhouettes from stepped voxels; avoid thin 1-voxel limbs.
 - Models face `+Z`, origin at bottom center.
 
+### 16.4 Budgets
+- Animal models and skin overlays ≤ 16×16×16 voxels and ≤ 800 voxels. Buildings: 1/8-block voxels (8 per footprint tile), footprint ≤ 3×3, height ≤ 24, ≤ 3,000 voxels (docs/CONTENT.md).
+
+### 16.5 Sprites
+- Collection, Day detail and Shop pictures are generated sprites (§9 Q33): each item rendered with the island's isometric orthographic camera (azimuth 45°, elevation 35.26°) and lighting, fit to a 48×48 px frame with an 8% margin, no antialiasing, fully opaque or transparent pixels. Flat shading keeps them to the model palette in three face shades. Shown at 2× (96 px cards) or 1× (48 px rows), nearest-neighbor.
+- Not collected: the same sprite as a flat `mute-soft` (#ababab) silhouette.
+- Block theme swatch: a 3×3 patch of grass blocks in the theme's colors with water in the middle.
+
 ## 17. Lighting and Materials
 
 - One directional light from top-left, one soft ambient light.

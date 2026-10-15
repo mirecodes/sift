@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-07.6';
+export const BALANCE_VERSION = '2026-10-08.1';
 
 const MINUTE = 60_000;
 
@@ -52,6 +52,16 @@ export const balance = deepFreeze({
   build: {
     /** Tiles that must stay free for animals after placing a building (Step 3.11). */
     minFreeTiles: 6,
+  },
+  /** Allowed shop price ranges [min, max] in gold (§8); `content:validate` enforces them. */
+  prices: {
+    /** Skins generated from a family, by family and tier. */
+    familySkin: [25, 60],
+    /** Handcrafted skins (e.g. White Tiger). */
+    handcraftedSkin: [60, 80],
+    blockTheme: [120, 200],
+    /** Fence 10 … windmill 80. */
+    building: [10, 80],
   },
 } as const);
 

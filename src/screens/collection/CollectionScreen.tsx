@@ -12,7 +12,7 @@ import { FeatureCard, TierCard } from '../../ui/components/Surfaces';
 import { TopBar } from '../../ui/components/TopBar';
 import page from '../Screen.module.css';
 import styles from './CollectionScreen.module.css';
-import { VoxelSprite } from './VoxelSprite';
+import { ItemSprite } from './ItemSprite';
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -56,7 +56,7 @@ export function CollectionScreen() {
               <li key={species.id}>
                 {count > 0 ? (
                   <TierCard rank={species.tierRank} className={styles.card}>
-                    <VoxelSprite modelId={species.modelId} />
+                    <ItemSprite id={species.id} />
                     <p className={`${styles.name} type-display-xs`}>{species.name}</p>
                     <TierBadge rank={species.tierRank} />
                     {count > 1 && <p className={`${styles.count} type-caption`}>{strings.collection.count(count)}</p>}
@@ -64,7 +64,7 @@ export function CollectionScreen() {
                   </TierCard>
                 ) : (
                   <FeatureCard className={styles.card} aria-label={strings.collection.unknownAnimal}>
-                    <VoxelSprite modelId={species.modelId} silhouette />
+                    <ItemSprite id={species.id} silhouette />
                     <p className={`${styles.name} ${styles.unknown} type-display-xs`}>{strings.collection.unknown}</p>
                   </FeatureCard>
                 )}

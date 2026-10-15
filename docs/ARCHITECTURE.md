@@ -106,7 +106,8 @@ type Phase =
 - Dev-only: `?twoIslands[=seed]` renders a second island (`app/devTwoIslands.ts`, stripped from production builds).
 
 **Scene and camera**
-- One persistent `<Canvas>` for Home, Focus and Break; never remounted. Break reward card uses its own small canvas only while visible; Collection uses 2D pixel sprites (ADR-007).
+- One persistent `<Canvas>` for Home, Focus and Break; never remounted. Break reward card uses its own small canvas only while visible; Collection, Day detail and Shop use generated pixel-art sprites from the content atlas (`ItemSprite`, `content.sprite(id)`; flat front-view `VoxelSprite` only as a fallback and for the Studio's live grid) (ADR-007, ADR-042).
+- **Content pipeline checks** (ADR-042): `npm run content:validate` (`shared/content/validate.ts` after `assemblePack`) checks palette keys, budgets, footprint vs model bounds, `balance.prices`, availability dates and that every item has a fresh sprite (atlas stores an input hash per item). It runs in CI (`.github/workflows/ci.yml`) and inside `npm test`. `npm run content:sprites` (`tools/sprite-gen/main.mjs` → dev page `/studio/sprites` → `screens/studio/spriteRenderer.ts`) regenerates `content/sprites/atlas.{png,json}`.
 - Orthographic isometric camera (azimuth 45°, elevation ≈ 35.26°). Fits the island top + 35% of the underside with a 5% margin, re-fits on growth, avoids the screen area under panels (ADR-014).
 - Render modes: Home full (60 fps, interaction). Focus dimmed: fixed camera, 24 fps cap, animals at 0.25 speed, no clouds, 1 s camera pull-back. Break full, fixed camera.
 

@@ -6,7 +6,7 @@ import { strings } from '../../ui/strings';
 import { TierBadge } from '../../ui/components/Badge';
 import { IconButton } from '../../ui/components/Button';
 import { CloseIcon } from '../../ui/components/Icons';
-import { VoxelSprite } from '../collection/VoxelSprite';
+import { ItemSprite } from '../collection/ItemSprite';
 import styles from './Stats.module.css';
 
 const MIN = 60_000;
@@ -58,7 +58,7 @@ export function DayDetail({ date, timeZone, onClose }: { date: string; timeZone:
                 </div>
                 {!stopped && animal && species && (
                   <div className={styles.reward} role="img" aria-label={species.name} title={species.name}>
-                    <VoxelSprite modelId={species.modelId} size={48} />
+                    <ItemSprite id={species.id} size={48} />
                     <TierBadge rank={animal.tierRank} />
                   </div>
                 )}

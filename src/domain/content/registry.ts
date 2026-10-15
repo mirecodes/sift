@@ -2,7 +2,17 @@ import { compareVersions, type ContentPack, type PackItem } from '../../../share
 import type { VoxelModel } from '../../../shared/content/model';
 import type { ItemDef, ItemKind, ReleaseDef, SpeciesDef } from '../../../shared/content/schema';
 
-type ByKind = { species: SpeciesDef; release: ReleaseDef } & { [K in ItemKind]: Extract<ItemDef, { kind: K }> };
+/** One frame of an atlas image: `size`² pixels at (x, y) of a `width`×`height` sheet. */
+export interface Sprite {
+  image: string;
+  x: number;
+  y: number;
+  size: number;
+  width: number;
+  height: number;
+}
+
+type ByKind ={ species: SpeciesDef; release: ReleaseDef } & { [K in ItemKind]: Extract<ItemDef, { kind: K }> };
 
 /** Semver-ish `x.y.z` compare. */
 const compareClient = (a: string, b: string) => compareVersions(a, b);
@@ -23,6 +33,7 @@ export function isAvailable(item: ItemDef, now: number, clientVersion: string): 
 export class ContentRegistry {
   private items = new Map<string, { item: PackItem; version: string; retired: boolean }>();
   private models = new Map<string, VoxelModel>();
+  private sprites = new Map<string, Sprite>();
   private latest = '';
 
   constructor(baseline: ContentPack) {
@@ -49,6 +60,17 @@ export class ContentRegistry {
     for (const [ref, model] of Object.entries(pack.models)) {
       if (newest || !this.models.has(ref)) this.models.set(ref, model);
     }
+    const atlas = pack.atlas;
+    if (atlas) {
+      for (const [id, [x, y]] of Object.entries(atlas.frames)) {
+        if (newest || !this.sprites.has(id)) this.sprites.set(id, { image: atlas.image, x, y, size: atlas.size, width: atlas.width, height: atlas.height });
+      }
+    }
+  }
+
+  /** Where an item's generated sprite is (Step 3.5), if it has one. */
+  sprite(id: string): Sprite | undefined {
+    return this.sprites.get(id);
   }
 
   /** Any known item, including retired ones (owned items must render). */

@@ -12,7 +12,9 @@
     "test:watch": "vitest",
     "e2e": "VITE_FEATURES=stats,economy vite build --outDir dist-e2e --emptyOutDir && node e2e/smoke.mjs",
     "content:build": "node tools/run.mjs tools/content-build/build.ts",
-    "content:vox": "node tools/run.mjs tools/vox-import/main.ts"
+    "content:vox": "node tools/run.mjs tools/vox-import/main.ts",
+    "content:validate": "node tools/run.mjs tools/content-build/validate.ts",
+    "content:sprites": "node tools/sprite-gen/main.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inconsolata": "^5.3.0",

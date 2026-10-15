@@ -1,0 +1,10 @@
+.sprite {
+  display: inline-block;
+  flex: none;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+/* Not collected yet: the shape in mute-soft grey (#ababab). */
+.silhouette {
+  filter: brightness(0) invert(0.67);
+}

@@ -1,6 +1,7 @@
 import { hexToRgb, hslToRgb, rgbToHex, rgbToHsl } from './color';
 import type { ModelColors, VoxelModel } from './model';
 import type { PaletteKey } from './palette';
+import type { AtlasIndex } from './sprites';
 import {
   ContentFile,
   type AnimalSkinDef,
@@ -12,9 +13,10 @@ import {
   type SpeciesDef,
 } from './schema';
 
-/** One sprite in the atlas: pixel rectangle of the item's picture (Step 3.5). */
-export interface AtlasFrame { x: number; y: number; w: number; h: number }
-export interface Atlas { image: string; size: number; frames: Readonly<Record<string, AtlasFrame>> }
+/** The sprite atlas (Step 3.5): image URL plus `SPRITE_SIZE` frames by item id. */
+export interface Atlas extends AtlasIndex {
+  image: string;
+}
 
 export type PackItem = SpeciesDef | ItemDef | ReleaseDef;
 
