@@ -1,4 +1,4 @@
-import type { FocusSession, InboxRow, PlacedAnimal } from '../../domain/types';
+import type { FocusSession, InboxRow, LedgerEntry, PlacedAnimal } from '../../domain/types';
 import type { BackupData } from '../../domain/backup';
 import { migrateRows, SCHEMA_VERSION } from '../../db/migrations';
 import type { Commit, PersistedState, StorageAdapter } from './index';
@@ -33,6 +33,7 @@ export function createMemoryStorage(): StorageAdapter {
         animals: rows<PlacedAnimal>('animals').sort((a, b) => a.acquiredAt - b.acquiredAt),
         sessions: rows<FocusSession>('sessions').sort((a, b) => a.startedAt - b.startedAt),
         inbox: rows<InboxRow>('inbox').sort((a, b) => a.createdAt - b.createdAt),
+        ledger: rows<LedgerEntry>('ledger').sort((a, b) => a.at - b.at),
       };
       for (const { key, value } of rows<{ key: 'settings' | 'world' | 'phase'; value: never }>('kv')) state[key] = value;
       return state;
@@ -58,6 +59,10 @@ export function createMemoryStorage(): StorageAdapter {
       tables.animals.clear();
     },
     async commit(change: Commit) {
+      // Checked before any write, so a rejected commit changes nothing (like the Dexie transaction).
+      if (change.ledgerAdd?.some((e) => tables.ledger.has(e.id))) throw new Error('Ledger entries are append-only');
+      for (const e of change.ledgerAdd ?? []) put('ledger', e);
+      for (const c of change.cosmeticsAdd ?? []) put('cosmetics', c);
       if (change.session) put('sessions', change.session);
       if (change.animal) put('animals', change.animal);
       for (const a of change.animals ?? []) put('animals', a);

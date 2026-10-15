@@ -45,7 +45,8 @@
 
 ## Phase 2 — Gold economy (F3)
 
-- [ ] 2.1 Ledger and wallet (domain + store)
+- [x] 2.1 Ledger and wallet (domain + store)
+  - Owner approved the Phase 0 and Phase 1 gates by requesting Phase 2. `domain/economy/ledger.ts`, `Commit.ledgerAdd/cosmeticsAdd`, store `gold` + `spendGold`. Tests: sum, typed error, rejected amounts, starter once and only with the flag, short balance and failed write change nothing, Dexie rollback + append-only. ADR-039 (Proposed, Q12).
 - [ ] 2.2 Expiry engine (shared rule)
 - [ ] 2.3 Departure presentation
 - [ ] 2.4 Coin pile prop
@@ -152,6 +153,9 @@
 ## Decisions taken by the agent
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
+
+- 2.1 · `spendGold` grants one `OwnedCosmetic`; buildings and other grant kinds extend it in Phase 3. · Only cosmetics exist as a grantable store today.
+- 2.1 · Starter gold is granted on load only while `features.economy` is on, once per save (also existing saves when the flag is first turned on). · Keeps production unchanged while the flag is off.
 
 - Owner request (after 1.7) · Developer switches grouped under `testMode`; `testMode.dummyData` adds in-memory sample data. **Every later step that adds a feature also adds its sample data to `app/devDummy.ts`** (gold/departures in Phase 2, cosmetics in 3, friends in 7, groups/missions in 8, war in 9). · Owner wants to review features with dummy data (ADR-038).
 

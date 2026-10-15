@@ -1,4 +1,4 @@
-import type { FocusSession, InboxRow, PlacedAnimal, Settings, WorldState } from '../../domain/types';
+import type { FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, Settings, WorldState } from '../../domain/types';
 import type { StoredPhase } from '../../domain/timer/phase';
 import type { BackupData } from '../../domain/backup';
 
@@ -11,6 +11,8 @@ export interface PersistedState {
   sessions: FocusSession[];
   /** Queued notices, oldest first. */
   inbox: InboxRow[];
+  /** Gold ledger, oldest first. */
+  ledger: LedgerEntry[];
 }
 
 /** Everything that must change together. An implementation applies it in one transaction. */
@@ -24,6 +26,10 @@ export interface Commit {
   inboxAdd?: InboxRow[];
   /** Ids of notices that were shown and dismissed. */
   inboxRemove?: string[];
+  /** Append-only: an entry whose id already exists fails the whole commit. */
+  ledgerAdd?: LedgerEntry[];
+  /** Items granted together with a purchase. */
+  cosmeticsAdd?: OwnedCosmetic[];
 }
 
 export interface StorageAdapter {

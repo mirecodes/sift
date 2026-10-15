@@ -1,14 +1,18 @@
 import { seededRng } from '../domain/random';
-import type { FocusSession, InboxRow } from '../domain/types';
+import type { FocusSession, InboxRow, LedgerEntry } from '../domain/types';
 
 /** Sample data added in memory by `testMode.dummyData` (dev builds only). Never saved or exported. */
 export interface DummyData {
   sessions: FocusSession[];
   inbox: InboxRow[];
+  ledger: LedgerEntry[];
 }
 
 const MIN = 60_000;
+const DAY = 24 * 60 * MIN;
 const DAYS = 45;
+/** Gold credits, oldest first: 140 gold in all. */
+const DUMMY_GOLD = [30, 9, 25, 14, 3, 8, 26, 25];
 
 /**
  * Deterministic sample data relative to `now` (ADR-038). Each phase adds its feature's data here
@@ -43,11 +47,22 @@ export function createDummyData(now: number): DummyData {
     }
   }
 
+  // Gold: past departures (shows the HUD counter and a mid-size coin pile). Spending it in a dev
+  // build writes a real debit, so the stored balance can go below zero there.
+  const ledger: LedgerEntry[] = DUMMY_GOLD.map((amount, i) => ({
+    id: `dummy-gold-${i}`,
+    at: now - (DUMMY_GOLD.length - i) * DAY,
+    currency: 'gold',
+    amount,
+    reason: 'expiry',
+    refId: null,
+  }));
+
   // Inbox: notices shown on Home, one at a time.
   const inbox: InboxRow[] = [
     { id: 'dummy-notice-1', createdAt: now - 2 * MIN, notice: { kind: 'animals_departed', animalIds: ['dummy-a', 'dummy-b', 'dummy-c'], gold: 12 } },
     { id: 'dummy-notice-2', createdAt: now - MIN, notice: { kind: 'friend_request', userId: 'dummy-user' } },
   ];
 
-  return { sessions, inbox };
+  return { sessions, inbox, ledger };
 }

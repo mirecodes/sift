@@ -7,6 +7,7 @@ import type { PlacedAnimal } from '../domain/types';
 import { createMemoryStorage } from '../platform/storage/memory';
 import type { StorageAdapter } from '../platform/storage';
 import { createAppStore, selectCurrentNotice, selectIslandLevel, selectVisibleAnimals } from './appStore';
+import { InsufficientGoldError } from '../domain/economy/ledger';
 
 const MIN = 60_000;
 
@@ -402,6 +403,65 @@ describe('persistence', () => {
     await h.get().init();
     await h.get().startFocus();
     expect(h.get().phase.kind).toBe('focus');
+  });
+});
+
+describe('wallet (Step 2.1)', () => {
+  const fence = { id: 'c1', kind: 'building' as const, defId: 'fence', acquiredAt: 0, source: 'shop' };
+  const economy = (storage: StorageAdapter = createMemoryStorage()) => {
+    let n = 0;
+    return createAppStore({ storage, now: () => 5, rng: seededRng(1), uuid: () => `w-${++n}`, economy: true });
+  };
+
+  it('grants the starter gold once per save, and only with the economy on', async () => {
+    const storage = createMemoryStorage();
+    const off = harness(storage);
+    await off.get().init();
+    expect(off.get().gold).toBe(0);
+
+    const a = economy(storage);
+    await a.getState().init();
+    expect(a.getState().gold).toBe(30);
+    const b = economy(storage);
+    await b.getState().init();
+    expect(b.getState().gold).toBe(30);
+    expect((await storage.load()).ledger).toHaveLength(1);
+  });
+
+  it('spending writes the debit and the item together and recomputes on load', async () => {
+    const storage = createMemoryStorage();
+    const s = economy(storage);
+    await s.getState().init();
+    await s.getState().spendGold(10, 'purchase', 'fence', fence);
+    expect(s.getState().gold).toBe(20);
+    const rows = await storage.exportAll();
+    expect(rows.cosmetics).toEqual([fence]);
+    const again = economy(storage);
+    await again.getState().init();
+    expect(again.getState().gold).toBe(20);
+  });
+
+  it('a short balance rejects with a typed error and changes nothing', async () => {
+    const storage = createMemoryStorage();
+    const s = economy(storage);
+    await s.getState().init();
+    await expect(s.getState().spendGold(31, 'purchase', 'fence', fence)).rejects.toBeInstanceOf(InsufficientGoldError);
+    expect(s.getState().gold).toBe(30);
+    const rows = await storage.exportAll();
+    expect(rows.ledger).toHaveLength(1);
+    expect(rows.cosmetics).toEqual([]);
+  });
+
+  it('a failed write changes neither the balance nor the stored rows', async () => {
+    const storage = createMemoryStorage();
+    const s = economy(storage);
+    await s.getState().init();
+    const failing: StorageAdapter = { ...storage, commit: () => Promise.reject(new Error('disk full')) };
+    const t = createAppStore({ storage: failing, now: () => 5, rng: seededRng(1), uuid: () => 'z', economy: true });
+    await t.getState().init();
+    await expect(t.getState().spendGold(10, 'purchase', 'fence', fence)).rejects.toThrow('disk full');
+    expect(t.getState().gold).toBe(30);
+    expect((await storage.exportAll()).ledger).toHaveLength(1);
   });
 });
 

@@ -8,6 +8,7 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Added** — Step 2.1: gold ledger and wallet: append-only `ledger` store, balance = sum (store `gold`), `spendGold` writes debit and granted item in one transaction or nothing (`InsufficientGoldError`); 30 starter gold once per save with `features.economy` (`balance.economy.starterGold`, `BALANCE_VERSION` 2026-10-07.3). Dummy data adds 140 gold (ADR-039).
 - 2026-10-07 · **Changed** — Developer switches grouped under `testMode` in `config/app.yaml` (`resetMapOnStart`, `animals.*`, new `dummyData`). `dummyData` shows ~6 weeks of sample sessions (Stats) and Inbox notices in memory only, dev builds only; later phases add their own sample data (ADR-038).
 - 2026-10-07 · **Added** — Step 1.7: Settings → Stats → "Week starts on" (Monday / Sunday) as a new `segmented` control, shown only with the Stats tab. Phase 1 complete, behind `features.stats` (off).
 - 2026-10-07 · **Added** — Step 1.6: Day detail sheet (native `<dialog>`) from the week and calendar: each session's start time, length with overtime, reward sprite and tier; abandoned sessions greyed as "Stopped after …" and not counted. New `--color-backdrop` token.

@@ -5,7 +5,7 @@ import { runtimeConfig } from '../app/runtimeConfig';
 import { platform } from '../platform';
 import { createAppStore, type AppState } from './appStore';
 
-const { testMode } = runtimeConfig;
+const { testMode, features } = runtimeConfig;
 const { animals } = testMode;
 // Every species, or a random subset chosen once per page load.
 const testSpecies = animals.enabled
@@ -23,6 +23,7 @@ export const appStore = createAppStore({
   resetMap: testMode.resetMapOnStart,
   // The DEV check lets the bundler drop the sample data from production builds.
   dummy: import.meta.env.DEV && testMode.dummyData ? createDummyData(Date.now()) : undefined,
+  economy: features.economy,
 });
 
 export function useApp<T>(selector: (state: AppState) => T): T {

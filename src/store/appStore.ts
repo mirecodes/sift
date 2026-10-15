@@ -1,6 +1,8 @@
 import { createStore } from 'zustand/vanilla';
 import { config, DEFAULT_BLOCK_THEME } from '../domain/config';
-import type { FocusSession, InboxRow, PlacedAnimal, Settings, WorldState } from '../domain/types';
+import type { FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, Settings, WorldState } from '../domain/types';
+import { balance } from '../../shared/balance/balance';
+import { debitEntry, goldBalance, goldEntry, hasStarterGrant, LEDGER_REASON } from '../domain/economy/ledger';
 import { canShowNotices, currentNotice, type Notice } from '../domain/inbox/inbox';
 import {
   IDLE,
@@ -34,8 +36,10 @@ export interface AppDeps {
   testSpecies?: AnimalSpecies[];
   /** Start with a new island seed and no placed animals (stored animals are deleted). */
   resetMap?: boolean;
-  /** Test mode: sample sessions and notices added in memory only, never persisted (ADR-038). */
-  dummy?: { sessions: FocusSession[]; inbox: InboxRow[] };
+  /** Test mode: sample data added in memory only, never persisted (ADR-038). */
+  dummy?: { sessions: FocusSession[]; inbox: InboxRow[]; ledger?: LedgerEntry[] };
+  /** `features.economy`: starter gold (and, from Step 2.2, expiry) run only when on. */
+  economy?: boolean;
 }
 
 export interface AppState {
@@ -53,6 +57,8 @@ export interface AppState {
   revealPending: string | null;
   /** Deferred notices (ADR-035), oldest first. Shown one at a time on Home and Break only. */
   inbox: InboxRow[];
+  /** Wallet balance: the ledger sum, recomputed on load. */
+  gold: number;
 
   init(): Promise<void>;
   exportBackup(): Promise<Backup>;
@@ -71,6 +77,11 @@ export interface AppState {
   enqueueNotice(notice: Notice): Promise<void>;
   /** Removes the shown notice. Ignored while focusing: nothing is dequeued during Focus. */
   dismissNotice(id: string): Promise<void>;
+  /**
+   * Writes the debit and the granted item in one transaction, or nothing.
+   * Rejects with `InsufficientGoldError` when the balance is short.
+   */
+  spendGold(amount: number, reason: string, refId: string | null, grant: OwnedCosmetic): Promise<void>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -173,8 +184,16 @@ export function createAppStore(initialDeps: AppDeps) {
       if (tile) animals.push(newPlacedAnimal(deps.uuid(), species, tile, 0, 'test-mode'));
     }
 
+    let ledger = loaded.ledger;
+    if (deps.economy && !hasStarterGrant(ledger)) {
+      const starter = goldEntry(deps.uuid(), deps.now(), balance.economy.starterGold, LEDGER_REASON.starter, null);
+      await commit({ ledgerAdd: [starter] });
+      ledger = [...ledger, starter];
+    }
+
     const dummy = devSwitches ? deps.dummy : undefined;
     return {
+      gold: goldBalance([...ledger, ...(dummy?.ledger ?? [])]),
       ready: true,
       settings,
       world,
@@ -197,6 +216,7 @@ export function createAppStore(initialDeps: AppDeps) {
     activeTab: 'island',
     revealPending: null,
     inbox: [],
+    gold: 0,
 
     async init() {
       set(await hydrate(true));
@@ -325,6 +345,13 @@ export function createAppStore(initialDeps: AppDeps) {
       if (!canShowNotices(phase) || !inbox.some((n) => n.id === id)) return;
       await commit({ inboxRemove: [id] });
       set({ inbox: get().inbox.filter((n) => n.id !== id) });
+    },
+
+    async spendGold(amount, reason, refId, grant) {
+      const debit = debitEntry(get().gold, amount, reason, refId, deps.uuid(), deps.now());
+      // No memory fallback here: a failed purchase must fail visibly and change nothing.
+      await deps.storage.commit({ ledgerAdd: [debit], cosmeticsAdd: [grant] });
+      set({ gold: get().gold + debit.amount });
     },
   }));
 }

@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-07.2';
+export const BALANCE_VERSION = '2026-10-07.3';
 
 const MINUTE = 60_000;
 
@@ -36,6 +36,10 @@ export const balance = deepFreeze({
   stats: {
     /** Abandoned (stopped) sessions count toward focus time. */
     includeAbandoned: false,
+  },
+  economy: {
+    /** Gold granted once per save when the economy starts (§9 Q12). */
+    starterGold: 30,
   },
 } as const);
 

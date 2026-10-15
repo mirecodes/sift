@@ -19,4 +19,10 @@ describe('createDummyData', () => {
   it('queues notices for the Inbox', () => {
     expect(createDummyData(now).inbox.length).toBeGreaterThan(0);
   });
+
+  it('holds 140 gold from past credits', () => {
+    const { ledger } = createDummyData(now);
+    expect(ledger.reduce((sum, e) => sum + e.amount, 0)).toBe(140);
+    expect(ledger.every((e) => e.at < now)).toBe(true);
+  });
 });

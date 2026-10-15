@@ -39,7 +39,7 @@ const V4_ANIMAL_FIELDS = { status: 'active', endedAt: null, endReason: null, ver
 describe('dexie storage', () => {
   it('starts empty', async () => {
     const s = createDexieStorage(new SiftDB('empty'));
-    expect(await s.load()).toEqual({ animals: [], sessions: [], inbox: [] });
+    expect(await s.load()).toEqual({ animals: [], sessions: [], inbox: [], ledger: [] });
   });
 
   it('round-trips settings, world, and the active phase', async () => {
@@ -105,7 +105,25 @@ describe('dexie storage', () => {
     expect(await s.load()).toEqual(before);
 
     await s.importAll({ kv: [], sessions: [], animals: [] }, s.schemaVersion);
-    expect(await s.load()).toEqual({ animals: [], sessions: [], inbox: [] });
+    expect(await s.load()).toEqual({ animals: [], sessions: [], inbox: [], ledger: [] });
+  });
+
+  it('writes a debit and its granted item together, or neither (Step 2.1)', async () => {
+    const db = new SiftDB('ledger');
+    const s = createDexieStorage(db);
+    const credit = { id: 'g1', at: 1, currency: 'gold' as const, amount: 30, reason: 'starter', refId: null };
+    const debit = { id: 'g2', at: 2, currency: 'gold' as const, amount: -10, reason: 'purchase', refId: 'fence' };
+    const item = { id: 'c1', kind: 'building' as const, defId: 'fence', acquiredAt: 2, source: 'shop' };
+    await s.commit({ ledgerAdd: [credit] });
+
+    await expect(s.commit({ ledgerAdd: [debit], cosmeticsAdd: [{ ...item, id: undefined } as unknown as typeof item] })).rejects.toThrow();
+    expect((await s.load()).ledger).toEqual([credit]);
+    expect(await db.cosmetics.count()).toBe(0);
+
+    await expect(s.commit({ ledgerAdd: [credit] })).rejects.toThrow(); // append-only: no overwrite
+    await s.commit({ ledgerAdd: [debit], cosmeticsAdd: [item] });
+    expect((await s.load()).ledger).toEqual([credit, debit]);
+    expect(await db.cosmetics.toArray()).toEqual([item]);
   });
 
   it('adds and removes inbox notices inside the commit transaction', async () => {
