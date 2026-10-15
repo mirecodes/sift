@@ -8,6 +8,9 @@
 
 ## guidance_v2
 
+- 2026-10-08 · **Added** — Owner feedback on Phase 3: build mode lists the buildings on the island under the tray, each with `Store`, plus `Store all`, so placed buildings go back to the inventory without finding them on the island (DESIGN.md 7.8).
+- 2026-10-08 · **Changed** — Owner feedback on Phase 3: Home and build mode turn the island up to ±135° (was ±30°); the sun and clouds turn with the camera, so shading and the cloud backdrop look the same from every side (DESIGN.md 13).
+
 - 2026-10-08 · **Added** — Step 3.13: new animals and save repair count buildings when choosing a tile; with no free tile left an animal shares the least crowded tile (at most 4, `balance.placement.maxPerTile`, `BALANCE_VERSION` 2026-10-08.3) and sharers stand in the tile's corners. Phase 3 complete, behind `features.cosmetics` (off); `PROJECT_STATUS.md` refreshed.
 
 - 2026-10-08 · **Added** — Step 3.12: animals find their way: a grid A* (`domain/island/path.ts`) routes Focus walks to the cabin and sleep spots, the walk home and moves forced by a new building around buildings, water (footbridges are crossed), the camp and steps of more than one level; with no route they walk straight as before.

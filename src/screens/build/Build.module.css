@@ -60,6 +60,23 @@
   color: var(--color-ink);
   cursor: pointer;
 }
+.placedHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-top: var(--space-xs);
+}
+.placedItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.small {
+  min-height: 32px;
+  padding: 0 var(--space-md);
+  font-size: 13px;
+}
 .count {
   color: var(--color-body-mid);
 }

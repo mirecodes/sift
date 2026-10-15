@@ -190,6 +190,29 @@ export function BuildScreen() {
                 </Button>
               </div>
             )}
+            {placed.length > 0 && (
+              <>
+                <div className={styles.placedHead}>
+                  <p className={`${styles.eyebrow} type-eyebrow`}>{strings.build.placed}</p>
+                  <Button variant="secondary" className={styles.small} onClick={() => void Promise.all(placed.map((b) => storeBuilding(b.id)))}>
+                    {strings.build.storeAll}
+                  </Button>
+                </div>
+                <ul className={styles.tray}>
+                  {placed.map((b) => (
+                    <li key={b.id} className={styles.placedItem}>
+                      <button type="button" className={styles.item} aria-label={strings.build.selectName(nameOf(b.defId))} onClick={() => buildUi.setState({ selected: b.id })}>
+                        <ItemSprite id={b.defId} size={48} />
+                        <span className="type-caption">{nameOf(b.defId)}</span>
+                      </button>
+                      <Button variant="secondary" className={styles.small} aria-label={strings.build.storeName(nameOf(b.defId))} onClick={() => void storeBuilding(b.id)}>
+                        {strings.build.store}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </>
         )}
       </Panel>
