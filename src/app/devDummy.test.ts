@@ -36,7 +36,7 @@ describe('createDummyData', () => {
     for (const c of cosmetics) expect(content.get(c.defId)?.kind, c.defId).toBe(c.kind);
     expect(sanitizeEquipped(equipped, cosmetics)).toEqual(equipped);
     const species = new Set(animals.map((a) => a.species.id));
-    for (const s of Object.keys(equipped.skinBySpecies)) expect(species.has(s)).toBe(true);
+    for (const s of Object.keys(equipped.skinsBySpecies)) expect(species.has(s)).toBe(true);
     for (const b of buildings) expect(cosmetics.some((c) => c.defId === b)).toBe(true);
     expect(unplacedBuildings(cosmetics, buildings.map((defId) => ({ defId }))).size).toBeGreaterThan(0);
   });

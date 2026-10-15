@@ -137,7 +137,8 @@ Legend: **[+]** = not in the initial plan, added later at the owner's request.
 ### 3.8 Cosmetics, shop and buildings (guidance_v2 Phase 3, flag `cosmetics`)
 - First release `v2-launch`: island themes Autumn, Snow, Desert and Cherry Blossom (next to the free Meadow); Fence, Lantern, Flower Bed, Well, Small Tree, Stone Statue, Windmill (turning sails), Footbridge (goes over the stream) and the Champion Flag (not for sale, for group winners later); skin families Golden, Snowy, Shadow, Pastel and Ghost for every animal, plus White Tiger and Night Unicorn.
 - **Shop**: opened by tapping the gold counter. Featured row, New and "Leaves in 3d" badges, skins only for animals you have met, a turning preview before buying. Prices: skins 25–60 (handcrafted 80), themes 120–200, buildings 10–80.
-- **Skins** apply to every animal of that species; **themes** recolor the whole island (and add falling leaves, snow or petals). Both are chosen in the Collection.
+- **Skins**: pick one or several per species in the Collection (picture cards; buy missing ones right there). New animals arrive in one of the picked skins at random and keep it. **Themes** recolor the whole island (and add falling leaves, snow, petals or glints); since the owner's feedback there are also **Winter** and **Future City** (glassy blue with rainbow tiles).
+- The Shop has filters (section, animal, skin style, hide owned, affordable); build mode lists placed buildings to store them; the island turns up to 135° either way.
 - **Build mode** (hammer icon on Home): place owned buildings on tiles that fit (green/red preview), rotate, move or store them. Animals standing there walk to a free tile.
 - Animals now **walk around** buildings, water and cliffs on their way to the cabin and back. When the island is full they share tiles (up to four per tile).
 

@@ -1,7 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { content } from '../content';
 import type { OwnedCosmetic } from '../types';
-import { buyProblem, DEFAULT_EQUIPPED, equipSkin, equipTheme, grantFor, ownedCount, ownedThemes, owns, sanitizeEquipped, skinChoices, unplacedBuildings } from './inventory';
+import {
+  addSkin,
+  buyProblem,
+  chooseSkins,
+  chosenSkins,
+  DEFAULT_EQUIPPED,
+  equipSkin,
+  equipTheme,
+  grantFor,
+  ownedCount,
+  ownedThemes,
+  owns,
+  pickSpawnSkin,
+  sanitizeEquipped,
+  skinChoices,
+  skinForAnimal,
+  toggleSkin,
+  unplacedBuildings,
+} from './inventory';
 
 const own = (defId: string, kind: OwnedCosmetic['kind'], i = 0): OwnedCosmetic => ({ id: `${defId}-${i}`, kind, defId, acquiredAt: 0, source: 'shop' });
 const ctx = { now: Date.parse('2026-10-10'), clientVersion: '0.1.0', discovered: new Set(['tiger', 'fox']) };
@@ -44,7 +62,7 @@ describe('inventory (Step 3.7)', () => {
   it('equips owned skins per species and themes; default always works', () => {
     const owned = [own('golden:fox', 'animalSkin'), own('autumn', 'blockTheme')];
     const eq = equipSkin(DEFAULT_EQUIPPED, owned, 'fox', 'golden:fox');
-    expect(eq).toEqual({ skinBySpecies: { fox: 'golden:fox' }, blockThemeId: 'default' });
+    expect(eq).toEqual({ skinsBySpecies: { fox: ['golden:fox'] }, blockThemeId: 'default' });
     expect(equipSkin(eq as never, owned, 'fox', 'default')).toEqual(DEFAULT_EQUIPPED);
     expect(equipSkin(DEFAULT_EQUIPPED, owned, 'tiger', 'golden:fox')).toBe('wrong_species');
     expect(equipSkin(DEFAULT_EQUIPPED, owned, 'tiger', 'white-tiger')).toBe('not_owned');
@@ -54,13 +72,39 @@ describe('inventory (Step 3.7)', () => {
     expect(equipTheme(DEFAULT_EQUIPPED, [], 'default')).toEqual(DEFAULT_EQUIPPED);
   });
 
-  it('cleans a stored equipped row against the inventory', () => {
+  it('cleans a stored equipped row against the inventory, reading the old one-skin rows too', () => {
     const owned = [own('golden:fox', 'animalSkin')];
     expect(sanitizeEquipped({ skinBySpecies: { fox: 'golden:fox', tiger: 'white-tiger', cat: 'gone' }, blockThemeId: 'snow' }, owned)).toEqual({
-      skinBySpecies: { fox: 'golden:fox' },
+      skinsBySpecies: { fox: ['golden:fox'] },
+      blockThemeId: 'default',
+    });
+    expect(sanitizeEquipped({ skinsBySpecies: { fox: ['golden:fox', 'snowy:fox', 'default'] }, blockThemeId: 'default' }, owned)).toEqual({
+      skinsBySpecies: { fox: ['golden:fox', 'default'] },
       blockThemeId: 'default',
     });
     expect(sanitizeEquipped(undefined, [])).toEqual(DEFAULT_EQUIPPED);
+  });
+
+  it('chooses several skins per species, toggles, adds and picks one per animal (ADR-043)', () => {
+    const owned = [own('golden:fox', 'animalSkin'), own('ghost:fox', 'animalSkin')];
+    let eq = toggleSkin(DEFAULT_EQUIPPED, owned, 'fox', 'golden:fox') as never as typeof DEFAULT_EQUIPPED;
+    expect(chosenSkins(eq, 'fox')).toEqual(['default', 'golden:fox']);
+    eq = toggleSkin(eq, owned, 'fox', 'default') as never;
+    expect(chosenSkins(eq, 'fox')).toEqual(['golden:fox']);
+    expect(toggleSkin(eq, owned, 'fox', 'golden:fox')).toBe(eq); // the last one stays
+    expect(chosenSkins(addSkin(DEFAULT_EQUIPPED, owned, 'fox', 'ghost:fox') as never, 'fox')).toEqual(['ghost:fox']); // Default alone is replaced
+    eq = chooseSkins(eq, owned, 'fox', ['golden:fox', 'ghost:fox', 'default']) as never;
+    expect(chooseSkins(eq, owned, 'fox', ['snowy:fox'])).toBe('not_owned');
+    // Spawn: a random pick among the chosen; draw: the arrival skin while it stays chosen, else a fixed pick.
+    expect(pickSpawnSkin(eq, 'fox', () => 0.99)).toBe('default');
+    expect(pickSpawnSkin(eq, 'fox', () => 0)).toBe('golden:fox');
+    expect(skinForAnimal({ id: 'a', speciesId: 'fox', skinId: 'ghost:fox' }, eq)).toBe('ghost:fox');
+    const narrowed = chooseSkins(eq, owned, 'fox', ['golden:fox']) as never as typeof eq;
+    expect(skinForAnimal({ id: 'a', speciesId: 'fox', skinId: 'ghost:fox' }, narrowed)).toBe('golden:fox');
+    const picks = new Set(Array.from({ length: 40 }, (_, i) => skinForAnimal({ id: `x${i}`, speciesId: 'fox' }, eq)));
+    expect(picks).toEqual(new Set(['golden:fox', 'ghost:fox', 'default']));
+    expect(skinForAnimal({ id: 'x1', speciesId: 'fox' }, eq)).toBe(skinForAnimal({ id: 'x1', speciesId: 'fox' }, eq));
+    expect(skinForAnimal({ id: 'x1', speciesId: 'cat' }, eq)).toBe('default');
   });
 
   it('lists skin choices for a species: default, owned, then for sale (Step 3.10)', () => {
@@ -83,6 +127,6 @@ describe('inventory (Step 3.7)', () => {
     expect(content.isRetired('golden:fox')).toBe(true);
     const owned = [own('golden:fox', 'animalSkin')];
     expect(buyProblem('golden:fox', [], ctx)).toBe('not_for_sale');
-    expect(equipSkin(DEFAULT_EQUIPPED, owned, 'fox', 'golden:fox')).toEqual({ skinBySpecies: { fox: 'golden:fox' }, blockThemeId: 'default' });
+    expect(equipSkin(DEFAULT_EQUIPPED, owned, 'fox', 'golden:fox')).toEqual({ skinsBySpecies: { fox: ['golden:fox'] }, blockThemeId: 'default' });
   });
 });

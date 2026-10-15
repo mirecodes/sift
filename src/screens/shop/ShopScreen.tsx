@@ -197,11 +197,11 @@ function ItemCard({ item, now, onBuy }: { item: ItemDef; now: number; onBuy: () 
 }
 
 /** Confirm, buy, then offer to equip (skins, themes) or point to build mode (buildings). */
-function BuySheet({ item, onClose }: { item: ItemDef; onClose: () => void }) {
+export function BuySheet({ item, onClose }: { item: ItemDef; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   const gold = useApp((s) => s.gold);
   const buyItem = useApp((s) => s.buyItem);
-  const equipSkin = useApp((s) => s.equipSkin);
+  const addSkin = useApp((s) => s.addSkin);
   const equipTheme = useApp((s) => s.equipTheme);
   const reducedMotion = usePrefersReducedMotion();
   const [state, setState] = useState<'confirm' | 'busy' | 'done' | 'failed'>('confirm');
@@ -220,7 +220,8 @@ function BuySheet({ item, onClose }: { item: ItemDef; onClose: () => void }) {
     }
   };
   const equip = async () => {
-    if (item.kind === 'animalSkin') await equipSkin(item.speciesId, item.id);
+    // A bought skin joins the species' chosen skins (replacing Default alone, ADR-043).
+    if (item.kind === 'animalSkin') await addSkin(item.speciesId, item.id);
     else if (item.kind === 'blockTheme') await equipTheme(item.id);
     close();
   };

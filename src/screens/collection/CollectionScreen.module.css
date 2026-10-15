@@ -137,33 +137,111 @@
 .sheetHead button {
   margin-left: auto;
 }
-.skins {
-  list-style: none;
-  margin: var(--space-lg) 0 0;
-  padding: 0;
+/* Species sheet: floating skin cards (owner request, DESIGN.md 7.5). */
+.wideSheet {
+  width: min(560px, calc(100% - 2 * var(--gutter)));
 }
-.skin {
+.sheetBar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-md);
-  padding: var(--space-sm) 0;
-  border-top: 1px solid var(--color-hairline);
+  margin-top: var(--space-sm);
 }
-.skinAction {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-.skinAction .hint {
+.sheetBar .hint {
   margin: 0;
 }
-.skinAction button {
+.small {
+  flex: none;
+  min-height: 32px;
+  padding: 0 var(--space-md);
+  font-size: 13px;
+}
+.skinGrid {
+  list-style: none;
+  margin: var(--space-lg) 0 0;
+  padding: 2px 2px var(--space-sm);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: var(--space-md);
+}
+.skinCard {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-xs) var(--space-xs) var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  box-shadow: var(--elevation-2);
+  cursor: pointer;
+  transition: transform var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+}
+.skinCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elevation-3);
+}
+.skinCard[aria-pressed='true'] {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 0;
+}
+.skinArt {
+  flex: 1;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: linear-gradient(to bottom, var(--color-canvas), color-mix(in srgb, var(--color-hairline) 45%, var(--color-canvas)));
+}
+.notOwned .skinArt > * {
+  opacity: 0.85;
+}
+.skinName {
+  margin-top: var(--space-xs);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.price {
+.skinPrice {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-xxs);
+  color: var(--color-body-mid);
   font-variant-numeric: tabular-nums;
+}
+.skinPrice svg {
+  width: 14px;
+  height: 14px;
+}
+.check {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+.check::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 4px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--color-on-primary);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .skinCard,
+  .skinCard:hover {
+    transform: none;
+    transition: none;
+  }
 }

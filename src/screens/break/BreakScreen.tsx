@@ -4,6 +4,7 @@ import { getSpecies } from '../../domain/animals/catalog';
 import { formatTimer, resolvePhase, timerDisplay } from '../../domain/timer/phase';
 import { platform } from '../../platform';
 import { runtimeConfig } from '../../app/runtimeConfig';
+import { skinForAnimal } from '../../domain/cosmetics/inventory';
 import { useApp } from '../../store';
 import { useNow, usePrefersReducedMotion, useSpaceKey } from '../../ui/hooks';
 import { strings } from '../../ui/strings';
@@ -52,8 +53,8 @@ export function BreakScreen() {
   const rewardId = phase.kind === 'break' ? phase.rewardId : undefined;
   const animal = rewardId ? animals.find((a) => a.id === rewardId) : undefined;
   const species = animal ? getSpecies(animal.speciesId) : undefined;
-  // The new animal wears its species' equipped skin, as it will on the island (Step 3.8).
-  const skinId = useApp((s) => (features.cosmetics && species ? s.equipped.skinBySpecies[species.id] : undefined));
+  // The new animal wears the skin it arrived with, as it will on the island (Step 3.8, ADR-043).
+  const skinId = useApp((s) => (features.cosmetics && animal ? skinForAnimal(animal, s.equipped) : undefined));
 
   // Reveal: tier chime once, then the animal joins the island after the reveal time (or on tap).
   const revealId = useRef<string | null>(null);

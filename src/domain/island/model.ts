@@ -3,6 +3,7 @@ import { isActive } from '../animals/placed';
 import { balance } from '../../../shared/balance/balance';
 import { expiresAt } from '../../../shared/rules/expiry';
 import type { Equipped, PlacedAnimal, PlacedBuilding, WorldState } from '../types';
+import { skinForAnimal } from '../cosmetics/inventory';
 import type { Tile } from './island';
 
 export const DEFAULT_SKIN = 'default';
@@ -62,7 +63,7 @@ export interface IslandModelInput {
 }
 
 export function buildIslandModel(input: IslandModelInput): IslandModel {
-  const skins = input.equipped?.skinBySpecies ?? {};
+  const equipped = input.equipped;
   const order = new Map((input.departing ?? []).map((id, i) => [id, i]));
   const model: IslandModel = {
     ownerId: input.ownerId ?? 'local',
@@ -78,7 +79,7 @@ export function buildIslandModel(input: IslandModelInput): IslandModel {
           speciesId: a.speciesId,
           tierRank: a.tierRank,
           tile: { x: a.tileX, z: a.tileZ },
-          skinId: skins[a.speciesId] ?? DEFAULT_SKIN,
+          skinId: equipped ? skinForAnimal(a, equipped) : DEFAULT_SKIN,
           ...(order.has(a.id) && { departure: order.get(a.id) }),
           ...(expires !== null && { expiresAt: expires }),
         };

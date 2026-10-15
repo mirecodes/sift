@@ -47,6 +47,8 @@ export interface PlacedAnimal {
   verified: boolean;
   /** Placed by hand (Phase 10); automatic placement never moves it. */
   pinned: boolean;
+  /** Skin picked when it arrived, from the species' chosen skins (ADR-043). Absent on older rows. */
+  skinId?: string;
 }
 
 export interface WorldState {
@@ -74,9 +76,12 @@ export interface OwnedCosmetic {
   source: string;
 }
 
-/** Singleton (kv `equipped`). Skins are per species. */
+/**
+ * Singleton (kv `equipped`). Per species, the chosen skins (one or more, `default` included when
+ * chosen; a species not listed wears the default). New animals get one of them at random (ADR-043).
+ */
 export interface Equipped {
-  skinBySpecies: Record<string, string>;
+  skinsBySpecies: Record<string, string[]>;
   blockThemeId: string;
 }
 

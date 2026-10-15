@@ -196,6 +196,10 @@
 - 3.9 · The Shop opens from Home only (the HUD is on Home's top bar, Break has none). · "Home and Break only" forbids Focus; adding a top bar to Break is a layout change not asked for.
 - 3.9 · After buying a skin or theme the sheet offers Equip; buildings point to build mode. · Saves a trip to the Collection.
 - 3.9 · The shop reads the clock once per visit (badges and availability do not tick while it is open). · Simplest; limited windows are days long.
+- Owner feedback (after 3.13) · Request 2 read as **skins** (the island theme stays one at a time): several chosen skins per species, a random one per new animal (ADR-043). Select-all includes Default. Unowned skin cards open the buy sheet in place instead of the Shop. · "해당 테마중 하나로 스폰" spoke of spawning, which only animals do.
+- Owner feedback · "Winter" is a separate ice-blue theme next to the existing white "Snow"; "glass" is a glossy finish with deep blue sides, not see-through blocks. Its release starts 2026-10-09 so the Featured row moves on from v2-launch. · See-through instanced blocks show their inner faces.
+- Owner feedback · Turning ±135° turns the sun and clouds with the camera. · Otherwise the back of the island is lit from behind and clouds pass in front.
+- Owner feedback · Build mode lists placed buildings under the tray with Store / Store all (tapping a building on the island still works). · Easier to find than tapping small models.
 - 3.7 · Skins of species never earned are not sold (`species_not_found`), matching "Animal skins (only species you have found)". Earned once is enough, even if the animal left. · Departures must not take skins out of the shop.
 - 3.7 · Placed buildings beyond the owned count are ignored on load, not deleted. · Only possible with dev dummy items; no data loss.
 - 3.7 · Equipped skins, theme and buildings render only with `features.cosmetics`. · Production stays unchanged while the phase is off.

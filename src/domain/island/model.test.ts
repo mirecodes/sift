@@ -30,7 +30,7 @@ describe('buildIslandModel', () => {
       world,
       islandLevel: 3,
       animals: [fox],
-      equipped: { skinBySpecies: { fox: 'golden:fox' }, blockThemeId: 'autumn' },
+      equipped: { skinsBySpecies: { fox: ['golden:fox'] }, blockThemeId: 'autumn' },
       buildings: [{ id: 'b1', defId: 'well', tileX: 2, tileZ: -2, rotation: 90, placedAt: 0 }],
       goldPileLevel: 3,
       championWeek: '2026-W41',

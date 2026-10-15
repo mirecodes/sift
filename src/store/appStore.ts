@@ -1,7 +1,23 @@
 import { createStore } from 'zustand/vanilla';
 import { config, DEFAULT_BLOCK_THEME } from '../domain/config';
 import type { Equipped, FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../domain/types';
-import { buyProblem, DEFAULT_EQUIPPED, equipSkin, equipTheme, grantFor, ownedCount, sanitizeEquipped, unplacedBuildings, type BuyProblem, type EquipProblem } from '../domain/cosmetics/inventory';
+import {
+  addSkin,
+  buyProblem,
+  chooseSkins,
+  chosenSkins,
+  DEFAULT_EQUIPPED,
+  equipSkin,
+  equipTheme,
+  grantFor,
+  ownedCount,
+  pickSpawnSkin,
+  sanitizeEquipped,
+  toggleSkin,
+  unplacedBuildings,
+  type BuyProblem,
+  type EquipProblem,
+} from '../domain/cosmetics/inventory';
 import { content } from '../domain/content';
 import { placementProblem, type PlaceProblem } from '../domain/build/placement';
 import type { Tile } from '../domain/island/island';
@@ -115,8 +131,14 @@ export interface AppState {
    * (not for sale, already owned, species not found) or `InsufficientGoldError`.
    */
   buyItem(defId: string): Promise<void>;
-  /** Equips an owned skin (or `default`) for every animal of a species. Rejects with an `EquipError`. */
+  /** Chooses only this owned skin (or `default`) for a species. Rejects with an `EquipError`. */
   equipSkin(speciesId: string, skinId: string): Promise<void>;
+  /** Adds an owned skin to the species' choice (replacing Default alone), e.g. right after buying it. */
+  addSkin(speciesId: string, skinId: string): Promise<void>;
+  /** Turns a skin on or off in the species' choice; the last one stays (ADR-043). */
+  toggleSkin(speciesId: string, skinId: string): Promise<void>;
+  /** Sets the species' chosen skins, e.g. every owned one. */
+  chooseSkins(speciesId: string, skinIds: readonly string[]): Promise<void>;
   /** Equips an owned block theme (or `default`). Rejects with an `EquipError`. */
   equipTheme(themeId: string): Promise<void>;
   /**
@@ -316,6 +338,12 @@ export function createAppStore(initialDeps: AppDeps) {
     };
   }
 
+  async function saveEquipped(next: Equipped | EquipProblem): Promise<void> {
+    if (typeof next === 'string') throw new EquipError(next);
+    await commit({ equipped: next });
+    store.setState({ equipped: next });
+  }
+
   /** Dummy data: the first free, valid tile from the center (no animal on it). */
   function placeDummyBuilding(defId: string, seed: number, animals: readonly PlacedAnimal[], placed: readonly PlacedBuilding[]): PlacedBuilding | null {
     const grid = getOccupancy({
@@ -436,6 +464,8 @@ export function createAppStore(initialDeps: AppDeps) {
         const tile = pickNewAnimalTile(world.seed, animals, deps.rng, buildings);
         if (tile) {
           animal = newPlacedAnimal(deps.uuid(), species, tile, now, session.id);
+          // With several chosen skins the new animal wears one of them at random, for good (ADR-043).
+          if (chosenSkins(get().equipped, species.id).length > 1) animal.skinId = pickSpawnSkin(get().equipped, species.id, deps.rng);
           session.rewardAnimalId = animal.id;
         }
       }
@@ -533,19 +563,11 @@ export function createAppStore(initialDeps: AppDeps) {
       await get().spendGold(item.price!, LEDGER_REASON.purchase, defId, grantFor(item, deps.uuid(), deps.now()));
     },
 
-    async equipSkin(speciesId, skinId) {
-      const next = equipSkin(get().equipped, get().cosmetics, speciesId, skinId);
-      if (typeof next === 'string') throw new EquipError(next);
-      await commit({ equipped: next });
-      set({ equipped: next });
-    },
-
-    async equipTheme(themeId) {
-      const next = equipTheme(get().equipped, get().cosmetics, themeId);
-      if (typeof next === 'string') throw new EquipError(next);
-      await commit({ equipped: next });
-      set({ equipped: next });
-    },
+    equipSkin: (speciesId, skinId) => saveEquipped(equipSkin(get().equipped, get().cosmetics, speciesId, skinId)),
+    addSkin: (speciesId, skinId) => saveEquipped(addSkin(get().equipped, get().cosmetics, speciesId, skinId)),
+    toggleSkin: (speciesId, skinId) => saveEquipped(toggleSkin(get().equipped, get().cosmetics, speciesId, skinId)),
+    chooseSkins: (speciesId, skinIds) => saveEquipped(chooseSkins(get().equipped, get().cosmetics, speciesId, skinIds)),
+    equipTheme: (themeId) => saveEquipped(equipTheme(get().equipped, get().cosmetics, themeId)),
 
     async placeBuilding({ defId, tile, rotation, movingId }) {
       const s = get();

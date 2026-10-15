@@ -109,7 +109,8 @@ export function createDummyData(now: number): DummyData {
   const cosmetics: OwnedCosmetic[] = DUMMY_ITEMS.flatMap(([defId, kind, count]) =>
     Array.from({ length: count }, (_, i) => ({ id: `dummy-item-${defId}-${i}`, kind, defId, acquiredAt: now - 2 * DAY, source: 'dummy' })),
   );
-  const equipped: Equipped = { skinBySpecies: { dog: 'golden:dog', cat: 'pastel:cat', unicorn: 'night-unicorn' }, blockThemeId: 'autumn' };
+  // The dog wears a mix (Golden or Default, picked per animal); cat and unicorn one skin each.
+  const equipped: Equipped = { skinsBySpecies: { dog: ['golden:dog', 'default'], cat: ['pastel:cat'], unicorn: ['night-unicorn'] }, blockThemeId: 'autumn' };
   const buildings = ['windmill', 'lantern', 'small-tree', 'flower-bed'];
 
   return { sessions, inbox, ledger, animals, cosmetics, equipped, buildings };

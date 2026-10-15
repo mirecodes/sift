@@ -58,7 +58,7 @@ describe('skins and themes in the renderer (Step 3.8)', () => {
       world: { seed: 1, blockThemeId: 'default' },
       islandLevel: 1,
       animals: [fox],
-      equipped: { skinBySpecies: { fox: 'golden:fox' }, blockThemeId: 'cherry' },
+      equipped: { skinsBySpecies: { fox: ['golden:fox'] }, blockThemeId: 'cherry' },
       buildings: [{ id: 'b', defId: 'lantern', tileX: 2, tileZ: 2, rotation: 90, placedAt: 0 }],
     });
     expect(model.blockThemeId).toBe('cherry');

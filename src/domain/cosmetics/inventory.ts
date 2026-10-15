@@ -12,7 +12,7 @@ import type { Equipped, OwnedCosmetic, PlacedBuilding } from '../types';
  * the shop: the registry keeps every item it ever knew.
  */
 
-export const DEFAULT_EQUIPPED: Equipped = { skinBySpecies: {}, blockThemeId: DEFAULT_BLOCK_THEME };
+export const DEFAULT_EQUIPPED: Equipped = { skinsBySpecies: {}, blockThemeId: DEFAULT_BLOCK_THEME };
 
 export const isDefaultItem = (defId: string) => defId === DEFAULT_SKIN || defId === DEFAULT_BLOCK_THEME;
 
@@ -55,17 +55,74 @@ export function grantFor(item: ItemDef, id: string, now: number): OwnedCosmetic 
 
 export type EquipProblem = 'not_owned' | 'wrong_kind' | 'wrong_species';
 
-export function equipSkin(equipped: Equipped, owned: readonly OwnedCosmetic[], speciesId: string, skinId: string): Equipped | EquipProblem {
-  if (skinId !== DEFAULT_SKIN) {
-    const item = content.get(skinId);
-    if (item?.kind !== 'animalSkin') return 'wrong_kind';
-    if (item.speciesId !== speciesId) return 'wrong_species';
-    if (!owns(owned, skinId)) return 'not_owned';
+function skinProblem(owned: readonly OwnedCosmetic[], speciesId: string, skinId: string): EquipProblem | null {
+  if (skinId === DEFAULT_SKIN) return null;
+  const item = content.get(skinId);
+  if (item?.kind !== 'animalSkin') return 'wrong_kind';
+  if (item.speciesId !== speciesId) return 'wrong_species';
+  return owns(owned, skinId) ? null : 'not_owned';
+}
+
+/** The skins chosen for a species (ADR-043); Default alone when none are. */
+export const chosenSkins = (equipped: Equipped, speciesId: string): readonly string[] => {
+  const list = equipped.skinsBySpecies[speciesId];
+  return list?.length ? list : [DEFAULT_SKIN];
+};
+
+/**
+ * Sets the chosen skins of a species: one or more, each owned and of that species. An empty list or
+ * Default alone clears the choice.
+ */
+export function chooseSkins(equipped: Equipped, owned: readonly OwnedCosmetic[], speciesId: string, skinIds: readonly string[]): Equipped | EquipProblem {
+  const list = [...new Set(skinIds)];
+  for (const id of list) {
+    const problem = skinProblem(owned, speciesId, id);
+    if (problem) return problem;
   }
-  const skinBySpecies = { ...equipped.skinBySpecies };
-  if (skinId === DEFAULT_SKIN) delete skinBySpecies[speciesId];
-  else skinBySpecies[speciesId] = skinId;
-  return { ...equipped, skinBySpecies };
+  const skinsBySpecies = { ...equipped.skinsBySpecies };
+  if (!list.length || (list.length === 1 && list[0] === DEFAULT_SKIN)) delete skinsBySpecies[speciesId];
+  else skinsBySpecies[speciesId] = list;
+  return { ...equipped, skinsBySpecies };
+}
+
+/** Wear only this skin. */
+export const equipSkin = (equipped: Equipped, owned: readonly OwnedCosmetic[], speciesId: string, skinId: string) => chooseSkins(equipped, owned, speciesId, [skinId]);
+
+/** Adds a skin to the choice; a choice of Default alone is replaced (a new purchase shows at once). */
+export function addSkin(equipped: Equipped, owned: readonly OwnedCosmetic[], speciesId: string, skinId: string): Equipped | EquipProblem {
+  const current = chosenSkins(equipped, speciesId);
+  const base = current.length === 1 && current[0] === DEFAULT_SKIN ? [] : current;
+  return chooseSkins(equipped, owned, speciesId, [...base, skinId]);
+}
+
+/** Turns one skin on or off in the choice; the last chosen skin stays on. */
+export function toggleSkin(equipped: Equipped, owned: readonly OwnedCosmetic[], speciesId: string, skinId: string): Equipped | EquipProblem {
+  const current = chosenSkins(equipped, speciesId);
+  if (!current.includes(skinId)) return chooseSkins(equipped, owned, speciesId, [...current, skinId]);
+  if (current.length === 1) return equipped;
+  return chooseSkins(equipped, owned, speciesId, current.filter((id) => id !== skinId));
+}
+
+const hashId = (id: string) => {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (Math.imul(h, 31) + id.charCodeAt(i)) | 0;
+  return h >>> 0;
+};
+
+/** The skin a new animal gets: one of its species' chosen skins, at random. */
+export function pickSpawnSkin(equipped: Equipped, speciesId: string, rng: () => number): string {
+  const chosen = chosenSkins(equipped, speciesId);
+  return chosen[Math.min(chosen.length - 1, Math.floor(rng() * chosen.length))]!;
+}
+
+/**
+ * The skin an animal wears: the one it got on arrival while that skin is still chosen; otherwise a
+ * fixed pick among the chosen skins (by its id), so it never flickers between frames or reloads.
+ */
+export function skinForAnimal(animal: { id: string; speciesId: string; skinId?: string }, equipped: Equipped): string {
+  const chosen = chosenSkins(equipped, animal.speciesId);
+  if (animal.skinId && chosen.includes(animal.skinId)) return animal.skinId;
+  return chosen[hashId(animal.id) % chosen.length]!;
 }
 
 export function equipTheme(equipped: Equipped, owned: readonly OwnedCosmetic[], themeId: string): Equipped | EquipProblem {
@@ -102,11 +159,16 @@ export function ownedThemes(owned: readonly OwnedCosmetic[]): string[] {
   return content.all('blockTheme').filter((t) => owns(owned, t.id)).map((t) => t.id);
 }
 
-/** A stored `equipped` row cleaned against what is owned (a lost or unknown item falls back to the default). */
-export function sanitizeEquipped(input: Partial<Equipped> | undefined, owned: readonly OwnedCosmetic[]): Equipped {
+/**
+ * A stored `equipped` row cleaned against what is owned: lost or unknown skins drop out of a choice
+ * (an emptied choice falls back to Default), an unowned theme falls back to the default. Rows from
+ * before ADR-043 (`skinBySpecies`, one skin each) are read as a choice of one.
+ */
+export function sanitizeEquipped(input: (Partial<Equipped> & { skinBySpecies?: Record<string, string> }) | undefined, owned: readonly OwnedCosmetic[]): Equipped {
   let out = DEFAULT_EQUIPPED;
-  for (const [speciesId, skinId] of Object.entries(input?.skinBySpecies ?? {})) {
-    const next = equipSkin(out, owned, speciesId, skinId);
+  const lists: Record<string, string[]> = { ...Object.fromEntries(Object.entries(input?.skinBySpecies ?? {}).map(([s, id]) => [s, [id]])), ...input?.skinsBySpecies };
+  for (const [speciesId, ids] of Object.entries(lists)) {
+    const next = chooseSkins(out, owned, speciesId, (Array.isArray(ids) ? ids : []).filter((id) => !skinProblem(owned, speciesId, id)));
     if (typeof next !== 'string') out = next;
   }
   const theme = equipTheme(out, owned, input?.blockThemeId ?? DEFAULT_BLOCK_THEME);

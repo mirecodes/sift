@@ -168,7 +168,16 @@ check('saved animals survive a reload (developer switches off in production)', a
 check('the island theme picker shows Meadow equipped', (await page.getByRole('button', { name: 'Meadow', pressed: true }).count()) === 1);
 await page.getByRole('button', { name: /: choose a skin$/ }).first().click();
 await settle(400);
-check('a species sheet lists Default as equipped and skins to buy', (await page.getByRole('dialog').getByText('Equipped').count()) === 1 && (await page.getByRole('dialog').getByRole('button', { name: 'Open shop' }).count()) >= 5);
+check(
+  'a species sheet shows Default chosen and skin cards to buy',
+  (await page.getByRole('dialog').getByRole('button', { name: 'Default', pressed: true }).count()) === 1 &&
+    (await page.getByRole('dialog').getByRole('button', { name: /gold\. Buy$/ }).count()) >= 5,
+);
+await page.getByRole('dialog').getByRole('button', { name: /gold\. Buy$/ }).first().click();
+await settle(400);
+check('a skin card opens the buy sheet in place', await page.getByText(/^Buy .+\?$/).isVisible());
+await page.keyboard.press('Escape');
+await settle(300);
 await page.keyboard.press('Escape');
 await settle(300);
 await page.getByRole('button', { name: 'Close' }).click();

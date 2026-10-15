@@ -523,18 +523,48 @@ describe('inventory and equip (Step 3.7)', () => {
     await s.getState().equipTheme('desert');
     await expect(s.getState().equipSkin('fox', 'golden:fox')).rejects.toMatchObject({ problem: 'not_owned' });
     await expect(s.getState().equipTheme('snow')).rejects.toBeInstanceOf(EquipError);
-    expect(s.getState().equipped).toEqual({ skinBySpecies: { tiger: 'white-tiger' }, blockThemeId: 'desert' });
+    expect(s.getState().equipped).toEqual({ skinsBySpecies: { tiger: ['white-tiger'] }, blockThemeId: 'desert' });
     const again = shop(storage);
     await again.getState().init();
-    expect(again.getState().equipped).toEqual({ skinBySpecies: { tiger: 'white-tiger' }, blockThemeId: 'desert' });
+    expect(again.getState().equipped).toEqual({ skinsBySpecies: { tiger: ['white-tiger'] }, blockThemeId: 'desert' });
     await again.getState().equipSkin('tiger', 'default');
-    expect(again.getState().equipped.skinBySpecies).toEqual({});
+    expect(again.getState().equipped.skinsBySpecies).toEqual({});
+  });
+
+  it('chooses, toggles and adds skins in a species choice, saved (ADR-043)', async () => {
+    const storage = await seeded();
+    const s = shop(storage);
+    await s.getState().init();
+    await s.getState().buyItem('white-tiger');
+    await s.getState().chooseSkins('tiger', ['white-tiger', 'default']);
+    expect(s.getState().equipped.skinsBySpecies.tiger).toEqual(['white-tiger', 'default']);
+    await s.getState().toggleSkin('tiger', 'default');
+    expect(s.getState().equipped.skinsBySpecies.tiger).toEqual(['white-tiger']);
+    await s.getState().addSkin('tiger', 'default');
+    expect(s.getState().equipped.skinsBySpecies.tiger).toEqual(['white-tiger', 'default']);
+    expect(((await storage.load()).equipped as { skinsBySpecies: Record<string, string[]> }).skinsBySpecies.tiger).toEqual(['white-tiger', 'default']);
+  });
+
+  it('a reward animal of a species with several chosen skins arrives in one of them', async () => {
+    // Choose two skins for every species the seeded roll could give, then earn one animal.
+    const storage = createMemoryStorage();
+    const all = CATALOG.map((c) => c.id);
+    await storage.commit({ cosmeticsAdd: all.map((id, i) => ({ id: `g${i}`, kind: 'animalSkin' as const, defId: `golden:${id}`, acquiredAt: 0, source: 'shop' })) });
+    const h = harness(storage);
+    await h.get().init();
+    for (const id of all) await h.get().chooseSkins(id, ['default', `golden:${id}`]);
+    await h.get().startFocus();
+    h.clock.t += 30 * MIN;
+    await h.get().endFocus();
+    const animal = h.get().animals[0]!;
+    expect(['default', `golden:${animal.speciesId}`]).toContain(animal.skinId);
+    expect((await storage.load()).animals[0]!.skinId).toBe(animal.skinId);
   });
 
   it('dummy items live in memory only: owned, equipped and placed, never stored', async () => {
     const storage = await seeded();
     const own = (defId: string, kind: 'building' | 'blockTheme', i = 0) => ({ id: `d-${defId}-${i}`, kind, defId, acquiredAt: 0, source: 'dummy' });
-    const s = shop(storage, { sessions: [], inbox: [], cosmetics: [own('lantern', 'building'), own('fence', 'building'), own('snow', 'blockTheme')], equipped: { skinBySpecies: {}, blockThemeId: 'snow' }, buildings: ['lantern'] });
+    const s = shop(storage, { sessions: [], inbox: [], cosmetics: [own('lantern', 'building'), own('fence', 'building'), own('snow', 'blockTheme')], equipped: { skinsBySpecies: {}, blockThemeId: 'snow' }, buildings: ['lantern'] });
     await s.getState().init();
     expect(s.getState().equipped.blockThemeId).toBe('snow');
     expect(s.getState().placedBuildings.map((b) => b.defId)).toEqual(['lantern']);

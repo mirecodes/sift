@@ -78,10 +78,10 @@ export const strings = {
     moreThemes: 'More themes in the shop.',
     defaultSkin: 'Default',
     skinsOf: (name: string) => `${name} skins`,
-    equip: 'Equip',
-    equipped: 'Equipped',
-    openShop: 'Open shop',
     openSpecies: (name: string) => `${name}: choose a skin`,
+    skinsHint: 'Pick one or more. New arrivals wear one of them at random.',
+    selectAll: 'Select all owned',
+    buySkin: (name: string, price: number) => `${name}, ${price} gold. Buy`,
   },
   stats: {
     /** `0m`, `42m`, `1h 42m`, `2h 05m`. */
