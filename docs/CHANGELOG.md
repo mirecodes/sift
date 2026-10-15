@@ -8,6 +8,7 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Added** — Step 0.2: Settings → Data exports a versioned JSON backup of every store and imports one after validation, a summary and confirmation, replacing all local data in one transaction. New `FilesAdapter` (download / file picker). E2E covers export → fresh profile → import.
 - 2026-10-07 · **Fixed** — Step 0.1: `testMode` and `resetMapOnStart` are honored only in development builds; production forces both off. Committed `app.yaml` sets both to `false`. E2E smoke fixed for the 50-species catalog and checks that saved animals survive a reload.
 
 ## guidance_v1

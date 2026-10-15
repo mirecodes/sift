@@ -1,0 +1,16 @@
+.confirm {
+  margin-top: var(--space-lg);
+}
+.warning {
+  margin: var(--space-xs) 0 var(--space-2xl);
+  color: var(--color-body-mid);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+.error {
+  margin-top: var(--space-lg);
+  color: var(--color-accent-red);
+}

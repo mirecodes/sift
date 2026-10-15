@@ -14,6 +14,7 @@ import type { AnimalSpecies } from '../domain/animals/catalog';
 import { rollReward } from '../domain/reward/reward';
 import { islandSide, islandTiles, pickPlacementTile } from '../domain/island/island';
 import { clamp, type Rng } from '../domain/random';
+import { createBackup, type Backup } from '../domain/backup';
 import type { StorageAdapter } from '../platform/storage';
 import { createMemoryStorage } from '../platform/storage/memory';
 
@@ -43,6 +44,9 @@ export interface AppState {
   revealPending: string | null;
 
   init(): Promise<void>;
+  exportBackup(): Promise<Backup>;
+  /** Replaces all local data with a validated backup, atomically, and reloads the store. */
+  importBackup(backup: Backup): Promise<void>;
   startFocus(): Promise<void>;
   endFocus(): Promise<void>;
   abandonFocus(): Promise<void>;
@@ -102,6 +106,41 @@ export function createAppStore(initialDeps: AppDeps) {
     }
   }
 
+  /** Reads storage into the store. Developer switches apply only on the first start, never after an import. */
+  async function hydrate(devSwitches: boolean): Promise<Partial<AppState>> {
+    let loaded;
+    try {
+      loaded = await deps.storage.load();
+    } catch (error) {
+      console.warn('Sift: could not read storage, starting fresh in memory.', error);
+      deps.storage = createMemoryStorage();
+      loaded = await deps.storage.load();
+    }
+
+    const resetMap = devSwitches && deps.resetMap;
+    const settings = sanitizeSettings(loaded.settings);
+    let world = loaded.world;
+    let stored = loaded.animals;
+    if (resetMap || !world) {
+      world = { seed: Math.floor(deps.rng() * 2 ** 31) };
+      if (resetMap) stored = [];
+      await deps.storage.resetWorld(world).catch(() => undefined);
+    }
+
+    const phase = loaded.phase ?? IDLE;
+    const rewardId = phase.kind === 'break' ? phase.rewardId : undefined;
+    const revealPending = rewardId && stored.some((a) => a.id === rewardId) ? rewardId : null;
+
+    const animals = [...stored];
+    for (const species of devSwitches ? (deps.testSpecies ?? []) : []) {
+      const occupied = animals.map((a) => ({ x: a.tileX, z: a.tileZ }));
+      const tile = pickPlacementTile(islandTiles(world.seed, islandSide(animals.length + 1)), occupied, deps.rng);
+      if (tile) animals.push({ id: deps.uuid(), speciesId: species.id, tier: species.tier, tileX: tile.x, tileZ: tile.z, acquiredAt: 0, sessionId: 'test-mode' });
+    }
+
+    return { ready: true, settings, world, animals, sessions: loaded.sessions, phase, revealPending };
+  }
+
   return createStore<AppState>()((set, get) => ({
     ready: false,
     settings: DEFAULT_SETTINGS,
@@ -113,36 +152,16 @@ export function createAppStore(initialDeps: AppDeps) {
     revealPending: null,
 
     async init() {
-      let loaded;
-      try {
-        loaded = await deps.storage.load();
-      } catch (error) {
-        console.warn('Sift: could not read storage, starting fresh in memory.', error);
-        deps.storage = createMemoryStorage();
-        loaded = await deps.storage.load();
-      }
+      set(await hydrate(true));
+    },
 
-      const settings = sanitizeSettings(loaded.settings);
-      let world = loaded.world;
-      let stored = loaded.animals;
-      if (deps.resetMap || !world) {
-        world = { seed: Math.floor(deps.rng() * 2 ** 31) };
-        if (deps.resetMap) stored = [];
-        await deps.storage.resetWorld(world).catch(() => undefined);
-      }
+    async exportBackup() {
+      return createBackup(await deps.storage.exportAll(), deps.storage.schemaVersion, deps.now());
+    },
 
-      const phase = loaded.phase ?? IDLE;
-      const rewardId = phase.kind === 'break' ? phase.rewardId : undefined;
-      const revealPending = rewardId && stored.some((a) => a.id === rewardId) ? rewardId : null;
-
-      const animals = [...stored];
-      for (const species of deps.testSpecies ?? []) {
-        const occupied = animals.map((a) => ({ x: a.tileX, z: a.tileZ }));
-        const tile = pickPlacementTile(islandTiles(world.seed, islandSide(animals.length + 1)), occupied, deps.rng);
-        if (tile) animals.push({ id: deps.uuid(), speciesId: species.id, tier: species.tier, tileX: tile.x, tileZ: tile.z, acquiredAt: 0, sessionId: 'test-mode' });
-      }
-
-      set({ ready: true, settings, world, animals, sessions: loaded.sessions, phase, revealPending });
+    async importBackup(backup) {
+      await deps.storage.importAll(backup.data, backup.schemaVersion);
+      set(await hydrate(false));
     },
 
     async startFocus() {

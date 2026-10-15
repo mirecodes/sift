@@ -136,6 +136,7 @@ Capability APIs only through `src/platform/<name>/` (interface `index.ts`, web `
 | `FullscreenAdapter` | Fullscreen API | immersive mode |
 | `NotifyAdapter` | Web Audio chimes | scheduled local notification for focus end (JS may be suspended) |
 | `HapticsAdapter` | no-op | Capacitor Haptics |
+| `FilesAdapter` | download link / file picker | share sheet / document picker |
 
 - "Capability API" = storage, wake lock, fullscreen, audio/notifications, haptics. DOM events, `visibilitychange`, `matchMedia`, `Date.now` are fine in `ui/`, `screens/`, `world/` (ADR-010).
 - Write no untested native stubs before M7 (ADR-002).
@@ -157,6 +158,7 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 - Dexie tables: `kv` (settings, world, phase), `sessions`, `animals`. Schema **v3** (v2, v3 rename stored tiers).
 - Every change adds a new `db.version(n)` with an `upgrade`; never edit old versions.
 - UUID ids and UTC epoch-ms times, ready for future sync. The island itself is never stored (derived from seed + count).
+- **Backup** (Settings → Data): `{ format: 'sift-backup', version: 1, exportedAt, schemaVersion, data: { <store>: rows[] } }` with every store. `StorageAdapter.exportAll` / `importAll` are generic over stores; import validates (`domain/backup.ts`), then replaces all stores in one transaction. Backups from an older `schemaVersion` are upgraded with the same row migrations as the database.
 
 ## 9. Runtime config
 

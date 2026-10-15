@@ -59,6 +59,34 @@ describe('dexie storage', () => {
     expect(loaded.phase).toBeUndefined();
   });
 
+  it('exports every store and imports it into an empty database (backup roundtrip)', async () => {
+    const a = createDexieStorage(new SiftDB('export-src'));
+    await a.saveSettings({ focusMinutes: 30, breakMinutes: 10, soundEnabled: false, theme: 'dark' });
+    await a.saveWorld({ seed: 77 });
+    await a.commit({ session: { ...session, status: 'completed', rewardAnimalId: 'a1' }, animal, phase: startBreak(30, 300000, 'a1') });
+    const data = await a.exportAll();
+    expect(Object.keys(data).sort()).toEqual(['animals', 'kv', 'sessions']);
+
+    const b = createDexieStorage(new SiftDB('export-dst'));
+    await b.importAll(data, a.schemaVersion);
+    expect(await b.load()).toEqual(await a.load());
+  });
+
+  it('import replaces everything, or nothing when a row is bad', async () => {
+    const s = createDexieStorage(new SiftDB('import-atomic'));
+    await s.commit({ session, animal });
+    const before = await s.load();
+    await expect(s.importAll({ kv: [], sessions: [], animals: [{ ...animal, id: undefined }] }, s.schemaVersion)).rejects.toThrow();
+    expect(await s.load()).toEqual(before);
+
+    await s.importAll({ kv: [], sessions: [], animals: [] }, s.schemaVersion);
+    expect(await s.load()).toEqual({ animals: [], sessions: [] });
+  });
+
+  it('reports the schema version', () => {
+    expect(createDexieStorage(new SiftDB('verno')).schemaVersion).toBe(3);
+  });
+
   it('renames stored tiers when upgrading from schema 1 (ADR-026, ADR-027)', async () => {
     const old = new Dexie('tier-swap');
     old.version(1).stores({ kv: 'key', sessions: 'id, startedAt', animals: 'id, acquiredAt' });

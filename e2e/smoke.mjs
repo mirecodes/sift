@@ -102,6 +102,42 @@ await page.getByRole('button', { name: 'Close' }).click();
 await page.reload();
 await settle(1500);
 check('settings persist across a reload', (await page.locator('p', { hasText: /30 min focus/i }).count()) > 0);
+
+// Backup: export, then import into a fresh context (same as cleared site data).
+const exportFrom = async (p) => {
+  await p.getByRole('button', { name: 'Open settings' }).click();
+  const [download] = await Promise.all([p.waitForEvent('download'), p.getByRole('button', { name: 'Export', exact: true }).click()]);
+  const file = await download.path();
+  await p.getByRole('button', { name: 'Close' }).click();
+  return file;
+};
+const { readFile } = await import('node:fs/promises');
+const backupFile = await exportFrom(page);
+const original = JSON.parse(await readFile(backupFile, 'utf8'));
+check('export downloads a sift-backup v1 file', original.format === 'sift-backup' && original.version === 1);
+
+const fresh = await (await browser.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true })).newPage();
+fresh.on('pageerror', (e) => errors.push(e.message));
+await fresh.goto(URL);
+await fresh.waitForTimeout(1500);
+await fresh.getByRole('button', { name: 'Open settings' }).click();
+const [chooser] = await Promise.all([fresh.waitForEvent('filechooser'), fresh.getByRole('button', { name: 'Import…' }).click()]);
+await chooser.setFiles(backupFile);
+await fresh.waitForTimeout(500);
+check('import shows a summary before replacing', await fresh.getByText(/^Backup from .*: \d+ sessions?, 1 animal\.$/).isVisible());
+await fresh.getByRole('button', { name: 'Replace data' }).click();
+await fresh.waitForTimeout(500);
+await fresh.getByRole('button', { name: 'Close' }).click();
+await fresh.waitForTimeout(700);
+check('import restores settings', (await fresh.locator('p', { hasText: /30 min focus/i }).count()) > 0);
+const restored = JSON.parse(await readFile(await exportFrom(fresh), 'utf8'));
+check('import restores every store exactly', JSON.stringify(restored.data) === JSON.stringify(original.data));
+await fresh.reload();
+await fresh.waitForTimeout(1500);
+await fresh.getByRole('button', { name: 'Open collection' }).click();
+await fresh.waitForTimeout(700);
+check('imported island survives a reload', await fresh.getByText(collected).isVisible());
+
 check('no page errors', errors.length === 0);
 if (errors.length) console.log(errors.join('\n'));
 

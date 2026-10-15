@@ -32,6 +32,19 @@ export const strings = {
     breakLength: 'Break length',
     chimes: 'Chimes',
     minutes: 'min',
+    data: 'Data',
+    exportData: 'Export data',
+    exportButton: 'Export',
+    importData: 'Import data',
+    importButton: 'Import…',
+    backupSummary: (exportedAt: number, sessions: number, animals: number) =>
+      `Backup from ${new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(exportedAt)}: ` +
+      `${sessions} ${sessions === 1 ? 'session' : 'sessions'}, ${animals} ${animals === 1 ? 'animal' : 'animals'}.`,
+    replaceWarning: 'This replaces all data on this device.',
+    replace: 'Replace data',
+    cancel: 'Cancel',
+    backupInvalid: 'This file is not a Sift backup.',
+    backupNewer: 'This backup is from a newer version of Sift. Update Sift and try again.',
   },
   collection: {
     title: 'Collection',

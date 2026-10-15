@@ -5,6 +5,8 @@ import { SiftDB } from './schema';
 
 export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
   return {
+    schemaVersion: db.verno,
+
     async load(): Promise<PersistedState> {
       const [kv, animals, sessions] = await Promise.all([
         db.kv.toArray(),
@@ -20,6 +22,22 @@ export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
       if (world) state.world = world;
       if (phase) state.phase = phase;
       return state;
+    },
+
+    async exportAll() {
+      return db.transaction('r', db.tables, async () =>
+        Object.fromEntries(await Promise.all(db.tables.map(async (t) => [t.name, await t.toArray()] as const))),
+      );
+    },
+
+    async importAll(data) {
+      await db.transaction('rw', db.tables, async () => {
+        for (const table of db.tables) {
+          await table.clear();
+          const rows = data[table.name];
+          if (rows?.length) await table.bulkAdd(rows);
+        }
+      });
     },
 
     async saveSettings(settings) {

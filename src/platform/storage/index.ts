@@ -1,5 +1,6 @@
 import type { FocusSession, PlacedAnimal, Settings, WorldState } from '../../domain/types';
 import type { StoredPhase } from '../../domain/timer/phase';
+import type { BackupData } from '../../domain/backup';
 
 export interface PersistedState {
   settings?: Settings;
@@ -19,7 +20,13 @@ export interface Commit {
 }
 
 export interface StorageAdapter {
+  /** Schema version of the stored rows (backups record it). */
+  readonly schemaVersion: number;
   load(): Promise<PersistedState>;
+  /** Every row of every store. */
+  exportAll(): Promise<BackupData>;
+  /** Replaces every store with `data` (rows written with `schemaVersion`), in one transaction. */
+  importAll(data: BackupData, schemaVersion: number): Promise<void>;
   saveSettings(settings: Settings): Promise<void>;
   saveWorld(world: WorldState): Promise<void>;
   /** Replaces the world and deletes every placed animal, in one transaction. */

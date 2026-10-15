@@ -196,7 +196,10 @@ describe('persistence', () => {
 
   it('falls back to memory when storage fails', async () => {
     const broken: StorageAdapter = {
+      schemaVersion: 3,
       load: () => Promise.reject(new Error('blocked')),
+      exportAll: () => Promise.reject(new Error('blocked')),
+      importAll: () => Promise.reject(new Error('blocked')),
       saveSettings: () => Promise.reject(new Error('blocked')),
       saveWorld: () => Promise.reject(new Error('blocked')),
       resetWorld: () => Promise.reject(new Error('blocked')),
@@ -206,5 +209,41 @@ describe('persistence', () => {
     await h.get().init();
     await h.get().startFocus();
     expect(h.get().phase.kind).toBe('focus');
+  });
+});
+
+describe('backup', () => {
+  async function earnOne(h: ReturnType<typeof harness>) {
+    await h.get().init();
+    await h.get().updateSettings({ focusMinutes: 30, theme: 'dark' });
+    await h.get().startFocus();
+    h.clock.t += 31 * MIN;
+    await h.get().endFocus();
+    await h.get().goHome();
+  }
+
+  it('export then import into empty storage restores island, sessions and settings exactly', async () => {
+    const a = harness();
+    await earnOne(a);
+    const backup = await a.get().exportBackup();
+
+    const b = harness(createMemoryStorage(), 99);
+    await b.get().init();
+    await b.get().importBackup(backup);
+    for (const key of ['world', 'animals', 'sessions', 'settings', 'phase'] as const) expect(b.get()[key]).toEqual(a.get()[key]);
+    expect(await b.storage.exportAll()).toEqual(backup.data);
+  });
+
+  it('import replaces existing data instead of merging', async () => {
+    const a = harness();
+    await a.get().init();
+    const empty = await a.get().exportBackup();
+
+    const b = harness();
+    await earnOne(b);
+    await b.get().importBackup(empty);
+    expect(b.get().animals).toEqual([]);
+    expect(b.get().sessions).toEqual([]);
+    expect(b.get().world).toEqual(a.get().world);
   });
 });

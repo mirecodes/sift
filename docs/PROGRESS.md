@@ -9,7 +9,8 @@
 
 - [x] 0.1 Developer switches can never reach users
   - `resolveRuntimeConfig(file, import.meta.env.DEV)` gates both switches; unit-tested. Accept verified: prod build with both `true` → e2e animal survives reload.
-- [ ] 0.2 Export / import backup
+- [x] 0.2 Export / import backup
+  - `domain/backup.ts` + generic `exportAll`/`importAll` on both adapters, `FilesAdapter`, Settings → Data. E2E: export → new browser context → import → re-export identical.
 - [ ] 0.3 Schema v4 migration (§4.1)
 - [ ] 0.4 Tier rank everywhere (§2.8)
 - [ ] 0.5 Shared module + seeded RNG + balance config (§2.6, §2.7)
@@ -123,10 +124,14 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 0.2 · Settings → Data section and import confirmation card: layout and copy.
+
 ## Decisions taken by the agent
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
 - 0.1 · Guidance says next ADR is ADR-028, but ADR-028/029 already exist in `DECISIONS.md`; new ADRs start at ADR-030. · Avoid duplicate numbers.
+- 0.2 · Backups carry `schemaVersion`; a backup from a newer schema or format is rejected with "newer version" copy. · Old apps must never write rows they cannot read.
+- 0.2 · Developer switches (`resetMapOnStart`, `testMode`) are not re-applied after an import. · An import must restore data exactly.
 - 0.1 · Updated the stale e2e collection check (`/ 20` → `/ 50`). · The catalog grew to 50 in guidance_v1; this was not a weakened test.
 
