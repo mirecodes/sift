@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
-import { CATALOG } from '../../domain/animals/catalog';
+import { useMemo, useState } from 'react';
+import { CATALOG, type AnimalSpecies } from '../../domain/animals/catalog';
+import { SpeciesSheet, ThemePicker } from './Cosmetics';
 import { isActive } from '../../domain/animals/placed';
 import { runtimeConfig } from '../../app/runtimeConfig';
 import { computeStats, countBySpecies, formatDuration } from '../../domain/stats/stats';
@@ -34,6 +35,7 @@ export function CollectionScreen() {
   const stats = useMemo(() => computeStats(sessions, animals), [sessions, animals]);
   const counts = useMemo(() => countBySpecies(animals), [animals]);
   const onIsland = useMemo(() => countBySpecies(animals.filter(isActive)), [animals]);
+  const [open, setOpen] = useState<AnimalSpecies | null>(null);
 
   return (
     <div className={page.page}>
@@ -51,18 +53,32 @@ export function CollectionScreen() {
           <Stat label={strings.collection.animals} value={`${stats.collectedSpecies} / ${stats.totalSpecies}`} />
         </div>
 
+        {features.cosmetics && <ThemePicker />}
+
         <ul className={styles.grid}>
           {CATALOG.map((species) => {
             const count = counts.get(species.id) ?? 0;
+            const body = (
+              <>
+                <ItemSprite id={(features.cosmetics && skins[species.id]) || species.id} />
+                <p className={`${styles.name} type-display-xs`}>{species.name}</p>
+                <TierBadge rank={species.tierRank} />
+                {count > 1 && <p className={`${styles.count} type-caption`}>{strings.collection.count(count)}</p>}
+                {features.economy && <p className={`${styles.count} type-caption`}>{strings.collection.onIsland(onIsland.get(species.id) ?? 0)}</p>}
+              </>
+            );
             return (
               <li key={species.id}>
                 {count > 0 ? (
                   <TierCard rank={species.tierRank} className={styles.card}>
-                    <ItemSprite id={(features.cosmetics && skins[species.id]) || species.id} />
-                    <p className={`${styles.name} type-display-xs`}>{species.name}</p>
-                    <TierBadge rank={species.tierRank} />
-                    {count > 1 && <p className={`${styles.count} type-caption`}>{strings.collection.count(count)}</p>}
-                    {features.economy && <p className={`${styles.count} type-caption`}>{strings.collection.onIsland(onIsland.get(species.id) ?? 0)}</p>}
+                    {features.cosmetics ? (
+                      // With cosmetics the card opens the species sheet to choose a skin (Step 3.10).
+                      <button type="button" className={styles.cardButton} aria-label={strings.collection.openSpecies(species.name)} onClick={() => setOpen(species)}>
+                        {body}
+                      </button>
+                    ) : (
+                      body
+                    )}
                   </TierCard>
                 ) : (
                   <FeatureCard className={styles.card} aria-label={strings.collection.unknownAnimal}>
@@ -75,6 +91,7 @@ export function CollectionScreen() {
           })}
         </ul>
       </main>
+      {open && <SpeciesSheet species={open} onClose={() => setOpen(null)} />}
     </div>
   );
 }

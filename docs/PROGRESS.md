@@ -80,7 +80,8 @@
   - Mesh build with skin palette + overlay, cache per (species, skin), theme swap without rebuilding the terrain layout, buildings and ambient particles landed in 3.4 for the Studio; this step adds the equipped skin to the Break reward card and Collection cards and `world/voxel/geometry.test.ts` (7 tests). Island with dummy cosmetics checked in 3.7 (day/night).
 - [x] 3.9 Shop screen (built for continuous releases)
   - `domain/cosmetics/shop.ts` (tested: featured from the newest started release, skins only for earned species in catalog order, flag never sold, future release not featured, New for 14 days, leaves-in), `ShopScreen` + `Shop.module.css`, `ItemPreview`, HUD gold opens the Shop. Dev server with dummy data at 1280/390: sections, confirm sheet with turning preview, buy 208→178, Owned, Equip offered, no console errors. E2E 49/49 (×2): open shop, buy fence, sheet text, Owned ×1, gold −10, survives reload.
-- [ ] 3.10 Collection: choose skins and island theme
+- [x] 3.10 Collection: choose skins and island theme
+  - `skinChoices` / `ownedThemes` (tested), `screens/collection/Cosmetics.tsx` (`ThemePicker`, `SpeciesSheet`), cards become buttons with cosmetics on. Dev server with dummy data at 1280/390: picked Cherry Blossom → pink roof and petals on Home, Dog back to Default → brown dog, no console errors. E2E 51/51 (theme picker, species sheet).
 - [ ] 3.11 Build mode (placing buildings)
 - [ ] 3.12 Pathfinding for walking animals
 - [ ] 3.13 Animal placement with buildings
@@ -154,6 +155,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 3.10 · Collection theme picker and species sheet (rows with Equip / price + Open shop). `Open shop` lands at the top of the Shop, not at that skin.
 - 3.9 · Shop look (cards, badges, confirm sheet) at phone and desktop width. With many animals the skin section is long (5 families × every earned species) and pushes themes and buildings far down; consider grouping skins by species or a filter. Release dates are read as UTC midnight, so the Featured row and New badges start at 02:00 in Zurich.
 - 3.6 · Look of the launch content in `/studio`: theme colors (Autumn orange grass, Snow roof, Desert sand, Cherry pink roof), the 9 building models, the 5 family transforms (Golden, Snowy, Shadow, Pastel, Ghost) and the two handcrafted skins. Prices: themes 120–200, buildings 10–80, family skins 25–60 by tier, handcrafted 80.
 - 3.5 · Collection and Day detail now show isometric pixel-art sprites (48 px at 2×) instead of the flat front view (Q33 default "yes"). Each sprite fills its frame, so a chick looks as big as a tiger.

@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-10-08 · **Added** — Step 3.10: with `features.cosmetics` the Collection has an Island theme picker (owned themes, Default first; a tap re-themes the island at once) and collected cards open a species sheet: Default and every owned or for-sale skin, with Equip for owned ones and price + Open shop for the rest; equipping changes every animal of that species (DESIGN.md 7.5). E2E 51 checks.
+
 - 2026-10-08 · **Added** — Step 3.9: the Shop (with `features.cosmetics`), opened by tapping the gold counter on Home: Featured row from the newest release, Animal skins (only species you have earned), Island themes, Decorations & buildings by category; cards with sprite, New / Leaves-in badges, price and Buy / Owned / `Need 12 more`; a confirm sheet with a turning preview that buys (debit and item in one write), then offers Equip (skins, themes) or points to build mode (`balance.shop.newBadgeDays` = 14, `BALANCE_VERSION` 2026-10-08.2). `npm run e2e` builds with `cosmetics` too and buys a fence (49 checks) (DESIGN.md 7.7).
 
 - 2026-10-08 · **Added** — Step 3.8: rendering of skins and themes completed (the renderer pieces arrived with the Studio in 3.4): the Break reward card spins the new animal in its species' equipped skin and Collection cards show the equipped skin's sprite (with `features.cosmetics`). Tests cover the per-(species, skin) geometry cache, fallbacks for unknown skins and themes, family skins keeping eyes, overlays, per-theme block meshes, and equipped items reaching the island model.

@@ -58,3 +58,112 @@
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* Cosmetics (DESIGN.md 7.5). */
+.cardButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.eyebrow {
+  margin: var(--space-2xl) 0 var(--space-sm);
+  color: var(--color-body-mid);
+}
+.themes {
+  display: flex;
+  gap: var(--space-sm);
+  overflow-x: auto;
+  padding: 2px;
+}
+.theme {
+  flex: none;
+  width: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-xs);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.theme[aria-pressed='true'] {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+}
+.hint {
+  margin: var(--space-sm) 0 0;
+  color: var(--color-body-mid);
+}
+.sheet {
+  width: min(480px, calc(100% - 2 * var(--gutter)));
+  max-height: 80%;
+  margin: auto auto calc(var(--space-lg) + var(--safe-bottom));
+  padding: var(--card-padding);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  box-shadow: var(--elevation-4);
+  overflow-y: auto;
+}
+.sheet::backdrop {
+  background: var(--color-backdrop);
+}
+@media (min-width: 768px) {
+  .sheet {
+    margin: auto;
+  }
+}
+.sheetHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.sheetHead h2 {
+  margin: 0;
+}
+.sheetHead button {
+  margin-left: auto;
+}
+.skins {
+  list-style: none;
+  margin: var(--space-lg) 0 0;
+  padding: 0;
+}
+.skin {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--color-hairline);
+}
+.skinAction {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.skinAction .hint {
+  margin: 0;
+}
+.skinAction button {
+  white-space: nowrap;
+}
+.price {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-variant-numeric: tabular-nums;
+}

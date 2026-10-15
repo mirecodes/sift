@@ -308,8 +308,11 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 ### 7.5 Collection
 - Canvas, `display-md` title, card grid (1 / 3 / 4-up).
 - Collected: `card-tier`. Not collected: `card-feature` with silhouette and `???`.
-- **Card contents.** A 96px pixel-art sprite of the animal (front view, nearest-neighbor scaled), the name in `display-xs`, `badge-tier`, and a `caption` count `×3` when more than one is owned (all-time: departed animals still count). With the economy on, a second `caption` line `On island: 2` (0 when all have left). Silhouettes are solid `--color-mute-soft` shapes.
+- **Card contents.** A 96px pixel-art sprite of the animal (16.5; its equipped skin with cosmetics on), the name in `display-xs`, `badge-tier`, and a `caption` count `×3` when more than one is owned (all-time: departed animals still count). With the economy on, a second `caption` line `On island: 2` (0 when all have left). Silhouettes are solid `--color-mute-soft` shapes.
 - **Stats strip** above the grid: three `card-feature`s (`FOCUS TIME` as `12 h 40 min`, `SESSIONS`, `ANIMALS` as `7 / 50`), each with an `eyebrow` label and a `display-sm` value. Stacked 1-up on Mobile, 3-up from Tablet.
+- **With cosmetics** (`features.cosmetics`):
+  - **Island theme** between the stats strip and the grid: `eyebrow` `ISLAND THEME`, then a row of owned themes (Default first), each a 96px-wide button with the 48px theme sprite and its name in `caption`; the equipped one has a 2px `--color-primary` outline and `aria-pressed`. A tap equips it and the island changes at once. With only Default owned, a `body-sm` `--color-body-mid` line `More themes in the shop.` follows it.
+  - Collected cards are buttons that open the **species sheet** (the Day-detail `<dialog>`): `display-sm` name with its `badge-tier`, then one row per skin, Default first, then every skin of that species that is owned or for sale (sprite 48px, name `body-md-strong`). Right side: `Equipped` (`caption`, `--color-body-mid`) for the equipped one; `Equip` (`button-secondary`) for owned ones; for the rest the price (gold icon + number) and `Open shop` (`button-secondary`), which closes the sheet and opens the Shop. Equipping changes every animal of the species on the island at once.
 
 ### 7.6 Stats (tab)
 - Canvas tab page (6.7), `display-md` title `Stats`, content max width 720px. Plain HTML/CSS bars, no chart library; every control is a real button (keyboard reachable). Durations read `0m`, `42m`, `1h 42m`, `2h 05m`.

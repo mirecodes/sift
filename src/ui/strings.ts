@@ -74,6 +74,14 @@ export const strings = {
     count: (n: number) => `×${n}`,
     onIsland: (n: number) => `On island: ${n}`,
     unknownAnimal: 'Not collected yet',
+    theme: 'Island theme',
+    moreThemes: 'More themes in the shop.',
+    defaultSkin: 'Default',
+    skinsOf: (name: string) => `${name} skins`,
+    equip: 'Equip',
+    equipped: 'Equipped',
+    openShop: 'Open shop',
+    openSpecies: (name: string) => `${name}: choose a skin`,
   },
   stats: {
     /** `0m`, `42m`, `1h 42m`, `2h 05m`. */

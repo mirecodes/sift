@@ -164,6 +164,13 @@ await settle(1500);
 await page.getByRole('button', { name: 'Open collection' }).click();
 await settle();
 check('saved animals survive a reload (developer switches off in production)', await page.getByText(collected).isVisible());
+// Cosmetics (Phase 3): the theme picker shows the default theme equipped; a collected card opens its skins.
+check('the island theme picker shows Meadow equipped', (await page.getByRole('button', { name: 'Meadow', pressed: true }).count()) === 1);
+await page.getByRole('button', { name: /: choose a skin$/ }).first().click();
+await settle(400);
+check('a species sheet lists Default as equipped and skins to buy', (await page.getByRole('dialog').getByText('Equipped').count()) === 1 && (await page.getByRole('dialog').getByRole('button', { name: 'Open shop' }).count()) >= 5);
+await page.keyboard.press('Escape');
+await settle(300);
 await page.getByRole('button', { name: 'Close' }).click();
 
 // Day detail: today has two stopped sessions and one completed with a reward.

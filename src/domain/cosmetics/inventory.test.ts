@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { content } from '../content';
 import type { OwnedCosmetic } from '../types';
-import { buyProblem, DEFAULT_EQUIPPED, equipSkin, equipTheme, grantFor, ownedCount, owns, sanitizeEquipped, unplacedBuildings } from './inventory';
+import { buyProblem, DEFAULT_EQUIPPED, equipSkin, equipTheme, grantFor, ownedCount, ownedThemes, owns, sanitizeEquipped, skinChoices, unplacedBuildings } from './inventory';
 
 const own = (defId: string, kind: OwnedCosmetic['kind'], i = 0): OwnedCosmetic => ({ id: `${defId}-${i}`, kind, defId, acquiredAt: 0, source: 'shop' });
 const ctx = { now: Date.parse('2026-10-10'), clientVersion: '0.1.0', discovered: new Set(['tiger', 'fox']) };
@@ -61,6 +61,21 @@ describe('inventory (Step 3.7)', () => {
       blockThemeId: 'default',
     });
     expect(sanitizeEquipped(undefined, [])).toEqual(DEFAULT_EQUIPPED);
+  });
+
+  it('lists skin choices for a species: default, owned, then for sale (Step 3.10)', () => {
+    const owned = [own('white-tiger', 'animalSkin')];
+    const choices = skinChoices('tiger', owned, ctx.now, ctx.clientVersion);
+    expect(choices[0]).toEqual({ id: 'default', owned: true });
+    expect(choices.find((c) => c.id === 'white-tiger')).toEqual({ id: 'white-tiger', owned: true });
+    expect(choices.find((c) => c.id === 'golden:tiger')).toEqual({ id: 'golden:tiger', owned: false, price: 60 });
+    expect(choices).toHaveLength(7);
+    expect(skinChoices('fox', [], ctx.now, ctx.clientVersion).every((c) => c.id === 'default' || c.id.endsWith(':fox'))).toBe(true);
+  });
+
+  it('lists owned themes, Default first', () => {
+    expect(ownedThemes([])).toEqual(['default']);
+    expect(ownedThemes([own('cherry', 'blockTheme'), own('autumn', 'blockTheme')])).toEqual(['default', 'autumn', 'cherry']);
   });
 
   it('keeps items a newer pack removed from the shop usable', () => {

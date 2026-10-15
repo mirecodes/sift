@@ -76,6 +76,32 @@ export function equipTheme(equipped: Equipped, owned: readonly OwnedCosmetic[], 
   return { ...equipped, blockThemeId: themeId };
 }
 
+export interface SkinChoice {
+  /** Skin id, or `default`. */
+  id: string;
+  owned: boolean;
+  /** Price when it can be bought now (not owned, for sale). */
+  price?: number;
+}
+
+/**
+ * The Collection's species sheet (Step 3.10): Default first, then every skin of the species that is
+ * owned or for sale now, in content order. Skins neither owned nor for sale are left out.
+ */
+export function skinChoices(speciesId: string, owned: readonly OwnedCosmetic[], now: number, clientVersion: string): SkinChoice[] {
+  const forSale = new Set(content.listed('animalSkin', now, clientVersion).map((s) => s.id));
+  const skins = content
+    .all('animalSkin')
+    .filter((s) => s.speciesId === speciesId && (owns(owned, s.id) || forSale.has(s.id)))
+    .map((s): SkinChoice => (owns(owned, s.id) ? { id: s.id, owned: true } : { id: s.id, owned: false, price: s.price! }));
+  return [{ id: DEFAULT_SKIN, owned: true }, ...skins];
+}
+
+/** Themes the island can wear: Default, then owned themes in content order. */
+export function ownedThemes(owned: readonly OwnedCosmetic[]): string[] {
+  return content.all('blockTheme').filter((t) => owns(owned, t.id)).map((t) => t.id);
+}
+
 /** A stored `equipped` row cleaned against what is owned (a lost or unknown item falls back to the default). */
 export function sanitizeEquipped(input: Partial<Equipped> | undefined, owned: readonly OwnedCosmetic[]): Equipped {
   let out = DEFAULT_EQUIPPED;
