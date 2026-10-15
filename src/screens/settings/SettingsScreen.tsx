@@ -5,7 +5,8 @@ import { platform } from '../../platform';
 import { useApp } from '../../store';
 import { strings } from '../../ui/strings';
 import { Button, IconButton } from '../../ui/components/Button';
-import { SettingsRow, Stepper, Toggle } from '../../ui/components/Controls';
+import { runtimeConfig } from '../../app/runtimeConfig';
+import { Segmented, SettingsRow, Stepper, Toggle } from '../../ui/components/Controls';
 import { CloseIcon } from '../../ui/components/Icons';
 import { FeatureCard } from '../../ui/components/Surfaces';
 import { TopBar } from '../../ui/components/TopBar';
@@ -120,6 +121,23 @@ export function SettingsScreen() {
         <SettingsRow label={strings.settings.chimes}>
           <Toggle label={strings.settings.chimes} checked={settings.soundEnabled} onChange={(v) => void updateSettings({ soundEnabled: v })} />
         </SettingsRow>
+
+        {runtimeConfig.features.stats && (
+          <>
+            <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.settings.stats}</h2>
+            <SettingsRow label={strings.settings.weekStartsOn}>
+              <Segmented
+                label={strings.settings.weekStartsOn}
+                options={[
+                  { value: 1, label: strings.settings.monday },
+                  { value: 0, label: strings.settings.sunday },
+                ]}
+                value={settings.weekStartsOn}
+                onChange={(v) => void updateSettings({ weekStartsOn: v })}
+              />
+            </SettingsRow>
+          </>
+        )}
 
         <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.settings.data}</h2>
         <DataSection />

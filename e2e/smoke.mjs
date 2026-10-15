@@ -171,6 +171,15 @@ await tabs.getByRole('button', { name: 'Island' }).click();
 await settle();
 
 await page.getByRole('button', { name: 'Open settings' }).click();
+await page.getByRole('button', { name: 'Sunday' }).click();
+await page.getByRole('button', { name: 'Close' }).click();
+await tabs.getByRole('button', { name: 'Stats' }).click();
+await settle();
+const weekHead = page.getByRole('button', { name: /day \d+ \w+: / }).nth(daysInMonth);
+check('Week starts on Sunday reorders the week', (await weekHead.getAttribute('aria-label')).startsWith('Sunday'));
+await tabs.getByRole('button', { name: 'Island' }).click();
+await settle();
+await page.getByRole('button', { name: 'Open settings' }).click();
 await page.getByRole('button', { name: 'Increase Focus length' }).click();
 await page.getByRole('button', { name: 'Decrease Break length' }).click();
 await page.getByRole('button', { name: 'Close' }).click();

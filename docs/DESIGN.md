@@ -235,6 +235,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 | `stepper` | `number-input` between two `button-secondary` (− / +) |
 | `toggle` | 44×24, `--radius-full`; on `--color-primary`, off `--color-hairline` |
 | `settings-row` | `body-md` label, control right-aligned, 1px hairline divider |
+| `segmented` | Two or more `button` options side by side in a 1px hairline frame, `--radius-sm`, each min 44px tall, `body-sm-strong`; selected = `--color-primary` fill with white text (`aria-pressed`) |
 
 ### 6.5 Top Bar (Home, Settings, Collection)
 - Transparent over the island (Home) or canvas (others), padding `--space-lg` `--space-3xl`.
@@ -291,6 +292,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - Canvas, `display-md` title, `settings-row`s grouped under `eyebrow` labels (`TIMER`, `SOUND`).
 - `TIMER`: `Focus length` and `Break length` as `stepper`s in minutes (focus 5–60 step 5, break 1–30 step 1), with a `body-sm` `--color-body-mid` unit label `min`.
 - `SOUND`: `Chimes` as a `toggle`.
+- `STATS` (only with the Stats tab): `Week starts on` as a `segmented` control `Monday` / `Sunday` (default Monday).
 - `DATA`: `Export data` and `Import data` rows, each with a `button-secondary` (`Export`, `Import…`). Picking a file shows a `card-feature` below the rows: `body-md` summary (`Backup from 7 Oct 2026: 12 sessions, 8 animals.`), `body-sm` `--color-body-mid` warning `This replaces all data on this device.`, then `button-primary` `Replace data` and `button-secondary` `Cancel`. An unreadable file shows a `body-sm` `--color-accent-red` line in the same place instead.
 - Content is a single column, max width 560px, centered; changes save immediately (no save button).
 

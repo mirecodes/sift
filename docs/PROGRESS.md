@@ -40,7 +40,8 @@
   - `MonthCalendar` + pure `heatLevel` (tested); compact `1h38` time so cells fit 390px. E2E: one button per day of the month + 7 week days. 33/33 e2e (×2).
 - [x] 1.6 Day detail
   - `DayDetail` (native `<dialog>`: focus trap, Esc), pure `sessionsOnDay` / `countsInStats` (tested). E2E: today = 1 counted session; sheet shows 3 rows, 2 "Stopped after", 1 reward; Esc closes. 36/36 e2e (×2).
-- [ ] 1.7 Settings
+- [x] 1.7 Settings
+  - `Segmented` control; STATS group only with `features.stats`. Store test (default Monday, Sunday persists, invalid → Monday); e2e: Sunday reorders the week. E2E 37/37 (×3); flags-off production build checked: no tab bar, no Stats setting. **Phase 1 complete; awaiting owner gate.**
 
 ## Phase 2 — Gold economy (F3)
 

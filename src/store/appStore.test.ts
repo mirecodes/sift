@@ -356,6 +356,19 @@ describe('persistence', () => {
     expect(h.get().settings).toMatchObject({ focusMinutes: 60, breakMinutes: 1 });
   });
 
+  it('week start defaults to Monday, saves Sunday, and rejects other values (Step 1.7)', async () => {
+    const storage = createMemoryStorage();
+    const h = harness(storage);
+    await h.get().init();
+    expect(h.get().settings.weekStartsOn).toBe(1);
+    await h.get().updateSettings({ weekStartsOn: 0 });
+    const again = harness(storage);
+    await again.get().init();
+    expect(again.get().settings.weekStartsOn).toBe(0);
+    await again.get().updateSettings({ weekStartsOn: 5 as 0 });
+    expect(again.get().settings.weekStartsOn).toBe(1);
+  });
+
   it('falls back to memory when storage fails', async () => {
     const broken: StorageAdapter = {
       schemaVersion: 3,

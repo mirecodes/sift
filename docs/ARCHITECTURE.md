@@ -57,7 +57,7 @@ stateDiagram-v2
 | Home | Island with idle animals; limited rotate/zoom; current cycle + Start focus; top bar (theme, collection, settings) |
 | Focus | Fullscreen + wake lock. Near-black overlay over the island as it was at focus start. Large timer only. Hidden "Hold to stop" (1.5 s long press) shows for 3 s on pointer move. At planned time: count-up `+05:23`, one chime, permanent End focus button |
 | Break | Reward reveal (card fades in, model spins, tier chime; after 3.5 s or tap the animal joins the island; buttons usable throughout, ADR-011) or a neutral no-reward message. Break countdown, then "Ready for the next one?" with chime. Never auto-starts focus |
-| Settings | Focus 5–60 min (step 5), break 1–30 min, chimes toggle; saves instantly |
+| Settings | Focus 5–60 min (step 5), break 1–30 min, chimes toggle, week starts on Monday/Sunday (only with `features.stats`); saves instantly |
 | Inbox | Deferred notices (`domain/inbox`, store `inbox`, Dexie `inbox`): queued at any time, shown one at a time (oldest first) as a `NoticeCard` on Home and Break only; `dismissNotice` is a no-op while focusing, `selectCurrentNotice` returns nothing during Focus. Visual events tied to a notice play when it is shown, not when the data changed (ADR-035) |
 | Tabs | Island (Home/Focus/Break + Settings/Collection pages), Stats, Friends, Group; non-Island tabs appear only with their feature flag, and with one tab there is no tab bar. `activeTab` lives in the store, in memory only (every launch opens on Island). Focus always runs on Island and hides the tab bar; `setTab` is ignored while focusing, and leaving Island ends a running reveal. Space and hold-Esc exist only on Island screens. Other tabs cover the canvas, which stays mounted with `frameloop="never"`; during a break they show a pill with the break timer (ADR-036) |
 | Stats | `domain/stats/days.ts`: `aggregateByDay(sessions, { timeZone, from, to })` → one `DayStat` per day (zeros included); `monthSummary(days, { today })`. Only `completed` sessions count (`balance.stats.includeAbandoned`); minutes = real `endedAt − startedAt` (not the reward cap); a session belongs to the local day it **started** in the user's current time zone. Daily average = month total ÷ days elapsed (through today in the current month, all days in past months). Epoch → local date via `Intl.DateTimeFormat`; calendar math on `YYYY-MM-DD` strings in UTC (ADR-037) |
@@ -224,6 +224,7 @@ src/
 | M5 | Animals (now 50), idle animations, reward reveal | Done |
 | M6 | Collection, stats, responsive layout | Done |
 | M7 | Mobile: Capacitor, native adapters, local notifications | Not started |
+| M8 | Stats & tabs (guidance_v2 Phase 1): tab shell, per-day stats, overview, week, month calendar, day detail | Done, behind `features.stats` |
 
 **Rules for the agent**
 - Every `domain/` module has Vitest tests (time math, 25 min threshold, 60 min cap, probabilities sum to 1, island size and monotonicity).
@@ -242,7 +243,7 @@ src/
 | Q6 | Long breaks | Not supported |
 | Q7 | Arrange animals | No; poke only |
 | Q8 | Non-animal rewards | No |
-| Q9 | Stats | All-time totals only |
+| Q9 | Stats | Collection: all-time totals; Stats tab: daily, weekly, monthly (ADR-037) |
 | Q10 | Accounts / sync | Local only, schema ready |
 | Q11 | Mobile approach | Capacitor |
 

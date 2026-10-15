@@ -44,6 +44,25 @@
   min-width: 28px;
 }
 
+.segmented {
+  display: flex;
+  padding: var(--space-xxs);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+}
+.segmented button {
+  min-height: 40px;
+  padding: 0 var(--space-lg);
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-ink);
+}
+.segmented button[aria-pressed='true'] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
 .toggle {
   position: relative;
   width: 44px;

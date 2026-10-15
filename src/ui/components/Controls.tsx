@@ -69,6 +69,19 @@ export function Stepper({ label, value, min, max, step, unit, onChange }: Steppe
   );
 }
 
+/** `segmented`: one choice out of a few, as pressed/unpressed buttons. */
+export function Segmented<T extends string | number>({ label, options, value, onChange }: { label: string; options: readonly { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  return (
+    <div role="group" aria-label={label} className={styles.segmented}>
+      {options.map((o) => (
+        <button key={String(o.value)} type="button" className="type-body-sm-strong" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button type="button" role="switch" aria-checked={checked} aria-label={label} className={styles.toggle} onClick={() => onChange(!checked)}>
