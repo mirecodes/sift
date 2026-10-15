@@ -1,15 +1,15 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import { MeshLambertMaterial, type Group } from 'three';
-import { modelById, animalGeometry, VOXEL_SIZE } from '../voxel/geometry';
+import { animalGeometry, skinnedModel, VOXEL_SIZE } from '../voxel/geometry';
 import { ELEVATION } from '../camera/CameraRig';
 import { lighting } from '../palette';
 
 const material = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
 
-function Spinner({ modelId, reducedMotion }: { modelId: string; reducedMotion: boolean }) {
+function Spinner({ modelId, skinId, reducedMotion }: { modelId: string; skinId?: string; reducedMotion: boolean }) {
   const group = useRef<Group>(null);
-  const geometry = useMemo(() => animalGeometry(modelId), [modelId]);
+  const geometry = useMemo(() => animalGeometry(modelId, skinId), [modelId, skinId]);
   useFrame((_, delta) => {
     if (group.current && !reducedMotion) group.current.rotation.y += (Math.PI * 2 * Math.min(delta, 0.1)) / 8; // one turn per 8s
   });
@@ -20,9 +20,9 @@ function Spinner({ modelId, reducedMotion }: { modelId: string; reducedMotion: b
   );
 }
 
-/** Small transparent canvas that shows one animal rotating slowly (Break reward card). */
-export function RewardModel({ modelId, height = 160, reducedMotion }: { modelId: string; height?: number; reducedMotion: boolean }) {
-  const model = modelById(modelId);
+/** Small transparent canvas that shows one animal rotating slowly (Break reward card, shop previews). */
+export function RewardModel({ modelId, skinId, height = 160, reducedMotion }: { modelId: string; skinId?: string; height?: number; reducedMotion: boolean }) {
+  const model = skinnedModel(modelId, skinId);
   const worldHeight = model.size[1] * VOXEL_SIZE;
   // Worst case over the rotation: height plus the footprint diagonal seen at the camera elevation.
   const diagonal = Math.hypot(model.size[0], model.size[2]) * VOXEL_SIZE;
@@ -43,7 +43,7 @@ export function RewardModel({ modelId, height = 160, reducedMotion }: { modelId:
       >
         <ambientLight intensity={lighting.ambient * k} />
         <directionalLight position={[dx * 10, dy * 10, dz * 10]} intensity={lighting.directional * k} />
-        <Spinner modelId={modelId} reducedMotion={reducedMotion} />
+        <Spinner modelId={modelId} skinId={skinId} reducedMotion={reducedMotion} />
       </Canvas>
     </div>
   );

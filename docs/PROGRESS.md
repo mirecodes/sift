@@ -76,7 +76,8 @@
   - `content/{blockThemes,buildings,skinFamilies,skins,releases}/v2-launch.json` + 9 DSL models in `content/models/buildings/`; 316 sprites regenerated; `content:validate` clean. Test: themes, buildings (presets, water, light, flag not sold), 5×50 family skins, handcrafted skins, release and featured ids. Checked in the Studio: windmill sails spin and its placement is refused over the stream, Snow/Cherry particles and roofs, Ghost lavender (first try matched Snowy), no console errors.
 - [x] 3.7 Inventory and equip (domain + store)
   - `domain/cosmetics/inventory.ts` + store (`cosmetics`, `equipped`, `placedBuildings`, `buyItem`, `equipSkin`, `equipTheme`), storage load/commit for items, equipped and buildings, `APP_VERSION`. Tests: defaults always owned, instance counts and tray, buy once vs many, refusals (unknown, not for sale, species not found, short gold) change nothing, equip rules, reload keeps equipped, sanitize drops lost items, retired items still equip, dummy items memory-only. Dev server with dummy data + economy + cosmetics: Autumn theme, golden dog, night unicorn, windmill, lantern, tree and flower bed on the island, day and night, no console errors.
-- [ ] 3.8 Rendering skins and themes
+- [x] 3.8 Rendering skins and themes
+  - Mesh build with skin palette + overlay, cache per (species, skin), theme swap without rebuilding the terrain layout, buildings and ambient particles landed in 3.4 for the Studio; this step adds the equipped skin to the Break reward card and Collection cards and `world/voxel/geometry.test.ts` (7 tests). Island with dummy cosmetics checked in 3.7 (day/night).
 - [ ] 3.9 Shop screen (built for continuous releases)
 - [ ] 3.10 Collection: choose skins and island theme
 - [ ] 3.11 Build mode (placing buildings)

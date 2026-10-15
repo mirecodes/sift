@@ -29,6 +29,8 @@ export function CollectionScreen() {
   const animals = useApp((s) => s.animals);
   const sessions = useApp((s) => s.sessions);
   const setView = useApp((s) => s.setView);
+  // Cards show the equipped skin of each species (Step 3.8).
+  const skins = useApp((s) => s.equipped.skinBySpecies);
   const stats = useMemo(() => computeStats(sessions, animals), [sessions, animals]);
   const counts = useMemo(() => countBySpecies(animals), [animals]);
   const onIsland = useMemo(() => countBySpecies(animals.filter(isActive)), [animals]);
@@ -56,7 +58,7 @@ export function CollectionScreen() {
               <li key={species.id}>
                 {count > 0 ? (
                   <TierCard rank={species.tierRank} className={styles.card}>
-                    <ItemSprite id={species.id} />
+                    <ItemSprite id={(features.cosmetics && skins[species.id]) || species.id} />
                     <p className={`${styles.name} type-display-xs`}>{species.name}</p>
                     <TierBadge rank={species.tierRank} />
                     {count > 1 && <p className={`${styles.count} type-caption`}>{strings.collection.count(count)}</p>}

@@ -3,6 +3,7 @@ import { config } from '../../domain/config';
 import { getSpecies } from '../../domain/animals/catalog';
 import { formatTimer, resolvePhase, timerDisplay } from '../../domain/timer/phase';
 import { platform } from '../../platform';
+import { runtimeConfig } from '../../app/runtimeConfig';
 import { useApp } from '../../store';
 import { useNow, usePrefersReducedMotion, useSpaceKey } from '../../ui/hooks';
 import { strings } from '../../ui/strings';
@@ -13,6 +14,8 @@ import { RewardModel } from '../../world/preview/RewardModel';
 import { NoticeCard } from '../NoticeCard';
 import layer from '../Screen.module.css';
 import styles from './BreakScreen.module.css';
+
+const { features } = runtimeConfig;
 
 /**
  * A lighter chime when the break ends while the app is open (on any tab). Returns the resolved
@@ -49,6 +52,8 @@ export function BreakScreen() {
   const rewardId = phase.kind === 'break' ? phase.rewardId : undefined;
   const animal = rewardId ? animals.find((a) => a.id === rewardId) : undefined;
   const species = animal ? getSpecies(animal.speciesId) : undefined;
+  // The new animal wears its species' equipped skin, as it will on the island (Step 3.8).
+  const skinId = useApp((s) => (features.cosmetics && species ? s.equipped.skinBySpecies[species.id] : undefined));
 
   // Reveal: tier chime once, then the animal joins the island after the reveal time (or on tap).
   const revealId = useRef<string | null>(null);
@@ -79,7 +84,7 @@ export function BreakScreen() {
             title={revealPending ? strings.aria.revealSkip : undefined}
           >
             <TierBadge rank={animal.tierRank} />
-            <RewardModel modelId={species.modelId} reducedMotion={reducedMotion} />
+            <RewardModel modelId={species.modelId} skinId={skinId} reducedMotion={reducedMotion} />
             <p className={`${styles.name} type-display-lg`}>{species.name}</p>
           </TierCard>
         ) : (
