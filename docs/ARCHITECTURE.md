@@ -197,14 +197,17 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 docs/            ARCHITECTURE, DESIGN, DECISIONS (human log), CHANGELOG, PROJECT_STATUS, guidance_vN
 config/app.yaml  runtime config
 e2e/             Playwright smoke test
+content/         data only (ADR-041): pack.json (contentVersion), species/, skins/, skinFamilies/, blockThemes/, buildings/, releases/
+tools/           node tools run through Vite's module runner (`node tools/run.mjs <file.ts>`): content-build/
 shared/          pure rules that must run identically on client and server (ADR-031)
 ├── balance/     balance.ts: gameplay tunables + BALANCE_VERSION
+├── content/     palette keys, model JSON type, zod schemas, buildPack (validation + family expansion)
 ├── rng/         the one seeded PRNG (mulberry32) + hash01, clamp, lerp
 └── rules/       tier.ts, reward.ts, placement.ts, expiry.ts (later scoring, war, …)
 src/
 ├── app/         App, routing, runtimeConfig.ts
 ├── screens/     home, focus, break, settings, collection, stats; TabPage, NoticeCard
-├── domain/      pure logic: config, types, random, timer/, reward/, animals/, island/ (+stream), stats/
+├── domain/      pure logic: config, types, random, timer/, reward/, animals/, island/ (+stream), stats/, content/ (registry + baseline pack)
 ├── world/       Scene, IslandScene, Clouds, RenderDriver, palette, voxel/, island/, animals/, camera/, props/ (camp), stream/, preview/
 ├── assets/voxels/  animal models + builder
 ├── store/       Zustand store
@@ -214,7 +217,8 @@ src/
 ```
 
 - `shared/` imports only `shared/` (relative paths), uses no browser/Node/Deno globals, never calls `Math.random()` or `Date.now()` (inject `Rng` and `now`); `shared/shared.test.ts` enforces this.
-- `domain/` imports only itself and `shared/` (`domain/random.ts` re-exports `shared/rng`). `world/` and `screens/` may use `domain/`, `shared/` and `store/`; `world/` may also import `ui/strings` for text drawn in the scene (poke label). Capability APIs only in `platform/`.
+- `shared/` may import one package, `zod` (content schemas, ADR-041).
+- `domain/` imports only itself and `shared/` (`domain/random.ts` re-exports `shared/rng`); the one exception is `domain/content/baseline.ts`, which bundles the data under `content/` and the built-in models in `src/assets/voxels`. Game code reads species, skins, themes and buildings only through `domain/content` (`content` registry), never by importing an item file. `world/` and `screens/` may use `domain/`, `shared/` and `store/`; `world/` may also import `ui/strings` for text drawn in the scene (poke label). Capability APIs only in `platform/`.
 
 ## 11. Milestones
 

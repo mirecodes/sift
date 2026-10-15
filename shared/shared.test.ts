@@ -20,6 +20,8 @@ describe('shared/ stays portable (guidance_v2 §2.7)', () => {
     const code = readFileSync(path as string, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
     expect(code).not.toMatch(/Math\.random|Date\.now|\bwindow\b|\bdocument\b|\blocalStorage\b|\bindexedDB\b|\bprocess\.|\bDeno\b/);
     for (const [, spec] of code.matchAll(/from '([^']+)'/g)) {
+      // zod is the one allowed package: content schemas (guidance_v2 §3, `shared/content/schema.ts`).
+      if (spec === 'zod') continue;
       expect(spec?.startsWith('.'), `${spec} must be a relative import`).toBe(true);
       expect(resolve(dirname(path as string), spec as string).startsWith(ROOT), `${spec} leaves shared/`).toBe(true);
     }

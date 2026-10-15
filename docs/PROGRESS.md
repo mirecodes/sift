@@ -62,7 +62,8 @@
 
 - [x] 3.0 Palette keys in voxel models (prerequisite)
   - Owner approved the Phase 2 gate by requesting Phase 3. Model palettes are `index → [key, color]` (`defineModel` emits `keys` + default `palette`); `resolveColors` applies a palette override. Terrain/camp colors in `defaultBlocks`. Parity: resolved `[x,y,z,color]` of all 50 models + butterfly parts and terrain colors byte-identical before/after. New test: every model uses known keys, `eye` is `#1E1E1E`.
-- [ ] 3.1 Content format, registry and packs
+- [x] 3.1 Content format, registry and packs
+  - `content/` JSON + `shared/content/{schema,pack,model,color}.ts` + `domain/content/{registry,baseline}.ts` + `npm run content:build`. Tests: all shipped content accepted, error collection (duplicate id, missing model, missing locale, bad color, unknown release/preset), registry merge (newer wins, older ignored, removed = retired but renderable), availability window + `minClientVersion`, family expansion (50 stable ids, tier prices, overrides). `CATALOG` dumped before/after: identical. E2E 44/44. ADR-041.
 - [ ] 3.2 Behavior presets
 - [ ] 3.3 Authoring paths
 - [ ] 3.4 Content Studio (development builds only)
@@ -164,6 +165,11 @@
 ## Decisions taken by the agent
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
+
+- 3.1 · Species models stay TypeScript builder files in `src/assets/voxels` (model ref `species/<id>`); only the catalog data moved to `content/species/*.json` (one file per tier). · Models are code-authored (Step 3.3 DSL path); moving 50 files gains nothing.
+- 3.1 · The app builds its baseline pack at startup from `content/**/*.json` (`import.meta.glob`) instead of loading a generated pack file; `content:build` emits the same pack for publishing. · No committed build output that can drift from the sources.
+- 3.1 · `shared/shared.test.ts` allows exactly one package import, `zod`. · The guidance puts zod schemas in `shared/content/schema.ts`.
+- 3.1 · Species are not shop items: their schema has no price or availability fields. · Animals are earned, never bought.
 
 - 2.6 · Time left: whole days rounded from 36 h (`7d left` right after earning), hours below, `<1h left` last. · Floor would show `6d` for a brand-new animal.
 - 2.6 · `On island: n` shows only with the economy on. · Without departures it always equals the count.
