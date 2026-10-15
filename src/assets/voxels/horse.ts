@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Horse: chestnut body, long legs, dark mane, tail and hooves. Long body (8 deep).
 export const horse = defineModel([3, 9, 8], {
-  1: '#A0522D', // coat
-  2: '#3B2416', // mane, tail, hooves
-  3: '#1E1E1E', // eye
-  4: '#C97A4A', // muzzle
+  1: ['body', '#A0522D'], // coat
+  2: ['mane', '#3B2416'], // mane, tail, hooves
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['muzzle', '#C97A4A'], // muzzle
 }, (b) => {
   b.boxM(0, 0, 1, 1, 3, 1, 1); // hind legs
   b.boxM(0, 0, 6, 1, 3, 1, 1); // front legs

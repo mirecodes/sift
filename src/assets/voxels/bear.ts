@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Bear: big heavy dark brown body (8 deep), light muzzle, small round ears.
 export const bear = defineModel([5, 9, 8], {
-  1: '#5E3B20', // fur
-  2: '#B98552', // muzzle
-  3: '#1E1E1E', // eye, nose
+  1: ['body', '#5E3B20'], // fur
+  2: ['muzzle', '#B98552'], // muzzle
+  3: ['eye', '#1E1E1E'], // eye, nose
 }, (b) => {
   b.boxM(0, 0, 0, 2, 2, 2, 1); // hind legs
   b.boxM(0, 0, 6, 2, 2, 2, 1); // front legs

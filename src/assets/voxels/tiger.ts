@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Tiger: orange with black stripes, white muzzle and a 王-style mark on the forehead. Long body (8 deep).
 export const tiger = defineModel([5, 12, 8], {
-  1: '#F28C28', // fur
-  2: '#1E1E1E', // stripes, eyes, forehead mark
-  3: '#FFFFFF', // muzzle, belly
-  4: '#F4A6B7', // nose
+  1: ['body', '#F28C28'], // fur
+  2: ['eye', '#1E1E1E'], // stripes, eyes, forehead mark
+  3: ['belly', '#FFFFFF'], // muzzle, belly
+  4: ['nose', '#F4A6B7'], // nose
 }, (b) => {
   b.boxM(0, 0, 1, 2, 4, 2, 1); // hind legs
   b.boxM(0, 0, 5, 2, 4, 2, 1); // front legs

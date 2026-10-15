@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { PALETTE_KEYS } from '../../../shared/content/palette';
 import { CATALOG } from '../../domain/animals/catalog';
 import { voxelModels } from './index';
 
@@ -31,14 +32,19 @@ describe('voxel models (DESIGN.md 16)', () => {
         expect(x).toBeLessThan(W);
         expect(y).toBeLessThan(H);
         expect(z).toBeLessThan(D);
-        expect(model.palette[c]).toBeDefined();
+        expect(model.palette[model.keys[c]!]).toBeDefined();
       }
     });
 
     it('respects the palette budget and has an eye', () => {
       const colors = Object.values(model.palette);
       expect(colors.length).toBeLessThanOrEqual(species.tier === 'legendary' ? 8 : 6);
-      expect(colors.map((c) => c.toUpperCase())).toContain('#1E1E1E');
+      expect(model.palette.eye?.toUpperCase()).toBe('#1E1E1E');
+    });
+
+    it('paints with named palette keys only (Step 3.0)', () => {
+      expect(Object.keys(model.keys).length).toBe(Object.keys(model.palette).length);
+      for (const key of Object.values(model.keys)) expect(PALETTE_KEYS).toContain(key);
     });
 
     it('has no duplicate voxel positions', () => {

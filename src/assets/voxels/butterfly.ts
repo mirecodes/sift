@@ -1,15 +1,15 @@
-import { defineModel, type VoxelBuilder } from './builder';
+import { defineModel, type ModelPalette, type VoxelBuilder } from './builder';
 
 // Butterfly: flat, wings spread in the horizontal plane (seen from above by the isometric camera).
 // `butterfly` is the rest pose used by sprites and the reward card; the world draws `butterflyBody`
 // and two `butterflyWing` meshes instead so the wings can flap (ADR-024).
-const palette = {
-  1: '#FF9A3C', // upper wings
-  2: '#7EC8FF', // lower wings
-  3: '#3A2A22', // body
-  4: '#FFFFFF', // wing spot
-  5: '#1E1E1E', // eyes, antennae
-} as const;
+const palette: ModelPalette = {
+  1: ['wing', '#FF9A3C'], // upper wings
+  2: ['accent', '#7EC8FF'], // lower wings
+  3: ['body', '#3A2A22'], // body
+  4: ['accent2', '#FFFFFF'], // wing spot
+  5: ['eye', '#1E1E1E'], // eyes, antennae
+};
 
 /** One wing with the inner edge at x = 1: scalloped upper (orange) and lower (sky) lobes. `m` also draws the mirror. */
 const wing = (b: VoxelBuilder, y: number, m: boolean) => {

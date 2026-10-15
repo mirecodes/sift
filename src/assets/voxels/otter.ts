@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Otter: dark brown, sitting up with a pink clam shell held on its belly.
 export const otter = defineModel([4, 6, 5], {
-  1: '#6B4A32', // fur
-  2: '#D7B58E', // belly, muzzle
-  3: '#1E1E1E', // eye
-  4: '#F4A6B7', // clam shell
+  1: ['body', '#6B4A32'], // fur
+  2: ['belly', '#D7B58E'], // belly, muzzle
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['prop', '#F4A6B7'], // clam shell
 }, (b) => {
   b.box(0, 0, 0, 4, 3, 4, 1); // body
   b.box(1, 1, 3, 2, 2, 1, 2); // belly

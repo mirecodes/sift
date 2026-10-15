@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Crab: vermilion body, raised open claws on both sides, eyes on top.
 export const crab = defineModel([6, 4, 5], {
-  1: '#F0563B', // shell
-  2: '#C93A28', // legs, claws
-  3: '#1E1E1E', // eye
+  1: ['body', '#F0563B'], // shell
+  2: ['accent', '#C93A28'], // legs, claws
+  3: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(0, 0, 1, 2, 1, 1, 2); // legs
   b.boxM(0, 0, 3, 2, 1, 1, 2);

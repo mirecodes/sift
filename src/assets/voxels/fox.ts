@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Fox: orange body, white chest and tail tip, dark legs and ear tips.
 export const fox = defineModel([3, 7, 6], {
-  1: '#E8702A', // fur
-  2: '#FFFFFF', // chest, muzzle, tail tip
-  3: '#3A2A22', // legs, ears, nose
-  4: '#1E1E1E', // eye
+  1: ['body', '#E8702A'], // fur
+  2: ['belly', '#FFFFFF'], // chest, muzzle, tail tip
+  3: ['accent', '#3A2A22'], // legs, ears, nose
+  4: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(0, 0, 2, 1, 2, 1, 3); // hind legs
   b.boxM(0, 0, 4, 1, 2, 1, 3); // front legs

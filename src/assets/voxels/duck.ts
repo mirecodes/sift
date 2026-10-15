@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Duck: yellow body with darker wings, orange bill and feet.
 export const duck = defineModel([4, 5, 5], {
-  1: '#FFD93D', // body
-  2: '#FF8C42', // bill, feet
-  3: '#1E1E1E', // eye
-  4: '#F2C230', // wings
+  1: ['body', '#FFD93D'], // body
+  2: ['beak', '#FF8C42'], // bill, feet
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['wing', '#F2C230'], // wings
 }, (b) => {
   b.boxM(1, 0, 1, 1, 1, 2, 2); // feet
   b.box(0, 1, 0, 4, 2, 4, 1); // body

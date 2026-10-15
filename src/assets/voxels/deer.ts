@@ -2,11 +2,11 @@ import { defineModel } from './builder';
 
 // Deer: tan body with white belly and spots, long legs, branching antlers.
 export const deer = defineModel([3, 10, 6], {
-  1: '#B9824F', // coat
-  2: '#FFFFFF', // belly, spots, tail
-  3: '#6B4A2B', // antlers
-  4: '#1E1E1E', // eye
-  5: '#3A2A20', // nose
+  1: ['body', '#B9824F'], // coat
+  2: ['belly', '#FFFFFF'], // belly, spots, tail
+  3: ['horn', '#6B4A2B'], // antlers
+  4: ['eye', '#1E1E1E'], // eye
+  5: ['nose', '#3A2A20'], // nose
 }, (b) => {
   b.boxM(0, 0, 1, 1, 4, 1, 1); // hind legs
   b.boxM(0, 0, 4, 1, 4, 1, 1); // front legs

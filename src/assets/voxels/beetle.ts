@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Beetle: glossy dark brown shell with one horn on the head.
 export const beetle = defineModel([4, 4, 6], {
-  1: '#5B3A22', // shell
-  2: '#8A5A36', // shine, horn
-  3: '#1E1E1E', // eye
+  1: ['body', '#5B3A22'], // shell
+  2: ['accent', '#8A5A36'], // shine, horn
+  3: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(0, 0, 1, 1, 1, 1, 1); // legs
   b.boxM(0, 0, 3, 1, 1, 1, 1);

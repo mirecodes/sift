@@ -2,11 +2,11 @@ import { defineModel } from './builder';
 
 // Sparrow: round brown body, cream chest and cheeks, short tail.
 export const sparrow = defineModel([4, 5, 5], {
-  1: '#9C6B3F', // plumage
-  2: '#F5E6C8', // chest, cheeks
-  3: '#1E1E1E', // eye
-  4: '#F2A93B', // beak, feet
-  5: '#6E4526', // wings, tail
+  1: ['body', '#9C6B3F'], // plumage
+  2: ['belly', '#F5E6C8'], // chest, cheeks
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['beak', '#F2A93B'], // beak, feet
+  5: ['wing', '#6E4526'], // wings, tail
 }, (b) => {
   b.boxM(1, 0, 2, 1, 1, 1, 4); // feet
   b.box(0, 1, 1, 4, 2, 3, 1); // body

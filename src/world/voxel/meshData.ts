@@ -1,4 +1,5 @@
-import type { VoxelModel } from '../../assets/voxels/types';
+import type { PaletteKey } from '../../../shared/content/palette';
+import { resolveColors, type VoxelModel } from '../../assets/voxels/types';
 
 /** Plain typed arrays, so geometry generation is testable without three.js. */
 export interface MeshData {
@@ -69,14 +70,14 @@ const FACES: readonly Face[] = [
  * Voxel model to one merged mesh: hidden faces culled, vertex colors, origin at the
  * bottom center of the model (x and z centered, y = 0 at the feet).
  */
-export function buildVoxelMesh(model: VoxelModel, voxelSize: number): MeshData {
+export function buildVoxelMesh(model: VoxelModel, voxelSize: number, override?: Partial<Record<PaletteKey, string>>): MeshData {
   const [W, , D] = model.size;
   const filled = new Map<string, number>();
   const key = (x: number, y: number, z: number) => `${x},${y},${z}`;
   for (const [x, y, z, c] of model.voxels) filled.set(key(x, y, z), c);
 
   const colors = new Map<number, [number, number, number]>();
-  for (const [index, hex] of Object.entries(model.palette)) colors.set(Number(index), hexToLinearRgb(hex));
+  for (const [index, hex] of Object.entries(resolveColors(model, override))) colors.set(Number(index), hexToLinearRgb(hex));
 
   const mesh = new MeshBuilder();
   for (const [x, y, z, c] of model.voxels) {

@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Wolf: silver-grey, sitting tall with its muzzle raised to howl.
 export const wolf = defineModel([3, 10, 6], {
-  1: '#9AA3AE', // fur
-  2: '#E6EAF0', // chest, muzzle, tail tip
-  3: '#1E1E1E', // eye, nose
-  4: '#5B6470', // back, ears
+  1: ['body', '#9AA3AE'], // fur
+  2: ['belly', '#E6EAF0'], // chest, muzzle, tail tip
+  3: ['eye', '#1E1E1E'], // eye, nose
+  4: ['accent', '#5B6470'], // back, ears
 }, (b) => {
   b.boxM(0, 0, 1, 1, 2, 1, 4); // hind legs
   b.boxM(0, 0, 4, 1, 2, 1, 4); // front legs

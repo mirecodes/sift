@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Squirrel: orange-brown body with a big bushy tail curling up behind.
 export const squirrel = defineModel([3, 5, 6], {
-  1: '#C8743A', // fur
-  2: '#F3DDBB', // muzzle
-  3: '#1E1E1E', // eye
-  4: '#E8A56B', // tail tip
+  1: ['body', '#C8743A'], // fur
+  2: ['muzzle', '#F3DDBB'], // muzzle
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['accent', '#E8A56B'], // tail tip
 }, (b) => {
   b.box(0, 0, 2, 3, 2, 3, 1); // body
   b.box(0, 1, 4, 3, 3, 2, 1); // head

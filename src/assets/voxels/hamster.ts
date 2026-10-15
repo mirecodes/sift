@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Hamster: chubby tan blob with white belly and pink ears.
 export const hamster = defineModel([5, 4, 5], {
-  1: '#E0B27A', // fur
-  2: '#FFFFFF', // belly
-  3: '#F4A6B7', // ears, nose
-  4: '#1E1E1E', // eye
+  1: ['body', '#E0B27A'], // fur
+  2: ['belly', '#FFFFFF'], // belly
+  3: ['nose', '#F4A6B7'], // ears, nose
+  4: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.box(0, 0, 0, 5, 2, 5, 1); // lower body
   b.box(1, 2, 0, 3, 1, 5, 1); // upper body

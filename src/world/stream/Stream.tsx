@@ -4,7 +4,7 @@ import { BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, DoubleSide
 import { config } from '../../domain/config';
 import { hash01 } from '../../domain/random';
 import type { Cell, StreamTile } from '../../domain/island/island';
-import { palette } from '../palette';
+import { defaultBlocks, palette } from '../palette';
 import { toGeometry } from '../voxel/geometry';
 import { bankMesh, buildStreamMesh } from './streamMesh';
 
@@ -24,9 +24,9 @@ function streakTexture(): CanvasTexture {
   c.width = 8;
   c.height = 16;
   const ctx = c.getContext('2d')!;
-  ctx.fillStyle = palette.water;
+  ctx.fillStyle = defaultBlocks.water;
   ctx.fillRect(0, 0, 8, 16);
-  ctx.fillStyle = palette.waterStreak;
+  ctx.fillStyle = defaultBlocks.waterStreak;
   for (let i = 0; i < 6; i++) ctx.fillRect(Math.floor(hash01(3, i, 1) * 7), Math.floor(hash01(3, i, 2) * 14), 1, 2 + (i % 3));
   const t = new CanvasTexture(c);
   t.wrapS = t.wrapT = RepeatWrapping;

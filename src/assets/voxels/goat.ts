@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Goat: off-white body, swept-back horns and a chin beard.
 export const goat = defineModel([3, 7, 6], {
-  1: '#F0EBE0', // fur
-  2: '#B8A98A', // horns
-  3: '#CFC7B2', // beard
-  4: '#1E1E1E', // eye
+  1: ['body', '#F0EBE0'], // fur
+  2: ['horn', '#B8A98A'], // horns
+  3: ['accent', '#CFC7B2'], // beard
+  4: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(0, 0, 0, 1, 2, 1, 1); // hind legs
   b.boxM(0, 0, 3, 1, 2, 1, 1); // front legs

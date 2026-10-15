@@ -2,11 +2,11 @@ import { defineModel } from './builder';
 
 // Cat: orange tabby with pointed ears, white muzzle and a striped upright tail.
 export const cat = defineModel([3, 6, 6], {
-  1: '#E8993E', // fur
-  2: '#B96A22', // stripes
-  3: '#FFF3E0', // muzzle, paws
-  4: '#1E1E1E', // eye
-  5: '#F4A6B7', // nose
+  1: ['body', '#E8993E'], // fur
+  2: ['accent', '#B96A22'], // stripes
+  3: ['muzzle', '#FFF3E0'], // muzzle, paws
+  4: ['eye', '#1E1E1E'], // eye
+  5: ['nose', '#F4A6B7'], // nose
 }, (b) => {
   b.boxM(0, 0, 1, 1, 1, 1, 1); // hind legs
   b.boxM(0, 0, 4, 1, 1, 1, 3); // front paws

@@ -2,11 +2,11 @@ import { defineModel } from './builder';
 
 // Beaver: brown body, flat dark tail and two white front teeth.
 export const beaver = defineModel([5, 6, 6], {
-  1: '#8B5A2B', // fur
-  2: '#5E3B20', // tail
-  3: '#1E1E1E', // eye, nose
-  4: '#FFFFFF', // teeth
-  5: '#C9A36B', // belly, muzzle
+  1: ['body', '#8B5A2B'], // fur
+  2: ['accent', '#5E3B20'], // tail
+  3: ['eye', '#1E1E1E'], // eye, nose
+  4: ['accent2', '#FFFFFF'], // teeth
+  5: ['belly', '#C9A36B'], // belly, muzzle
 }, (b) => {
   b.box(1, 0, 0, 3, 2, 1, 2); // tail
   b.box(0, 0, 1, 5, 3, 4, 1); // body

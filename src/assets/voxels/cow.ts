@@ -2,11 +2,11 @@ import { defineModel } from './builder';
 
 // Cow: white with black patches, pink snout, small horns. Long body (8 deep).
 export const cow = defineModel([5, 7, 8], {
-  1: '#F7F7F2', // coat
-  2: '#2B2B2B', // patches, hooves
-  3: '#F4A6B7', // snout
-  4: '#F3E6C4', // horns
-  5: '#1E1E1E', // eye
+  1: ['body', '#F7F7F2'], // coat
+  2: ['accent', '#2B2B2B'], // patches, hooves
+  3: ['nose', '#F4A6B7'], // snout
+  4: ['horn', '#F3E6C4'], // horns
+  5: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(0, 0, 0, 2, 3, 2, 1); // hind legs
   b.boxM(0, 0, 5, 2, 3, 2, 1); // front legs

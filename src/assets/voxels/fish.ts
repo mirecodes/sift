@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Fish: orange body with light belly, tail fin, dorsal and side fins.
 export const fish = defineModel([3, 5, 6], {
-  1: '#FF8C42', // body
-  2: '#FFC48A', // belly
-  3: '#E56A1F', // fins
-  4: '#1E1E1E', // eye
+  1: ['body', '#FF8C42'], // body
+  2: ['belly', '#FFC48A'], // belly
+  3: ['accent', '#E56A1F'], // fins
+  4: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.box(0, 1, 2, 3, 1, 3, 2); // belly
   b.box(0, 2, 2, 3, 1, 3, 1); // body

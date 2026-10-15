@@ -2,12 +2,12 @@ import { defineModel } from './builder';
 
 // Owl: brown body, cream belly, big round yellow eyes and ear tufts.
 export const owl = defineModel([5, 6, 5], {
-  1: '#8B5E3C', // feathers
-  2: '#F1E2C6', // belly, face disc
-  3: '#FFD23F', // eye
-  4: '#1E1E1E', // pupil
-  5: '#F2A93B', // beak, feet
-  6: '#5E3B20', // wings, tufts
+  1: ['body', '#8B5E3C'], // feathers
+  2: ['belly', '#F1E2C6'], // belly, face disc
+  3: ['accent', '#FFD23F'], // eye
+  4: ['eye', '#1E1E1E'], // pupil
+  5: ['beak', '#F2A93B'], // beak, feet
+  6: ['wing', '#5E3B20'], // wings, tufts
 }, (b) => {
   b.box(0, 0, 0, 5, 3, 4, 1); // body
   b.box(1, 0, 3, 3, 3, 1, 2); // belly

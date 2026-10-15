@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Changed** — Step 3.0: voxel models paint with named palette keys (`body`, `belly`, `accent`, `eye`, `horn`, …; `shared/content/palette.ts`) and carry a default palette; terrain, water and camp colors are one keyed record (`defaultBlocks`: `grassTop`, `cabinLog`, …). Visual parity verified: every model's resolved voxel colors and the terrain colors are byte-identical to before.
+
 - 2026-10-07 · **Added** — Step 2.6: with the economy on, Collection cards add `On island: n` (counts stay all-time) and poking an animal shows its time left (`6d left`, `20h left`, `<1h left`; Unicorn keeps `!`). `npm run e2e` now builds with `stats,economy` and fast-forwards a week to a departure (44 checks). Phase 2 complete, behind `features.economy` (off). `PROJECT_STATUS.md` refreshed.
 - 2026-10-07 · **Added** — Step 2.5: HUD counters on Home's top bar (left): gold (counts up over 1 s when a departure notice shows; jumps with reduced motion) and Unicorns on the island; tapping gold opens a short explanation until the Shop exists. New `gold` and `unicorn` icons; `TopBar` gets a left slot (DESIGN.md 6.8).
 - 2026-10-07 · **Added** — Step 2.4: coin pile on the reserved camp tile next to the cabin: 6 sizes of gold voxel heap from `balance.economy.pileThresholds` [1, 10, 30, 100, 300, 1000] (`BALANCE_VERSION` 2026-10-07.5), one instanced mesh; warm glow and 3 twinkling sparkles at night (none on Focus or with reduced motion). Departure gold joins it when its notice shows (DESIGN.md 15.6).

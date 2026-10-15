@@ -2,11 +2,11 @@ import { defineModel } from './builder';
 
 // Capybara: boxy tan body with a mikan orange balanced on its head.
 export const capybara = defineModel([5, 7, 6], {
-  1: '#B58B5A', // fur
-  2: '#8A6440', // muzzle, ears
-  3: '#1E1E1E', // eye
-  4: '#FF9F1C', // orange
-  5: '#5FA83E', // leaf
+  1: ['body', '#B58B5A'], // fur
+  2: ['muzzle', '#8A6440'], // muzzle, ears
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['prop', '#FF9F1C'], // orange
+  5: ['prop2', '#5FA83E'], // leaf
 }, (b) => {
   b.boxM(0, 0, 0, 1, 1, 2, 2); // feet
   b.boxM(0, 0, 3, 1, 1, 2, 2);

@@ -2,11 +2,11 @@ import { defineModel } from './builder';
 
 // Dog: light brown body, tan muzzle, floppy dark ears and a wagging tail.
 export const dog = defineModel([5, 6, 6], {
-  1: '#C9955C', // fur
-  2: '#E6C39A', // muzzle
-  3: '#7A5230', // ears
-  4: '#1E1E1E', // eye
-  5: '#2B2B2B', // nose
+  1: ['body', '#C9955C'], // fur
+  2: ['muzzle', '#E6C39A'], // muzzle
+  3: ['accent', '#7A5230'], // ears
+  4: ['eye', '#1E1E1E'], // eye
+  5: ['nose', '#2B2B2B'], // nose
 }, (b) => {
   b.boxM(1, 0, 0, 1, 2, 1, 1); // hind legs
   b.boxM(1, 0, 3, 1, 2, 1, 1); // front legs

@@ -12,7 +12,7 @@ import {
   PointLight,
 } from 'three';
 import { CAMP_LEVEL, FIRE_TILE, HUT_TILE, levelTop } from '../../domain/island/island';
-import { night as nightPalette } from '../palette';
+import { defaultBlocks, night as nightPalette } from '../palette';
 
 const SURFACE_Y = levelTop(CAMP_LEVEL) + 0.5;
 /** Where animals enter the hut: in front of the door (+x face, toward the fire) and at the door. */
@@ -21,15 +21,15 @@ export const HUT_DOOR = { x: HUT_TILE.x + 0.67, z: HUT_TILE.z } as const;
 
 const box = new BoxGeometry(1, 1, 1);
 const lambert = (color: string) => new MeshLambertMaterial({ color, flatShading: true });
-const logLight = lambert('#B98552');
-const logDark = lambert('#9A6A3E');
-const beam = lambert('#5E3B20');
-const roofLight = lambert('#8A5A36');
-const roofDark = lambert('#6F4528');
-const stone = lambert('#9A9DA3');
-const stoneDark = lambert('#6E7179');
+const logLight = lambert(defaultBlocks.cabinLog);
+const logDark = lambert(defaultBlocks.cabinLogDark);
+const beam = lambert(defaultBlocks.cabinBeam);
+const roofLight = lambert(defaultBlocks.cabinRoof);
+const roofDark = lambert(defaultBlocks.cabinRoofDark);
+const stone = lambert(defaultBlocks.campStone);
+const stoneDark = lambert(defaultBlocks.campStoneDark);
 const smokeMaterial = new MeshBasicMaterial({ color: '#D9DCE6', transparent: true, opacity: 0 });
-const log = new MeshLambertMaterial({ color: '#6B4526', flatShading: true });
+const log = new MeshLambertMaterial({ color: defaultBlocks.firewood, flatShading: true });
 const doorDay = new Color('#3B2A1E');
 const doorNight = new Color('#FFB050');
 const flameColors = ['#FF7A1A', '#FFB33D', '#FFE38A'].map((c) => new MeshBasicMaterial({ color: c }));

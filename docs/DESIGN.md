@@ -417,6 +417,8 @@ Defined in `src/world/palette.ts`. Not shared with UI tokens.
 | Dirt | `#9B6B43` | `#86593A` |
 | Stone | `#8A8F98` | `#747983` |
 
+Terrain, water and camp colors are one keyed record, `defaultBlocks` (`grassTop`, `grassSide`, `dirtTop`, `dirtSide`, `stoneTop`, `stoneSide`, `water`, `waterStreak`, `cabinLog`, `cabinLogDark`, `cabinBeam`, `cabinRoof`, `cabinRoofDark`, `campStone`, `campStoneDark`, `firewood`; keys in `shared/content/palette.ts`). A block theme replaces this record.
+
 ### 14.3 Water
 
 | Token | Value |
@@ -506,10 +508,12 @@ Defined in `src/world/palette.ts`. Not shared with UI tokens.
 // src/assets/voxels/<animalId>.ts
 export const chick: VoxelModel = {
   size: [4, 5, 4],
-  palette: { 1: '#FFD93D', 2: '#FF8C42', 3: '#1E1E1E' },
+  keys: { 1: 'body', 2: 'beak', 3: 'eye' },                        // palette index → named key
+  palette: { body: '#FFD93D', beak: '#FF8C42', eye: '#1E1E1E' },   // the species' default colors
   voxels: [ /* [x, y, z, paletteIndex] */ ],
 };
 ```
+- Voxels are painted by **named key** (`body`, `belly`, `muzzle`, `accent`…, `eye`, `nose`, `beak`, `horn`, `wing`, …; list in `shared/content/palette.ts`), so a skin recolors a model by key. `eye` is always the `#1E1E1E` ink key.
 - Converted at runtime into one merged `BufferGeometry` per model with hidden faces culled and vertex colors.
 - Geometry is built once per species and cached; each placed animal reuses it.
 

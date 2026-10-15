@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Mouse: small grey body, big pink ears, thin pink tail.
 export const mouse = defineModel([3, 3, 6], {
-  1: '#B8BCC4', // fur
-  2: '#F4A6B7', // ears, nose, tail
-  3: '#1E1E1E', // eye
+  1: ['body', '#B8BCC4'], // fur
+  2: ['nose', '#F4A6B7'], // ears, nose, tail
+  3: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.box(0, 0, 1, 3, 2, 3, 1); // body
   b.box(0, 0, 4, 3, 2, 2, 1); // head

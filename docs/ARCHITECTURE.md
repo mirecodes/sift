@@ -136,7 +136,7 @@ type Phase =
 - World scale 0.25× (animal voxel = 1/6 block in the model, 1/24 on the island) (ADR-014).
 - Model limits: width ≤ 6 voxels; depth ≤ 6, or 8 for Epic and Legendary (ADR-025).
 - Poke: clicking an animal (not on Focus) shows a `!` bubble (with the economy on: its time left, e.g. `3d left`; Unicorn keeps `!`) and forces one idle action. Render-only state (ADR-022).
-- Voxel models are TS data in `src/assets/voxels/<id>.ts`, merged into one cached `BufferGeometry` per species (hidden faces culled).
+- Voxel models are TS data in `src/assets/voxels/<id>.ts`, merged into one cached `BufferGeometry` per species (hidden faces culled). Voxels reference **named palette keys** (`shared/content/palette.ts`) with a default palette per model; terrain and camp colors are the keyed `defaultBlocks` record (`world/palette.ts`). Raw colors never appear in model shapes.
 
 ## 7. Platform layer
 

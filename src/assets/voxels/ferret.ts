@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Ferret: long cream body with a brown bandit mask, brown feet and nose.
 export const ferret = defineModel([3, 5, 6], {
-  1: '#F2DDB8', // fur
-  2: '#7A5230', // mask, feet, nose
-  3: '#1E1E1E', // eye
+  1: ['body', '#F2DDB8'], // fur
+  2: ['accent', '#7A5230'], // mask, feet, nose
+  3: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(0, 0, 0, 1, 1, 1, 2); // feet
   b.boxM(0, 0, 3, 1, 1, 1, 2);

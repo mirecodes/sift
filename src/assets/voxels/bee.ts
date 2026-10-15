@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Bee: yellow body with black stripes, pale wings and two antennae.
 export const bee = defineModel([5, 4, 5], {
-  1: '#FFD93D', // body
-  2: '#1E1E1E', // stripes, eyes, antennae
-  3: '#D6EEFF', // wings
+  1: ['body', '#FFD93D'], // body
+  2: ['eye', '#1E1E1E'], // stripes, eyes, antennae
+  3: ['wing', '#D6EEFF'], // wings
 }, (b) => {
   b.box(1, 0, 0, 3, 3, 4, 1); // body
   b.box(1, 0, 1, 3, 3, 1, 2); // stripes

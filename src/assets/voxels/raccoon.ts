@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Raccoon: grey body, dark eye mask, white brow and a striped tail.
 export const raccoon = defineModel([5, 5, 6], {
-  1: '#8A8F98', // fur
-  2: '#2B2B2B', // mask, legs, tail stripes
-  3: '#EDEDED', // brow, muzzle
-  4: '#1E1E1E', // eye
+  1: ['body', '#8A8F98'], // fur
+  2: ['accent', '#2B2B2B'], // mask, legs, tail stripes
+  3: ['muzzle', '#EDEDED'], // brow, muzzle
+  4: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(1, 0, 2, 1, 1, 2, 2); // legs
   b.box(0, 1, 2, 5, 2, 2, 1); // body

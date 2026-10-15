@@ -60,7 +60,8 @@
 
 ## Phase 3 — Content pipeline, cosmetics, buildings, shop (F10, F4)
 
-- [ ] 3.0 Palette keys in voxel models (prerequisite)
+- [x] 3.0 Palette keys in voxel models (prerequisite)
+  - Owner approved the Phase 2 gate by requesting Phase 3. Model palettes are `index → [key, color]` (`defineModel` emits `keys` + default `palette`); `resolveColors` applies a palette override. Terrain/camp colors in `defaultBlocks`. Parity: resolved `[x,y,z,color]` of all 50 models + butterfly parts and terrain colors byte-identical before/after. New test: every model uses known keys, `eye` is `#1E1E1E`.
 - [ ] 3.1 Content format, registry and packs
 - [ ] 3.2 Behavior presets
 - [ ] 3.3 Authoring paths

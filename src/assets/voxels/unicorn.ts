@@ -2,14 +2,14 @@ import { defineModel } from './builder';
 
 // Unicorn: white body, gold horn, rainbow mane and tail.
 export const unicorn = defineModel([3, 11, 6], {
-  1: '#FFFFFF', // coat
-  2: '#FFD24D', // horn
-  3: '#1E1E1E', // eye
-  4: '#FF5A5F', // rainbow red
-  5: '#FFA24D', // rainbow orange
-  6: '#FFE14D', // rainbow yellow
-  7: '#5ED67A', // rainbow green
-  8: '#4DA6FF', // rainbow blue
+  1: ['body', '#FFFFFF'], // coat
+  2: ['horn', '#FFD24D'], // horn
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['rainbow1', '#FF5A5F'], // rainbow red
+  5: ['rainbow2', '#FFA24D'], // rainbow orange
+  6: ['rainbow3', '#FFE14D'], // rainbow yellow
+  7: ['rainbow4', '#5ED67A'], // rainbow green
+  8: ['rainbow5', '#4DA6FF'], // rainbow blue
 }, (b) => {
   b.boxM(0, 0, 1, 1, 4, 1, 1); // hind legs
   b.boxM(0, 0, 4, 1, 4, 1, 1); // front legs

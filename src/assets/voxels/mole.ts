@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Mole: dark grey body, pink nose and big tan digging paws.
 export const mole = defineModel([5, 3, 6], {
-  1: '#5A5F6B', // fur
-  2: '#F4A6B7', // nose
-  3: '#1E1E1E', // eye
-  4: '#E8B58A', // paws
+  1: ['body', '#5A5F6B'], // fur
+  2: ['nose', '#F4A6B7'], // nose
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['accent', '#E8B58A'], // paws
 }, (b) => {
   b.box(0, 0, 0, 5, 2, 4, 1); // body
   b.box(1, 2, 0, 3, 1, 4, 1); // back

@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Sheep: fluffy white wool body, dark face and legs.
 export const sheep = defineModel([5, 6, 6], {
-  1: '#F4F4F0', // wool
-  2: '#3A3A3A', // face, legs, ears
-  3: '#1E1E1E', // eye
+  1: ['body', '#F4F4F0'], // wool
+  2: ['accent', '#3A3A3A'], // face, legs, ears
+  3: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(1, 0, 0, 1, 2, 1, 2); // hind legs
   b.boxM(1, 0, 3, 1, 2, 1, 2); // front legs

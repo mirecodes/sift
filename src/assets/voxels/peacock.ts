@@ -2,12 +2,12 @@ import { defineModel } from './builder';
 
 // Peacock: teal body, small gold crest and a big green tail fan with gold eye spots.
 export const peacock = defineModel([5, 10, 6], {
-  1: '#1FA8A0', // body
-  2: '#2B6FD0', // chest, spot centers
-  3: '#1E1E1E', // eye
-  4: '#FFC933', // crest, eye spots
-  5: '#5FBF78', // tail fan
-  6: '#F2A93B', // beak
+  1: ['body', '#1FA8A0'], // body
+  2: ['accent', '#2B6FD0'], // chest, spot centers
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['accent2', '#FFC933'], // crest, eye spots
+  5: ['accent3', '#5FBF78'], // tail fan
+  6: ['beak', '#F2A93B'], // beak
 }, (b) => {
   b.box(1, 2, 0, 3, 1, 1, 5); // tail fan
   b.box(0, 3, 0, 5, 4, 1, 5);

@@ -2,7 +2,7 @@ import { BufferAttribute, BufferGeometry } from 'three';
 import { voxelModels } from '../../assets/voxels';
 import { butterflyBody, butterflyWing } from '../../assets/voxels/butterfly';
 import type { VoxelModel } from '../../assets/voxels/types';
-import { palette } from '../palette';
+import { defaultBlocks } from '../palette';
 import { buildBlockMesh, buildVoxelMesh, type MeshData } from './meshData';
 
 /** Animal voxel = 1/6 block (DESIGN.md 16.2). */
@@ -53,9 +53,9 @@ let blocks: Record<'grass' | 'dirt' | 'stone', BufferGeometry> | undefined;
 
 export function blockGeometries() {
   blocks ??= {
-    grass: toGeometry(buildBlockMesh(palette.grass.top, palette.grass.side, palette.dirt.side)),
-    dirt: toGeometry(buildBlockMesh(palette.dirt.top, palette.dirt.side)),
-    stone: toGeometry(buildBlockMesh(palette.stone.top, palette.stone.side)),
+    grass: toGeometry(buildBlockMesh(defaultBlocks.grassTop, defaultBlocks.grassSide, defaultBlocks.dirtSide)),
+    dirt: toGeometry(buildBlockMesh(defaultBlocks.dirtTop, defaultBlocks.dirtSide)),
+    stone: toGeometry(buildBlockMesh(defaultBlocks.stoneTop, defaultBlocks.stoneSide)),
   };
   return blocks;
 }

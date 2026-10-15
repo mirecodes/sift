@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { resolveColors } from '../../assets/voxels/types';
 import { modelById } from '../../world/voxel/geometry';
 import { colors } from '../../ui/tokens';
 
@@ -19,6 +20,7 @@ export function VoxelSprite({ modelId, silhouette, size = 96 }: Props) {
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
     const model = modelById(modelId);
+    const palette = resolveColors(model);
     const [W, H] = model.size;
     const px = Math.max(1, Math.floor(size / Math.max(W, H)));
     canvas.width = size;
@@ -36,7 +38,7 @@ export function VoxelSprite({ modelId, silhouette, size = 96 }: Props) {
     const offY = Math.floor((size - H * px) / 2);
     for (const [k, { c }] of front) {
       const [x, y] = k.split(',').map(Number) as [number, number];
-      ctx.fillStyle = silhouette ? colors.muteSoft : (model.palette[c] as string);
+      ctx.fillStyle = silhouette ? colors.muteSoft : (palette[c] as string);
       ctx.fillRect(offX + x * px, offY + (H - 1 - y) * px, px, px);
     }
   }, [modelId, silhouette, size]);

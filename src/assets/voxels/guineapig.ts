@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Guinea pig: boxy cream body with orange patches, tiny ears, pink nose.
 export const guineapig = defineModel([4, 4, 6], {
-  1: '#F7EFE2', // coat
-  2: '#E8993E', // patches
-  3: '#1E1E1E', // eye
-  4: '#F4A6B7', // nose, ears
+  1: ['body', '#F7EFE2'], // coat
+  2: ['accent', '#E8993E'], // patches
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['nose', '#F4A6B7'], // nose, ears
 }, (b) => {
   b.box(0, 0, 0, 4, 3, 6, 1); // body
   b.box(0, 2, 0, 2, 1, 3, 2); // back patch

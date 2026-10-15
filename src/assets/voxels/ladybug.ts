@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Ladybug: round red back with black spots, black head with white eyes.
 export const ladybug = defineModel([5, 3, 5], {
-  1: '#E63946', // shell
-  2: '#1E1E1E', // head, spots
-  3: '#FFFFFF', // eye
+  1: ['body', '#E63946'], // shell
+  2: ['eye', '#1E1E1E'], // head, spots
+  3: ['accent', '#FFFFFF'], // eye
 }, (b) => {
   b.box(0, 0, 0, 5, 1, 4, 1); // base
   b.box(1, 1, 0, 3, 2, 4, 1); // dome

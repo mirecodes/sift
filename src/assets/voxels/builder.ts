@@ -1,3 +1,4 @@
+import type { PaletteKey } from '../../../shared/content/palette';
 import type { Voxel, VoxelModel } from './types';
 
 export interface VoxelBuilder {
@@ -13,13 +14,16 @@ export interface VoxelBuilder {
   erase(x: number, y: number, z: number, w: number, h: number, d: number): void;
 }
 
+/** Palette index → [palette key, default color]. Builder calls paint with the index. */
+export type ModelPalette = Readonly<Record<number, readonly [PaletteKey, string]>>;
+
 /**
  * Authoring helper: describe a model with boxes, get the plain `VoxelModel` format.
  * Throws on out-of-range coordinates or unknown palette indexes so mistakes fail loudly.
  */
 export function defineModel(
   size: readonly [number, number, number],
-  palette: Readonly<Record<number, string>>,
+  palette: ModelPalette,
   build: (b: VoxelBuilder) => void,
 ): VoxelModel {
   const [W, H, D] = size;
@@ -53,5 +57,12 @@ export function defineModel(
     },
   });
 
-  return { size, palette, voxels: [...cells.values()] };
+  const keys: Record<number, PaletteKey> = {};
+  const colors: Partial<Record<PaletteKey, string>> = {};
+  for (const [index, [key, color]] of Object.entries(palette)) {
+    if (key in colors) throw new Error(`Palette key ${key} used twice`);
+    keys[Number(index)] = key;
+    colors[key] = color;
+  }
+  return { size, keys, palette: colors, voxels: [...cells.values()] };
 }

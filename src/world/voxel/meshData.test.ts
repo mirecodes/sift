@@ -4,7 +4,8 @@ import { buildBlockMesh, buildVoxelMesh, hexToLinearRgb } from './meshData';
 
 const model = (voxels: VoxelModel['voxels'], size: VoxelModel['size'] = [2, 2, 2]): VoxelModel => ({
   size,
-  palette: { 1: '#FF0000', 2: '#FFFFFF' },
+  keys: { 1: 'body', 2: 'belly' },
+  palette: { body: '#FF0000', belly: '#FFFFFF' },
   voxels,
 });
 

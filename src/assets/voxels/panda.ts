@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Panda: black and white, sitting and holding a bamboo stalk.
 export const panda = defineModel([5, 8, 6], {
-  1: '#F7F7F7', // fur
-  2: '#1E1E1E', // arms, ears, eye patches, nose
-  3: '#7BC950', // bamboo
-  4: '#4E9A3A', // bamboo leaves
+  1: ['body', '#F7F7F7'], // fur
+  2: ['eye', '#1E1E1E'], // arms, ears, eye patches, nose
+  3: ['prop', '#7BC950'], // bamboo
+  4: ['prop2', '#4E9A3A'], // bamboo leaves
 }, (b) => {
   b.box(0, 0, 0, 5, 4, 4, 1); // body
   b.boxM(0, 0, 3, 2, 1, 2, 2); // feet

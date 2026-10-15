@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Koala: grey body, big round ears with light insides, tall dark nose.
 export const koala = defineModel([5, 6, 5], {
-  1: '#9EA4AE', // fur
-  2: '#E6E8EC', // belly, inner ears
-  3: '#1E1E1E', // eye, nose
+  1: ['body', '#9EA4AE'], // fur
+  2: ['belly', '#E6E8EC'], // belly, inner ears
+  3: ['eye', '#1E1E1E'], // eye, nose
 }, (b) => {
   b.box(0, 0, 0, 5, 3, 4, 1); // body
   b.box(1, 0, 3, 3, 2, 1, 2); // belly

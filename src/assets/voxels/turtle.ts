@@ -2,10 +2,10 @@ import { defineModel } from './builder';
 
 // Turtle: green skin, dark shell with a light lime top pattern.
 export const turtle = defineModel([5, 3, 6], {
-  1: '#8FD36B', // skin
-  2: '#4E9A3A', // shell
-  3: '#C5E87D', // shell top
-  4: '#1E1E1E', // eye
+  1: ['body', '#8FD36B'], // skin
+  2: ['shell', '#4E9A3A'], // shell
+  3: ['accent', '#C5E87D'], // shell top
+  4: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(0, 0, 0, 1, 1, 1, 1); // hind feet
   b.boxM(0, 0, 3, 1, 1, 2, 1); // front feet

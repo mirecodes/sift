@@ -1,6 +1,6 @@
 import { config } from '../../domain/config';
 import { levelTop, type StreamTile } from '../../domain/island/island';
-import { palette } from '../palette';
+import { defaultBlocks } from '../palette';
 import { hexToLinearRgb, type MeshData } from '../voxel/meshData';
 
 type P = [number, number, number];
@@ -207,9 +207,9 @@ export function bankMesh(
   const normals: number[] = [];
   const colors: number[] = [];
   const indices: number[] = [];
-  const grass = hexToLinearRgb(palette.grass.top);
-  const lip = hexToLinearRgb(palette.grass.side);
-  const dirt = hexToLinearRgb(palette.dirt.side);
+  const grass = hexToLinearRgb(defaultBlocks.grassTop);
+  const lip = hexToLinearRgb(defaultBlocks.grassSide);
+  const dirt = hexToLinearRgb(defaultBlocks.dirtSide);
   const vertex = (x: number, y: number, z: number, n: readonly [number, number, number], c: readonly number[]): number => {
     positions.push(x, y, z);
     normals.push(...n);

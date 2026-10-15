@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Pig: pink body, darker snout, small ears and curly tail.
 export const pig = defineModel([5, 5, 6], {
-  1: '#F4A6B7', // skin
-  2: '#E58AA0', // snout, tail
-  3: '#1E1E1E', // eye
+  1: ['body', '#F4A6B7'], // skin
+  2: ['nose', '#E58AA0'], // snout, tail
+  3: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(0, 0, 0, 2, 1, 1, 1); // hind legs
   b.boxM(0, 0, 3, 2, 1, 1, 1); // front legs

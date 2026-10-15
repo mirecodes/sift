@@ -2,9 +2,9 @@ import { defineModel } from './builder';
 
 // Lizard: flat green body, long thin tail and a light stripe down the back.
 export const lizard = defineModel([3, 3, 6], {
-  1: '#8ED15B', // skin
-  2: '#C8EE8E', // back stripe
-  3: '#1E1E1E', // eye
+  1: ['body', '#8ED15B'], // skin
+  2: ['accent', '#C8EE8E'], // back stripe
+  3: ['eye', '#1E1E1E'], // eye
 }, (b) => {
   b.boxM(0, 0, 1, 1, 1, 1, 1); // legs
   b.boxM(0, 0, 3, 1, 1, 1, 1);

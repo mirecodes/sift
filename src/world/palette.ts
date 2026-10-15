@@ -1,15 +1,32 @@
+import type { BlockPalette } from '../../shared/content/palette';
+
+/** Terrain and camp colors by named key (Step 3.0); the default block theme. */
+export const defaultBlocks: BlockPalette = {
+  grassTop: '#7BC950',
+  grassSide: '#5FA83E',
+  dirtTop: '#9B6B43',
+  dirtSide: '#86593A',
+  stoneTop: '#8A8F98',
+  stoneSide: '#747983',
+  water: '#4FA8E8',
+  waterStreak: '#9AD4FF',
+  cabinLog: '#B98552',
+  cabinLogDark: '#9A6A3E',
+  cabinBeam: '#5E3B20',
+  cabinRoof: '#8A5A36',
+  cabinRoofDark: '#6F4528',
+  campStone: '#9A9DA3',
+  campStoneDark: '#6E7179',
+  firewood: '#6B4526',
+};
+
 /** World colors (DESIGN.md 14). Never shared with UI tokens. */
 export const palette = {
   skyTop: '#9FD8FF',
   skyBottom: '#EAF6FF',
   cloud: '#FFFFFF',
   cloudOpacity: 0.9,
-  grass: { top: '#7BC950', side: '#5FA83E' },
-  dirt: { top: '#9B6B43', side: '#86593A' },
-  stone: { top: '#8A8F98', side: '#747983' },
   shadow: '#000000',
-  water: '#4FA8E8',
-  waterStreak: '#9AD4FF',
   splash: '#FFFFFF',
   coin: '#F2C230',
   coinDark: '#D9A21E',

@@ -2,11 +2,11 @@ import { defineModel } from './builder';
 
 // Parrot: red body, blue wings and tail, a yellow wing stripe and a pale hooked beak.
 export const parrot = defineModel([4, 7, 5], {
-  1: '#E8403F', // body
-  2: '#3B89FF', // wings, tail
-  3: '#1E1E1E', // eye
-  4: '#FFC933', // wing stripe
-  5: '#F7F0DC', // beak, feet
+  1: ['body', '#E8403F'], // body
+  2: ['wing', '#3B89FF'], // wings, tail
+  3: ['eye', '#1E1E1E'], // eye
+  4: ['accent', '#FFC933'], // wing stripe
+  5: ['beak', '#F7F0DC'], // beak, feet
 }, (b) => {
   b.boxM(1, 0, 2, 1, 1, 1, 5); // feet
   b.box(0, 1, 1, 4, 3, 3, 1); // body

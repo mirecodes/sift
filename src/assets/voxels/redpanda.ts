@@ -2,11 +2,11 @@ import { defineModel } from './builder';
 
 // Red panda: rust fur, white face, dark legs and a tall ringed tail.
 export const redpanda = defineModel([4, 8, 6], {
-  1: '#C4542D', // fur
-  2: '#FFFFFF', // face
-  3: '#1E1E1E', // eye, nose
-  4: '#4A2A1F', // legs, tail rings
-  5: '#E8B27A', // tail rings
+  1: ['body', '#C4542D'], // fur
+  2: ['muzzle', '#FFFFFF'], // face
+  3: ['eye', '#1E1E1E'], // eye, nose
+  4: ['accent', '#4A2A1F'], // legs, tail rings
+  5: ['accent2', '#E8B27A'], // tail rings
 }, (b) => {
   b.box(1, 2, 0, 2, 1, 1, 5); // tail rings, bottom to top
   b.box(1, 3, 0, 2, 1, 1, 4);
