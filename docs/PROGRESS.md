@@ -21,7 +21,8 @@
   - `domain/island/level.ts` (`islandLevel`, `pickNewAnimalTile`); `selectIslandCount` → `selectIslandLevel`; only active animals render/occupy. Tests: departures keep terrain identical; all-active saves unchanged. ADR-032.
 - [x] 0.7 Occupancy grid + save repair (§2.5)
   - `domain/island/occupancy.ts`; coin pile reserve (-2,1); repair on every load, persisted via `Commit.animals`. Tests: grid flags, pile tile dry/flat on 300 seeds, overlapping fixture repaired, idempotent (domain + store). ADR-033.
-- [ ] 0.8 `IslandModel` + `<IslandScene model mode>` (§2.4)
+- [x] 0.8 `IslandModel` + `<IslandScene model mode>` (§2.4)
+  - Screenshot harness (seeded Math.random, paused clock, imported fixture) vs the pre-refactor build: 6 states pixel-identical within run-to-run noise; Math.random call counts identical. `?twoIslands=99` dev view renders two independent islands, no errors; absent from the production bundle. E2E 18/18. ADR-034.
 - [ ] 0.9 Inbox infrastructure (§2.9)
 
 ## Phase 1 — Tabs and Stats (F1, F2)
@@ -130,6 +131,7 @@
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
 - 0.2 · Settings → Data section and import confirmation card: layout and copy.
+- 0.8 · Open `npm run dev` with `?twoIslands` once: two islands side by side (camera fit, clouds cover both). Single-island parity was verified automatically.
 - 0.7 · Coin pile tile at (-2,1) (beside the cabin, camera side): confirm the spot before the pile prop is built (Step 2.4). Night sleeping arrangement shifts slightly because that tile is skipped.
 
 ## Decisions taken by the agent

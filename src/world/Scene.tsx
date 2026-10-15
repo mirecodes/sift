@@ -1,16 +1,13 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useMemo, useRef, type MutableRefObject, type ReactNode } from 'react';
-import { Color, type AmbientLight, type DirectionalLight, type Group } from 'three';
+import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
+import { Color, type AmbientLight, type DirectionalLight } from 'three';
 import { config } from '../domain/config';
 import { hash01 } from '../domain/random';
-import { generateIsland } from '../domain/island/island';
-import type { PlacedAnimal } from '../domain/types';
-import { Animals } from './animals/Animals';
+import type { IslandMode, IslandModel } from '../domain/island/model';
 import { CameraRig, ELEVATION, type CameraControls } from './camera/CameraRig';
 import { Clouds } from './Clouds';
-import { Island, islandExtent } from './island/Island';
-import { Camp } from './props/Camp';
-import { Stream } from './stream/Stream';
+import { islandExtent } from './island/Island';
+import { IslandScene } from './IslandScene';
 import { lighting, night as nightPalette, palette } from './palette';
 import { RenderDriver } from './RenderDriver';
 import type { WorldMode } from './types';
@@ -18,13 +15,16 @@ import styles from './Scene.module.css';
 
 interface SceneProps {
   mode: WorldMode;
-  seed: number;
-  /** Island level (lifetime earned animals); sizes the island. */
-  islandLevel: number;
-  animals: readonly PlacedAnimal[];
+  /** One island normally; several (side by side, left to right on screen) for moves, visits and battles. */
+  islands: readonly { model: IslandModel; mode: IslandMode }[];
   reducedMotion: boolean;
   theme: 'light' | 'dark';
 }
+
+/** Empty space between neighbouring islands, in blocks along the screen. */
+const ISLAND_GAP = 3;
+/** Screen-right direction of the isometric camera on the ground plane. */
+const RIGHT = [Math.SQRT1_2, 0, -Math.SQRT1_2] as const;
 
 const STARS = Array.from({ length: 40 }, (_, i) => {
   const x = hash01(7, i, 1) * 100;
@@ -66,26 +66,37 @@ function Lights({ night, target, reducedMotion }: { night: MutableRefObject<numb
   );
 }
 
-/** Slow up-and-down bob of the whole island (DESIGN.md 18). */
-function Bob({ children, timeScale, reducedMotion }: { children: ReactNode; timeScale: number; reducedMotion: boolean }) {
-  const group = useRef<Group>(null);
-  const t = useRef(0);
-  useFrame((_, delta) => {
-    if (!group.current) return;
-    t.current += Math.min(delta, 0.1) * timeScale;
-    group.current.position.y = reducedMotion ? 0 : Math.sin((t.current / config.render.bobPeriodS) * Math.PI * 2) * config.render.bobAmplitude;
-  });
-  return <group ref={group}>{children}</group>;
+/**
+ * Islands side by side along the screen's horizontal axis, and the extent the camera must fit.
+ * One island sits at the origin and fits exactly as before.
+ */
+function useLayout(islands: SceneProps['islands']) {
+  const key = islands.map(({ model }) => `${model.seed}:${model.islandLevel}`).join('|');
+  return useMemo(() => {
+    const extents = islands.map(({ model }) => islandExtent(model.seed, model.islandLevel));
+    const maxSide = Math.max(...extents.map((e) => e.side));
+    const spacing = maxSide * Math.SQRT2 + ISLAND_GAP;
+    const n = islands.length;
+    const positions = islands.map((_, i): [number, number, number] => {
+      const d = (i - (n - 1) / 2) * spacing;
+      return [RIGHT[0] * d, 0, RIGHT[2] * d];
+    });
+    return {
+      positions,
+      side: maxSide + (spacing * (n - 1)) / Math.SQRT2,
+      depth: Math.max(...extents.map((e) => e.depth)),
+      rise: Math.max(...extents.map((e) => e.rise)),
+    };
+  }, [key]); // `key` captures everything the layout depends on
 }
 
 /** The one persistent canvas shared by Home, Focus, and Break. It is never remounted. */
-export function Scene({ mode, seed, islandLevel, animals, reducedMotion, theme }: SceneProps) {
+export function Scene({ mode, islands, reducedMotion, theme }: SceneProps) {
   const dark = theme === 'dark';
   const night = useRef(dark ? 1 : 0);
-  const { tiles, streams } = useMemo(() => generateIsland(seed, islandLevel), [seed, islandLevel]);
   const controls = useRef<CameraControls>({ azimuth: 0, zoom: 1 });
-  const { side, depth, rise } = useMemo(() => islandExtent(seed, islandLevel), [seed, islandLevel]);
-  const timeScale = mode === 'focus' ? config.render.focusAnimalTimeScale : 1;
+  const { positions, side, depth, rise } = useLayout(islands);
+  const primary = islands[0]?.model;
 
   return (
     <div className={styles.root} aria-hidden="true">
@@ -108,13 +119,21 @@ export function Scene({ mode, seed, islandLevel, animals, reducedMotion, theme }
         <Lights night={night} target={dark ? 1 : 0} reducedMotion={reducedMotion} />
         <RenderDriver mode={mode} />
         <CameraRig mode={mode} side={side} depth={depth} rise={rise} reducedMotion={reducedMotion} controls={controls} />
-        <Bob timeScale={timeScale} reducedMotion={reducedMotion}>
-          <Island seed={seed} level={islandLevel} animate={!reducedMotion} />
-          <Stream streams={streams} tiles={tiles}timeScale={timeScale} reducedMotion={reducedMotion} />
-          <Camp night={night} reducedMotion={reducedMotion} />
-          <Animals animals={animals} tiles={tiles} mode={mode} dark={dark} timeScale={timeScale} reducedMotion={reducedMotion} />
-        </Bob>
-        <Clouds seed={seed} side={side} depth={depth} visible={mode === 'home' || mode === 'break'} reducedMotion={reducedMotion} night={night} />
+        {islands.map(({ model, mode: islandMode }, i) => (
+          <IslandScene
+            key={`${model.ownerId}:${i}`}
+            model={model}
+            mode={islandMode}
+            worldMode={mode}
+            night={night}
+            dark={dark}
+            reducedMotion={reducedMotion}
+            position={positions[i]}
+          />
+        ))}
+        {primary && (
+          <Clouds seed={primary.seed} side={side} depth={depth} visible={mode === 'home' || mode === 'break'} reducedMotion={reducedMotion} night={night} />
+        )}
       </Canvas>
     </div>
   );

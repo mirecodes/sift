@@ -3,7 +3,7 @@ import { memo, useMemo, useRef } from 'react';
 import { CircleGeometry, Color, Group, Mesh, MeshBasicMaterial, MeshLambertMaterial, BoxGeometry } from 'three';
 import { config } from '../../domain/config';
 import { getSpecies } from '../../domain/animals/catalog';
-import type { PlacedAnimal } from '../../domain/types';
+import type { IslandAnimal } from '../../domain/island/model';
 import { palette } from '../palette';
 import { animalGeometry, flutterParts, modelById, VOXEL_SIZE } from '../voxel/geometry';
 import { HUT_APPROACH, HUT_DOOR } from '../props/Camp';
@@ -95,7 +95,7 @@ export type GroundAt = (x: number, z: number) => number;
 
 interface AnimalProps {
   ground: GroundAt;
-  animal: PlacedAnimal;
+  animal: IslandAnimal;
   timeScale: number;
   reducedMotion: boolean;
   /** True for animals that appear after the scene has mounted (reveal). */
@@ -148,8 +148,8 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     routineAt: 0,
     delay: 0,
     clock: 0,
-    px: routine === 'hut' ? HUT_DOOR.x : routine === 'sleep' ? slot.x : animal.tileX,
-    pz: routine === 'hut' ? HUT_DOOR.z : routine === 'sleep' ? slot.z : animal.tileZ,
+    px: routine === 'hut' ? HUT_DOOR.x : routine === 'sleep' ? slot.x : animal.tile.x,
+    pz: routine === 'hut' ? HUT_DOOR.z : routine === 'sleep' ? slot.z : animal.tile.z,
     appear: routine === 'hut' ? 0 : 1,
     lie: routine === 'sleep' ? 1 : 0,
     leg: 1,
@@ -157,7 +157,7 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     arrived: routine === 'sleep',
     returning: false,
     stride: 0,
-    gy: ground(animal.tileX, animal.tileZ),
+    gy: ground(animal.tile.x, animal.tile.z),
     bubbleUntil: -1,
   });
 
@@ -192,7 +192,7 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
       s.action = 'none';
       s.returning = wanted === 'none' && from !== 'none';
       if (reducedMotion) {
-        const to = wanted === 'hut' ? HUT_DOOR : wanted === 'sleep' ? slotRef.current : { x: animal.tileX + s.offX, z: animal.tileZ + s.offZ };
+        const to = wanted === 'hut' ? HUT_DOOR : wanted === 'sleep' ? slotRef.current : { x: animal.tile.x + s.offX, z: animal.tile.z + s.offZ };
         s.px = to.x;
         s.pz = to.z;
         s.appear = wanted === 'hut' ? 0 : 1;
@@ -238,7 +238,7 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
         s.lie += ((s.arrived ? 1 : 0) - s.lie) * Math.min(1, dt * 3);
       } else {
         s.lie += (0 - s.lie) * Math.min(1, dt * 5);
-        if (s.returning && active && s.lie < 0.05 && moveTo(animal.tileX + s.offX, animal.tileZ + s.offZ, WALK)) s.returning = false;
+        if (s.returning && active && s.lie < 0.05 && moveTo(animal.tile.x + s.offX, animal.tile.z + s.offZ, WALK)) s.returning = false;
       }
     }
 
@@ -335,8 +335,8 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     }
 
     if (idle) {
-      s.px = animal.tileX + s.offX;
-      s.pz = animal.tileZ + s.offZ;
+      s.px = animal.tile.x + s.offX;
+      s.pz = animal.tile.z + s.offZ;
     }
     if (moving) y = Math.abs(Math.sin(s.stride)) * 0.14;
     const lie = easeInOut(Math.min(1, Math.max(0, s.lie)));
@@ -365,7 +365,7 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
   });
 
   return (
-    <group ref={outer} position={[animal.tileX, ground(animal.tileX, animal.tileZ), animal.tileZ]}>
+    <group ref={outer} position={[animal.tile.x, ground(animal.tile.x, animal.tile.z), animal.tile.z]}>
       <mesh geometry={shadowGeometry} material={shadowMaterial} position={[0, 0.005, 0]} />
       {/* Invisible hit box: animals are tiny (0.25x), so the model alone is hard to click. */}
       <mesh ref={hitRef} material={hitMaterial} geometry={bubbleBox} position={[0, bodyH / 2, 0]} scale={[Math.max(bodyW, 1), bodyH + 0.2, Math.max(bodyW, 1)]} onClick={poke} />
@@ -478,7 +478,7 @@ function RainbowBursts({ timeScale }: { timeScale: number }) {
 }
 
 interface AnimalsProps {
-  animals: readonly PlacedAnimal[];
+  animals: readonly IslandAnimal[];
   tiles: readonly (Spot & { top: number; water?: boolean })[];
   mode: WorldMode;
   dark: boolean;

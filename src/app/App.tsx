@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { buildIslandModel, type IslandMode, type IslandModel } from '../domain/island/model';
 import { selectIslandLevel, selectVisibleAnimals, useApp } from '../store';
 import { usePrefersReducedMotion } from '../ui/hooks';
 import { BreakScreen } from '../screens/break/BreakScreen';
@@ -8,13 +9,14 @@ import { HomeScreen } from '../screens/home/HomeScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { Scene } from '../world/Scene';
 import type { WorldMode } from '../world/types';
+import { devSecondIsland, DEV_TWO_ISLANDS } from './devTwoIslands';
 import styles from './App.module.css';
 
 export function App() {
   const ready = useApp((s) => s.ready);
   const phase = useApp((s) => s.phase);
   const view = useApp((s) => s.view);
-  const seed = useApp((s) => s.world.seed);
+  const world = useApp((s) => s.world);
   const allAnimals = useApp((s) => s.animals);
   const revealPending = useApp((s) => s.revealPending);
   const islandLevel = useApp((s) => selectIslandLevel(s));
@@ -22,7 +24,13 @@ export function App() {
   const reducedMotion = usePrefersReducedMotion();
 
   // Overtime and break-over share the render mode of their base phase, so no clock is needed here.
-  const animals = useMemo(() => selectVisibleAnimals({ animals: allAnimals, revealPending }), [allAnimals, revealPending]);
+  const islands = useMemo(() => {
+    const animals = selectVisibleAnimals({ animals: allAnimals, revealPending });
+    const own = buildIslandModel({ world, islandLevel, animals });
+    const list: { model: IslandModel; mode: IslandMode }[] = [{ model: own, mode: 'own' }];
+    if (DEV_TWO_ISLANDS !== null) list.push({ model: devSecondIsland(own, DEV_TWO_ISLANDS), mode: 'visit' });
+    return list;
+  }, [world, islandLevel, allAnimals, revealPending]);
 
   if (!ready) return <div className={styles.blank} />;
 
@@ -47,7 +55,7 @@ export function App() {
 
   return (
     <>
-      <Scene mode={mode} seed={seed} islandLevel={islandLevel} animals={animals} reducedMotion={reducedMotion} theme={theme} />
+      <Scene mode={mode} islands={islands} reducedMotion={reducedMotion} theme={theme} />
       {screen}
     </>
   );
