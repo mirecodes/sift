@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { buildIslandModel, type IslandMode, type IslandModel } from '../domain/island/model';
-import { selectIslandLevel, selectVisibleAnimals, useApp, type Tab } from '../store';
+import { config } from '../domain/config';
+import { appStore, selectIslandLevel, selectVisibleAnimals, useApp, type Tab } from '../store';
 import { usePrefersReducedMotion } from '../ui/hooks';
 import { strings } from '../ui/strings';
 import { FriendsIcon, GroupIcon, IslandIcon, StatsIcon } from '../ui/components/Icons';
@@ -57,6 +58,13 @@ export function App() {
   useEffect(() => {
     document.documentElement.toggleAttribute('data-tabs', showTabs);
   }, [showTabs]);
+
+  // Expiry check every minute while not focusing (start and phase changes are handled in the store).
+  useEffect(() => {
+    if (!ready || focusing || !features.economy) return;
+    const id = setInterval(() => void appStore.getState().applyExpirations(), config.ui.expiryCheckMs);
+    return () => clearInterval(id);
+  }, [ready, focusing]);
 
   if (!ready) return <div className={styles.blank} />;
 

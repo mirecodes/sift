@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-07.3';
+export const BALANCE_VERSION = '2026-10-07.4';
 
 const MINUTE = 60_000;
 
@@ -40,6 +40,12 @@ export const balance = deepFreeze({
   economy: {
     /** Gold granted once per save when the economy starts (§9 Q12). */
     starterGold: 30,
+    /** An active animal departs this long after it was earned and leaves gold. */
+    animalLifetimeDays: 7,
+    /** Never expire: the Unicorn is the island-move currency (F5). */
+    expiryExemptSpecies: ['unicorn'],
+    /** Gold left by a departing animal, by tier rank (Common, Mythic, Epic, Legendary). */
+    goldByTierRank: [1, 3, 8, 25],
   },
 } as const);
 

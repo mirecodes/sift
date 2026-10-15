@@ -47,7 +47,8 @@
 
 - [x] 2.1 Ledger and wallet (domain + store)
   - Owner approved the Phase 0 and Phase 1 gates by requesting Phase 2. `domain/economy/ledger.ts`, `Commit.ledgerAdd/cosmeticsAdd`, store `gold` + `spendGold`. Tests: sum, typed error, rejected amounts, starter once and only with the flag, short balance and failed write change nothing, Dexie rollback + append-only. ADR-039 (Proposed, Q12).
-- [ ] 2.2 Expiry engine (shared rule)
+- [x] 2.2 Expiry engine (shared rule)
+  - `shared/rules/expiry.ts` + store `applyExpirations` + 60 s check in `App`. Tests: exact 7-day boundary, gold by rank, Unicorn exempt, long absence (one notice), idempotent incl. concurrent calls, deferred during Focus and applied at End focus, Home/abandon transitions, flag off, memory-only animals never stored. ADR-040 (Proposed, Q14).
 - [ ] 2.3 Departure presentation
 - [ ] 2.4 Coin pile prop
 - [ ] 2.5 HUD counters
@@ -154,6 +155,9 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 2.2 · The 60 s expiry check runs on Home and Break (any non-Focus phase), not only idle. · A break should not hold a departure back; Break shows notices anyway.
+- 2.2 · Test-mode animals now get `acquiredAt = now` (was 0) and are memory-only like dummy animals. · With 0 they would all depart at once on every start.
+- 2.2 · Removed the fake dummy `animals_departed` notice; dummy departures now come from real dummy animals. · The fake one pointed at animals that do not exist.
 - 2.1 · `spendGold` grants one `OwnedCosmetic`; buildings and other grant kinds extend it in Phase 3. · Only cosmetics exist as a grantable store today.
 - 2.1 · Starter gold is granted on load only while `features.economy` is on, once per save (also existing saves when the flag is first turned on). · Keeps production unchanged while the flag is off.
 

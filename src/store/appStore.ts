@@ -3,6 +3,7 @@ import { config, DEFAULT_BLOCK_THEME } from '../domain/config';
 import type { FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, Settings, WorldState } from '../domain/types';
 import { balance } from '../../shared/balance/balance';
 import { debitEntry, goldBalance, goldEntry, hasStarterGrant, LEDGER_REASON } from '../domain/economy/ledger';
+import { computeExpirations } from '../../shared/rules/expiry';
 import { canShowNotices, currentNotice, type Notice } from '../domain/inbox/inbox';
 import {
   IDLE,
@@ -37,8 +38,14 @@ export interface AppDeps {
   /** Start with a new island seed and no placed animals (stored animals are deleted). */
   resetMap?: boolean;
   /** Test mode: sample data added in memory only, never persisted (ADR-038). */
-  dummy?: { sessions: FocusSession[]; inbox: InboxRow[]; ledger?: LedgerEntry[] };
-  /** `features.economy`: starter gold (and, from Step 2.2, expiry) run only when on. */
+  dummy?: {
+    sessions: FocusSession[];
+    inbox: InboxRow[];
+    ledger?: LedgerEntry[];
+    /** Placed on free tiles at startup, like test species. */
+    animals?: { species: AnimalSpecies; acquiredAt: number }[];
+  };
+  /** `features.economy`: starter gold and animal expiry run only when on. */
   economy?: boolean;
 }
 
@@ -77,6 +84,11 @@ export interface AppState {
   enqueueNotice(notice: Notice): Promise<void>;
   /** Removes the shown notice. Ignored while focusing: nothing is dequeued during Focus. */
   dismissNotice(id: string): Promise<void>;
+  /**
+   * Departs every expired active animal (Step 2.2): statuses, gold credits and one
+   * `animals_departed` notice in one write. No-op while focusing or with the economy off.
+   */
+  applyExpirations(): Promise<void>;
   /**
    * Writes the debit and the granted item in one transaction, or nothing.
    * Rejects with `InsufficientGoldError` when the balance is short.
@@ -133,6 +145,9 @@ export function selectIslandLevel(s: Pick<AppState, 'animals' | 'phase'>): numbe
 
 export function createAppStore(initialDeps: AppDeps) {
   const deps = { ...initialDeps };
+  /** Test-mode and dummy animals: they live in memory only, so their changes are never stored. */
+  const memoryOnly = new Set<string>();
+  let expiring: Promise<void> | null = null;
 
   /** Persistence must never block the cycle: fall back to memory if storage fails. */
   async function commit(change: Parameters<StorageAdapter['commit']>[0]): Promise<void> {
@@ -179,9 +194,16 @@ export function createAppStore(initialDeps: AppDeps) {
     const revealPending = rewardId && stored.some((a) => a.id === rewardId) ? rewardId : null;
 
     const animals = [...stored];
-    for (const species of devSwitches ? (deps.testSpecies ?? []) : []) {
+    memoryOnly.clear();
+    const extra = devSwitches
+      ? [...(deps.testSpecies ?? []).map((species) => ({ species, acquiredAt: deps.now() })), ...(deps.dummy?.animals ?? [])]
+      : [];
+    for (const { species, acquiredAt } of extra) {
       const tile = pickNewAnimalTile(world.seed, animals, deps.rng);
-      if (tile) animals.push(newPlacedAnimal(deps.uuid(), species, tile, 0, 'test-mode'));
+      if (!tile) continue;
+      const animal = newPlacedAnimal(deps.uuid(), species, tile, acquiredAt, 'test-mode');
+      memoryOnly.add(animal.id);
+      animals.push(animal);
     }
 
     let ledger = loaded.ledger;
@@ -205,7 +227,46 @@ export function createAppStore(initialDeps: AppDeps) {
     };
   }
 
-  return createStore<AppState>()((set, get) => ({
+  async function expire(): Promise<void> {
+    const { getState: get, setState: set } = store;
+    const { phase, animals } = get();
+    if (!deps.economy || !canShowNotices(phase)) return; // never while focusing
+    const now = deps.now();
+    const due = computeExpirations(animals, now, balance.economy);
+    if (!due.length) return;
+
+    const byId = new Map(animals.map((a) => [a.id, a]));
+    const departed = due.map(({ animalId, expiredAt }): PlacedAnimal => ({
+      ...byId.get(animalId)!,
+      status: 'departed',
+      endedAt: expiredAt,
+      endReason: 'expired',
+    }));
+    // Stored and memory-only animals never share a write or a notice.
+    const groups = [due.filter((d) => !memoryOnly.has(d.animalId)), due.filter((d) => memoryOnly.has(d.animalId))];
+    const inboxAdd: InboxRow[] = [];
+    let gained = 0;
+    for (const [i, group] of groups.entries()) {
+      if (!group.length) continue;
+      const gold = group.reduce((sum, d) => sum + d.gold, 0);
+      const ids = group.map((d) => d.animalId);
+      const row: InboxRow = { id: deps.uuid(), createdAt: now, notice: { kind: 'animals_departed', animalIds: ids, gold } };
+      if (i === 0) {
+        const credits = group.filter((d) => d.gold > 0).map((d) => goldEntry(deps.uuid(), d.expiredAt, d.gold, LEDGER_REASON.expiry, d.animalId));
+        await commit({ animals: departed.filter((a) => !memoryOnly.has(a.id)), ledgerAdd: credits, inboxAdd: [row] });
+      }
+      inboxAdd.push(row);
+      gained += gold;
+    }
+    const changed = new Map(departed.map((a) => [a.id, a]));
+    set({
+      animals: get().animals.map((a) => changed.get(a.id) ?? a),
+      gold: get().gold + gained,
+      inbox: [...get().inbox, ...inboxAdd],
+    });
+  }
+
+  const store = createStore<AppState>()((set, get) => ({
     ready: false,
     settings: DEFAULT_SETTINGS,
     world: { seed: 0, blockThemeId: DEFAULT_BLOCK_THEME },
@@ -220,6 +281,7 @@ export function createAppStore(initialDeps: AppDeps) {
 
     async init() {
       set(await hydrate(true));
+      await get().applyExpirations();
     },
 
     async exportBackup() {
@@ -229,6 +291,7 @@ export function createAppStore(initialDeps: AppDeps) {
     async importBackup(backup) {
       await deps.storage.importAll(backup.data, backup.schemaVersion);
       set(await hydrate(false));
+      await get().applyExpirations();
     },
 
     async startFocus() {
@@ -281,6 +344,7 @@ export function createAppStore(initialDeps: AppDeps) {
         animals: animal ? [...animals, animal] : animals,
         revealPending: animal?.id ?? null,
       });
+      await get().applyExpirations(); // animals that expired during Focus leave now
     },
 
     async abandonFocus() {
@@ -305,6 +369,7 @@ export function createAppStore(initialDeps: AppDeps) {
         sessions: sessions.map((s) => (s.id === session.id ? session : s)),
         revealPending: null,
       });
+      await get().applyExpirations();
     },
 
     async goHome() {
@@ -312,6 +377,7 @@ export function createAppStore(initialDeps: AppDeps) {
       if (phase.kind !== 'break') return;
       await commit({ phase: IDLE });
       set({ phase: IDLE, revealPending: null, view: 'home' });
+      await get().applyExpirations();
     },
 
     finishReveal() {
@@ -353,7 +419,14 @@ export function createAppStore(initialDeps: AppDeps) {
       await deps.storage.commit({ ledgerAdd: [debit], cosmeticsAdd: [grant] });
       set({ gold: get().gold + debit.amount });
     },
+
+    applyExpirations() {
+      // One run at a time, so a timer tick and a phase change never credit the same animal twice.
+      expiring ??= expire().finally(() => (expiring = null));
+      return expiring;
+    },
   }));
+  return store;
 }
 
 export type AppStore = ReturnType<typeof createAppStore>;

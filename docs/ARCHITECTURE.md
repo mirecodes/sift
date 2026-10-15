@@ -61,7 +61,7 @@ stateDiagram-v2
 | Inbox | Deferred notices (`domain/inbox`, store `inbox`, Dexie `inbox`): queued at any time, shown one at a time (oldest first) as a `NoticeCard` on Home and Break only; `dismissNotice` is a no-op while focusing, `selectCurrentNotice` returns nothing during Focus. Visual events tied to a notice play when it is shown, not when the data changed (ADR-035) |
 | Tabs | Island (Home/Focus/Break + Settings/Collection pages), Stats, Friends, Group; non-Island tabs appear only with their feature flag, and with one tab there is no tab bar. `activeTab` lives in the store, in memory only (every launch opens on Island). Focus always runs on Island and hides the tab bar; `setTab` is ignored while focusing, and leaving Island ends a running reveal. Space and hold-Esc exist only on Island screens. Other tabs cover the canvas, which stays mounted with `frameloop="never"`; during a break they show a pill with the break timer (ADR-036) |
 | Stats | `domain/stats/days.ts`: `aggregateByDay(sessions, { timeZone, from, to })` → one `DayStat` per day (zeros included); `monthSummary(days, { today })`. Only `completed` sessions count (`balance.stats.includeAbandoned`); minutes = real `endedAt − startedAt` (not the reward cap); a session belongs to the local day it **started** in the user's current time zone. Daily average = month total ÷ days elapsed (through today in the current month, all days in past months). Epoch → local date via `Intl.DateTimeFormat`; calendar math on `YYYY-MM-DD` strings in UTC (ADR-037) |
-| Economy | `features.economy`. Gold = sum of the append-only `ledger` store (`domain/economy/ledger.ts`), cached as store `gold`, recomputed on load. `spendGold(amount, reason, refId, grant)` writes debit + granted item in one transaction or fails (`InsufficientGoldError`, no memory fallback). 30 starter gold once per save (`starter` entry) (ADR-039) |
+| Economy | `features.economy`. Gold = sum of the append-only `ledger` store (`domain/economy/ledger.ts`), cached as store `gold`, recomputed on load. `spendGold(amount, reason, refId, grant)` writes debit + granted item in one transaction or fails (`InsufficientGoldError`, no memory fallback). 30 starter gold once per save (`starter` entry) (ADR-039). **Expiry** (`shared/rules/expiry.ts` `computeExpirations`): an active animal departs at exactly `acquiredAt + 7 days` (Unicorn exempt) and leaves gold by rank `[1, 3, 8, 25]`; `endedAt` = that moment. Store `applyExpirations` writes statuses, one credit per animal (`refId` = animal) and one `animals_departed` notice in one commit; it runs at start, after an import, on every transition to Home or Break and every 60 s while not focusing, never during Focus; one run at a time. Test-mode and dummy animals are memory-only: their departures never reach storage (ADR-040) |
 | Collection | All 50 species (silhouettes if not owned, counts if duplicated) + stats: total focus time, completed sessions, species `n / 50` |
 
 ## 4. Timer engine
@@ -200,7 +200,7 @@ e2e/             Playwright smoke test
 shared/          pure rules that must run identically on client and server (ADR-031)
 ├── balance/     balance.ts: gameplay tunables + BALANCE_VERSION
 ├── rng/         the one seeded PRNG (mulberry32) + hash01, clamp, lerp
-└── rules/       tier.ts, reward.ts, placement.ts (later expiry, scoring, war, …)
+└── rules/       tier.ts, reward.ts, placement.ts, expiry.ts (later scoring, war, …)
 src/
 ├── app/         App, routing, runtimeConfig.ts
 ├── screens/     home, focus, break, settings, collection, stats; TabPage, NoticeCard

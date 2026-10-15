@@ -8,6 +8,7 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Added** — Step 2.2: animal expiry (`shared/rules/expiry.ts`): active animals depart 7 days after they were earned (Unicorn exempt) and leave 1 / 3 / 8 / 25 gold by tier; statuses, credits and one `animals_departed` notice in one write; runs at start, on the way to Home or Break and every minute, never during Focus (`BALANCE_VERSION` 2026-10-07.4). Behind `features.economy`. Dummy data adds animals of every age (ADR-040).
 - 2026-10-07 · **Added** — Step 2.1: gold ledger and wallet: append-only `ledger` store, balance = sum (store `gold`), `spendGold` writes debit and granted item in one transaction or nothing (`InsufficientGoldError`); 30 starter gold once per save with `features.economy` (`balance.economy.starterGold`, `BALANCE_VERSION` 2026-10-07.3). Dummy data adds 140 gold (ADR-039).
 - 2026-10-07 · **Changed** — Developer switches grouped under `testMode` in `config/app.yaml` (`resetMapOnStart`, `animals.*`, new `dummyData`). `dummyData` shows ~6 weeks of sample sessions (Stats) and Inbox notices in memory only, dev builds only; later phases add their own sample data (ADR-038).
 - 2026-10-07 · **Added** — Step 1.7: Settings → Stats → "Week starts on" (Monday / Sunday) as a new `segmented` control, shown only with the Stats tab. Phase 1 complete, behind `features.stats` (off).

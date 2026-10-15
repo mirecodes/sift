@@ -8,6 +8,8 @@ import { createMemoryStorage } from '../platform/storage/memory';
 import type { StorageAdapter } from '../platform/storage';
 import { createAppStore, selectCurrentNotice, selectIslandLevel, selectVisibleAnimals } from './appStore';
 import { InsufficientGoldError } from '../domain/economy/ledger';
+import { CATALOG } from '../domain/animals/catalog';
+import { newPlacedAnimal } from '../domain/animals/placed';
 
 const MIN = 60_000;
 
@@ -462,6 +464,111 @@ describe('wallet (Step 2.1)', () => {
     await expect(t.getState().spendGold(10, 'purchase', 'fence', fence)).rejects.toThrow('disk full');
     expect(t.getState().gold).toBe(30);
     expect((await storage.exportAll()).ledger).toHaveLength(1);
+  });
+});
+
+describe('expiry (Step 2.2)', () => {
+  const DAY = 24 * 60 * MIN;
+  const species = (id: string) => CATALOG.find((s) => s.id === id)!;
+  const stored = (id: string, speciesId: string, acquiredAt: number, tileX: number): PlacedAnimal => ({
+    ...newPlacedAnimal(id, species(speciesId), { x: tileX, z: 2 }, acquiredAt, 's'),
+  });
+  async function setup(animals: PlacedAnimal[], now: number, economy = true) {
+    const storage = createMemoryStorage();
+    await storage.commit({ animals });
+    await storage.saveWorld({ seed: 1, blockThemeId: 'default' });
+    const clock = { t: now };
+    let n = 0;
+    const store = createAppStore({ storage, now: () => clock.t, rng: seededRng(1), uuid: () => `e-${++n}`, economy });
+    await store.getState().init();
+    return { store, storage, clock, get: store.getState };
+  }
+  const departures = (s: { inbox: { notice: { kind: string } }[] }) => s.inbox.filter((r) => r.notice.kind === 'animals_departed');
+
+  it('departs at exactly 7 days with gold, a notice and the real expiry time, all in storage', async () => {
+    const h = await setup([stored('fox', 'fox', 0, 1), stored('chick', 'chick', DAY, 2)], 7 * DAY);
+    expect(h.get().animals.find((a) => a.id === 'fox')).toMatchObject({ status: 'departed', endedAt: 7 * DAY, endReason: 'expired' });
+    expect(h.get().animals.find((a) => a.id === 'chick')?.status).toBe('active');
+    expect(h.get().gold).toBe(30 + 8);
+    expect(departures(h.get())[0]?.notice).toEqual({ kind: 'animals_departed', animalIds: ['fox'], gold: 8 });
+    const saved = await h.storage.load();
+    expect(saved.animals.find((a) => a.id === 'fox')?.status).toBe('departed');
+    expect(saved.ledger.find((e) => e.reason === 'expiry')).toMatchObject({ amount: 8, refId: 'fox', at: 7 * DAY });
+    expect(saved.inbox).toHaveLength(1);
+  });
+
+  it('never expires a Unicorn', async () => {
+    const h = await setup([stored('u', 'unicorn', 0, 1)], 365 * DAY);
+    expect(h.get().animals[0]?.status).toBe('active');
+    expect(departures(h.get())).toHaveLength(0);
+  });
+
+  it('a long absence departs many at once in one notice', async () => {
+    const list = ['chick', 'rabbit', 'duck', 'sheep', 'tiger'].map((id, i) => stored(id, id, i * DAY, i - 2));
+    const h = await setup(list, 60 * DAY);
+    expect(h.get().animals.every((a) => a.status === 'departed')).toBe(true);
+    expect(departures(h.get())).toHaveLength(1);
+    expect(h.get().gold).toBe(30 + 1 + 1 + 1 + 3 + 25);
+  });
+
+  it('is idempotent: running again gives the gold once', async () => {
+    const h = await setup([stored('fox', 'fox', 0, 1)], 8 * DAY);
+    await h.get().applyExpirations();
+    await Promise.all([h.get().applyExpirations(), h.get().applyExpirations()]);
+    expect(h.get().gold).toBe(38);
+    expect((await h.storage.load()).ledger.filter((e) => e.reason === 'expiry')).toHaveLength(1);
+    expect(departures(h.get())).toHaveLength(1);
+  });
+
+  it('nothing departs while focusing; it happens when Focus ends', async () => {
+    const h = await setup([stored('fox', 'fox', 0, 1)], 7 * DAY - 10 * MIN);
+    await h.get().startFocus();
+    h.clock.t += 20 * MIN; // expired mid-focus
+    await h.get().applyExpirations();
+    expect(h.get().animals[0]?.status).toBe('active');
+    expect(h.get().gold).toBe(30);
+    h.clock.t += 10 * MIN;
+    await h.get().endFocus();
+    expect(h.get().animals[0]).toMatchObject({ status: 'departed', endedAt: 7 * DAY });
+    expect(h.get().gold).toBe(38);
+  });
+
+  it('runs on the way Home and does nothing with the economy off', async () => {
+    // Expires one minute after Focus ends, during the break.
+    const h = await setup([stored('fox', 'fox', 0, 1)], 7 * DAY - 31 * MIN);
+    await h.get().startFocus();
+    h.clock.t += 30 * MIN;
+    await h.get().endFocus();
+    expect(h.get().animals[0]?.status).toBe('active');
+    h.clock.t += 2 * MIN; // no timer tick in the store: the Home transition applies it
+    await h.get().goHome();
+    expect(h.get().animals[0]?.status).toBe('departed');
+
+    const a = await setup([stored('cat', 'cat', 0, 1)], 7 * DAY - 2 * MIN);
+    await a.get().startFocus();
+    a.clock.t += 3 * MIN;
+    await a.get().abandonFocus();
+    expect(a.get().animals[0]?.status).toBe('departed');
+
+    const off = await setup([stored('fox', 'fox', 0, 1)], 30 * DAY, false);
+    await off.get().applyExpirations();
+    expect(off.get().animals[0]?.status).toBe('active');
+    expect(off.get().gold).toBe(0);
+  });
+
+  it('memory-only animals depart in memory and never reach storage', async () => {
+    const storage = createMemoryStorage();
+    const store = createAppStore({
+      storage, now: () => 10 * DAY, rng: seededRng(1), uuid: (() => { let n = 0; return () => `m-${++n}`; })(), economy: true,
+      dummy: { sessions: [], inbox: [], animals: [{ species: species('fox'), acquiredAt: 0 }] },
+    });
+    await store.getState().init();
+    expect(store.getState().animals[0]?.status).toBe('departed');
+    expect(store.getState().gold).toBe(38);
+    const saved = await storage.load();
+    expect(saved.animals).toEqual([]);
+    expect(saved.ledger.map((e) => e.reason)).toEqual(['starter']);
+    expect(saved.inbox).toEqual([]);
   });
 });
 

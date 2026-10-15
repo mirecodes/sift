@@ -1,4 +1,6 @@
 import { seededRng } from '../domain/random';
+import { balance } from '../../shared/balance/balance';
+import { CATALOG, type AnimalSpecies } from '../domain/animals/catalog';
 import type { FocusSession, InboxRow, LedgerEntry } from '../domain/types';
 
 /** Sample data added in memory by `testMode.dummyData` (dev builds only). Never saved or exported. */
@@ -6,6 +8,7 @@ export interface DummyData {
   sessions: FocusSession[];
   inbox: InboxRow[];
   ledger: LedgerEntry[];
+  animals: { species: AnimalSpecies; acquiredAt: number }[];
 }
 
 const MIN = 60_000;
@@ -13,6 +16,21 @@ const DAY = 24 * 60 * MIN;
 const DAYS = 45;
 /** Gold credits, oldest first: 140 gold in all. */
 const DUMMY_GOLD = [30, 9, 25, 14, 3, 8, 26, 25];
+const LIFETIME = balance.economy.animalLifetimeDays * DAY;
+/** [species, age]. */
+const DUMMY_ANIMALS: [string, number][] = [
+  ['chick', 8 * DAY],
+  ['duck', 9 * DAY],
+  ['sheep', 10 * DAY],
+  ['fox', 8.5 * DAY],
+  ['tiger', 12 * DAY],
+  ['rabbit', LIFETIME - 1.5 * MIN],
+  ['hamster', LIFETIME - 2.5 * MIN],
+  ['dog', 6 * DAY],
+  ['cat', 4 * DAY],
+  ['panda', 1 * DAY],
+  ['unicorn', 20 * DAY],
+];
 
 /**
  * Deterministic sample data relative to `now` (ADR-038). Each phase adds its feature's data here
@@ -58,11 +76,13 @@ export function createDummyData(now: number): DummyData {
     refId: null,
   }));
 
-  // Inbox: notices shown on Home, one at a time.
-  const inbox: InboxRow[] = [
-    { id: 'dummy-notice-1', createdAt: now - 2 * MIN, notice: { kind: 'animals_departed', animalIds: ['dummy-a', 'dummy-b', 'dummy-c'], gold: 12 } },
-    { id: 'dummy-notice-2', createdAt: now - MIN, notice: { kind: 'friend_request', userId: 'dummy-user' } },
-  ];
+  // Inbox: notices shown on Home, one at a time. Departure notices come from the animals below.
+  const inbox: InboxRow[] = [{ id: 'dummy-notice-1', createdAt: now - MIN, notice: { kind: 'friend_request', userId: 'dummy-user' } }];
 
-  return { sessions, inbox, ledger };
+  // Animals by age. With `features.economy` on, the expired ones leave at startup (one notice),
+  // two more leave a minute or two later, and the rest show their time left when poked.
+  const species = (id: string) => CATALOG.find((s) => s.id === id)!;
+  const animals = DUMMY_ANIMALS.map(([id, age]) => ({ species: species(id), acquiredAt: now - age }));
+
+  return { sessions, inbox, ledger, animals };
 }

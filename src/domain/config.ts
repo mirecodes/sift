@@ -85,6 +85,8 @@ export const config = {
     chimeFreshMs: 3000,
     /** Month calendar heatmap: a day reaches level i+1 at `heatMinutes[i]` focus minutes (levels 1–4). */
     heatMinutes: [1, 30, 60, 120],
+    /** How often expired animals are checked for while not focusing (Step 2.2). */
+    expiryCheckMs: 60_000,
   },
   render: {
     /** Frame rate cap on the Focus screen. */
