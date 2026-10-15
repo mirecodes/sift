@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { debitEntry, goldBalance, goldEntry, hasStarterGrant, InsufficientGoldError, LEDGER_REASON } from './ledger';
+import { balance } from '../../../shared/balance/balance';
+import { debitEntry, goldBalance, goldEntry, goldPileLevel, hasStarterGrant, InsufficientGoldError, LEDGER_REASON } from './ledger';
 
 describe('ledger', () => {
   it('sums credits and debits', () => {
@@ -17,6 +18,12 @@ describe('ledger', () => {
     expect(() => debitEntry(10, -3, 'purchase', null, 'd', 5)).toThrow(RangeError);
     expect(() => debitEntry(10, 1.5, 'purchase', null, 'd', 5)).toThrow(RangeError);
     expect(() => goldEntry('a', 1, 0, 'expiry', null)).toThrow(RangeError);
+  });
+
+  it('maps the balance to a coin pile level with the balance thresholds', () => {
+    const t = balance.economy.pileThresholds;
+    expect([0, 1, 9, 10, 29, 30, 99, 100, 299, 300, 999, 1000, 50_000].map((g) => goldPileLevel(g, t))).toEqual([0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
+    expect(goldPileLevel(-5, t)).toBe(0);
   });
 
   it('detects the starter grant', () => {

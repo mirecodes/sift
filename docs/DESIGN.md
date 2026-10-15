@@ -422,6 +422,7 @@ Defined in `src/world/palette.ts`. Not shared with UI tokens.
 | Token | Value |
 |---|---|
 | `coin` | `#F2C230` (lit like blocks, so faces shade) |
+| `coin-dark` | `#D9A21E` (checkered with `coin` in the pile) |
 | `puff` | `#EEEEEE` (departure puff) |
 
 ## 15. Island
@@ -469,6 +470,13 @@ Defined in `src/world/palette.ts`. Not shared with UI tokens.
   - Day: every animal runs to the hut door, shrinks over 0.25s and disappears inside.
   - Night: animals walk to spots on the blocks nearest the hut (up to 3 per block), then lie on their side and breathe slowly (about 3.5% body scale, ~3s period).
   - Leaving Focus (Break or reload into Break): animals reappear at the door (day) or stand up (night) and walk back to their tiles. Reloading while in Focus shows the end state immediately. With reduced motion all of this snaps with no walking.
+
+### 15.6 Coin Pile
+
+- On the reserved camp tile next to the cabin (camera side, `(-2, 1)`), only with the economy on. It shows a bucket of the gold balance, never the exact amount: levels 1–6 from `balance.economy.pileThresholds` (1, 10, 30, 100, 300, 1000 gold), nothing at 0.
+- A round heap of 0.12-block gold voxels on a 7×7 grid (one instanced mesh, never one mesh per coin), checkered `coin` / `coin-dark` so the voxels read. Center height 1, 2, 3, 4, 5, 6 voxels by level, falling off by one voxel per grid step.
+- The level follows the gold the user has been told about: departure gold joins the pile when its notice shows (coins land there, see 18).
+- Night: the pile is lit by the campfire like every block plus a faint warm glow (emissive 30% of `coin`, following the day/night blend) so it catches the firelight, and 3 tiny white sparkles twinkle on its top voxels. No sparkles on Focus or with reduced motion.
 
 ### 15.5 Stream
 

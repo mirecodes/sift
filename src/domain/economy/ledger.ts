@@ -29,5 +29,8 @@ export function debitEntry(balance: number, amount: number, reason: string, refI
   return goldEntry(id, at, -amount, reason, refId);
 }
 
+/** Coin pile size 0..thresholds.length: how many thresholds the balance reaches (Step 2.4). */
+export const goldPileLevel = (gold: number, thresholds: readonly number[]): number => thresholds.filter((t) => gold >= t).length;
+
 /** The one-time starter grant has been given on this save. */
 export const hasStarterGrant = (entries: readonly LedgerEntry[]): boolean => entries.some((e) => e.reason === LEDGER_REASON.starter);

@@ -2,6 +2,8 @@ import { useEffect, useMemo } from 'react';
 import { buildIslandModel, type IslandMode, type IslandModel } from '../domain/island/model';
 import { config } from '../domain/config';
 import { pendingDepartures } from '../domain/inbox/inbox';
+import { goldPileLevel as goldPileLevelOf } from '../domain/economy/ledger';
+import { balance } from '../../shared/balance/balance';
 import { appStore, selectIslandLevel, selectVisibleAnimals, useApp, type Tab } from '../store';
 import { usePrefersReducedMotion } from '../ui/hooks';
 import { strings } from '../ui/strings';
@@ -42,17 +44,20 @@ export function App() {
   const islandLevel = useApp((s) => selectIslandLevel(s));
   const theme = useApp((s) => s.settings.theme);
   const inbox = useApp((s) => s.inbox);
+  const gold = useApp((s) => s.gold);
   const reducedMotion = usePrefersReducedMotion();
 
   // Overtime and break-over share the render mode of their base phase, so no clock is needed here.
   const islands = useMemo(() => {
-    const { leaving, departing } = pendingDepartures(inbox, phase);
+    const { leaving, departing, heldGold } = pendingDepartures(inbox, phase);
     const animals = selectVisibleAnimals({ animals: allAnimals, revealPending }, leaving);
-    const own = buildIslandModel({ world, islandLevel, animals, leaving, departing });
+    // The pile shows the gold the user has been told about (Step 2.4).
+    const goldPileLevel = features.economy ? goldPileLevelOf(gold - heldGold, balance.economy.pileThresholds) : 0;
+    const own = buildIslandModel({ world, islandLevel, animals, leaving, departing, goldPileLevel });
     const list: { model: IslandModel; mode: IslandMode }[] = [{ model: own, mode: 'own' }];
     if (DEV_TWO_ISLANDS !== null) list.push({ model: devSecondIsland(own, DEV_TWO_ISLANDS), mode: 'visit' });
     return list;
-  }, [world, islandLevel, allAnimals, revealPending, inbox, phase]);
+  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold]);
 
   const focusing = phase.kind === 'focus';
   const tab = focusing || !TABS.some((t) => t.id === activeTab) ? 'island' : activeTab;

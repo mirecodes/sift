@@ -51,7 +51,8 @@
   - `shared/rules/expiry.ts` + store `applyExpirations` + 60 s check in `App`. Tests: exact 7-day boundary, gold by rank, Unicorn exempt, long absence (one notice), idempotent incl. concurrent calls, deferred during Focus and applied at End focus, Home/abandon transitions, flag off, memory-only animals never stored. ADR-040 (Proposed, Q14).
 - [x] 2.3 Departure presentation
   - Pure `pendingDepartures` (tested: leaving set, notice order, held gold, nothing during Focus) + model `leaving`/`departing` (tested) + `DepartureEffects`. Card copy existed since 0.9. Dev server with dummy data: "5 animals left 38 gold.", frames show puffs and coin arcs, no console errors. The HUD count-up lands in 2.5 (uses `heldGold`).
-- [ ] 2.4 Coin pile prop
+- [x] 2.4 Coin pile prop
+  - `goldPileLevel` (tested at every threshold), `pileVoxels` (tested: empty at 0, grows per level, inside its tile, < 200 voxels), `CoinPile` instanced mesh. Dev server with dummy data (level 4): day and night at 1280 and 390, no console errors.
 - [ ] 2.5 HUD counters
 - [ ] 2.6 Collection and poke updates
 
@@ -141,6 +142,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 2.4 · Coin pile look (dummy data shows level 4) and its night glow. The 0.7 spot review from Phase 0 is settled by this: it sits left of the cabin, camera side.
 - 2.3 · Departure animation (turn on `features.economy` + `testMode.dummyData`; dismiss the first notice): puff and coin sizes, timing, whether it reads as neutral. On desktop the coins land behind the notice card (the pile tile is at the back, next to the cabin).
 - 1.6 · Day detail sheet: bottom sheet on phones, centered dialog from 768px. Small models (e.g. Unicorn) look tiny as 48px sprites.
 - 1.5 · Heatmap steps are greys (hairline → mute-soft → body-mid → primary) at 1 / 30 / 60 / 120 min; no new accent. Check they read as "more focus" and the thresholds feel right.
@@ -157,6 +159,8 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 2.4 · The pile shows `gold − heldGold` (gold the user has been told about), so it grows when a departure notice shows. · Matches §2.9: visuals play when the notice shows.
+- 2.4 · Added a faint night emissive glow on the pile besides sparkles. · With firelight alone it read as dull brown at night.
 - 2.3 · Leaving animals keep being drawn while their notice is queued, but their tiles are already free; a new animal could land on one during a break. · Rare and brief; occupancy stays the single truth.
 - 2.3 · Animations are driven by the frame clock (`useFrame`), so on a paused tab they play when the island is visible again. · No timers outside the render loop.
 - 2.2 · The 60 s expiry check runs on Home and Break (any non-Focus phase), not only idle. · A break should not hold a departure back; Break shows notices anyway.

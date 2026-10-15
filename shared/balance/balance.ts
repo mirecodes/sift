@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-07.4';
+export const BALANCE_VERSION = '2026-10-07.5';
 
 const MINUTE = 60_000;
 
@@ -46,6 +46,8 @@ export const balance = deepFreeze({
     expiryExemptSpecies: ['unicorn'],
     /** Gold left by a departing animal, by tier rank (Common, Mythic, Epic, Legendary). */
     goldByTierRank: [1, 3, 8, 25],
+    /** Coin pile visual levels 1..6 start at these balances (the pile shows a bucket, not exact gold). */
+    pileThresholds: [1, 10, 30, 100, 300, 1000],
   },
 } as const);
 

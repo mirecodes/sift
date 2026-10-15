@@ -7,6 +7,7 @@ import type { IslandMode, IslandModel } from '../domain/island/model';
 import { Animals } from './animals/Animals';
 import { Island } from './island/Island';
 import { Camp } from './props/Camp';
+import { CoinPile } from './props/CoinPile';
 import { Stream } from './stream/Stream';
 import type { WorldMode } from './types';
 
@@ -57,6 +58,7 @@ export function IslandScene({ model, mode, worldMode, night, dark, reducedMotion
       <Island seed={seed} level={islandLevel} animate={!reducedMotion} />
       <Stream streams={streams} tiles={tiles} timeScale={timeScale} reducedMotion={reducedMotion} />
       <Camp night={night} reducedMotion={reducedMotion} />
+      <CoinPile level={model.goldPileLevel} night={night} sparkle={!reducedMotion && worldMode !== 'focus'} />
       <Animals animals={model.animals} tiles={tiles} mode={worldMode} dark={dark} timeScale={timeScale} reducedMotion={reducedMotion} />
     </Bob>
   );
