@@ -34,6 +34,8 @@ export interface AppDeps {
   testSpecies?: AnimalSpecies[];
   /** Start with a new island seed and no placed animals (stored animals are deleted). */
   resetMap?: boolean;
+  /** Test mode: sample sessions and notices added in memory only, never persisted (ADR-038). */
+  dummy?: { sessions: FocusSession[]; inbox: InboxRow[] };
 }
 
 export interface AppState {
@@ -171,7 +173,17 @@ export function createAppStore(initialDeps: AppDeps) {
       if (tile) animals.push(newPlacedAnimal(deps.uuid(), species, tile, 0, 'test-mode'));
     }
 
-    return { ready: true, settings, world, animals, sessions: loaded.sessions, phase, revealPending, inbox: loaded.inbox };
+    const dummy = devSwitches ? deps.dummy : undefined;
+    return {
+      ready: true,
+      settings,
+      world,
+      animals,
+      sessions: dummy ? [...dummy.sessions, ...loaded.sessions] : loaded.sessions,
+      phase,
+      revealPending,
+      inbox: dummy ? [...loaded.inbox, ...dummy.inbox] : loaded.inbox,
+    };
   }
 
   return createStore<AppState>()((set, get) => ({

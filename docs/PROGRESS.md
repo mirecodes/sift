@@ -153,6 +153,8 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- Owner request (after 1.7) · Developer switches grouped under `testMode`; `testMode.dummyData` adds in-memory sample data. **Every later step that adds a feature also adds its sample data to `app/devDummy.ts`** (gold/departures in Phase 2, cosmetics in 3, friends in 7, groups/missions in 8, war in 9). · Owner wants to review features with dummy data (ADR-038).
+
 - 1.6 · Day detail is a native `<dialog>` with `showModal()`. · Platform focus trap, Esc and inert background without code.
 - 1.5 · Stats order: month selector → Overview → Month calendar → Week (own navigation). Calendar cells also open the Day detail. · Keeps the calendar next to the month selector it follows.
 - 1.5 · Heatmap thresholds are absolute minutes (`config.ui.heatMinutes`, client-only), not relative to the month's best day. · A day's color means the same in every month.

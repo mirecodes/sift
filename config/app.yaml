@@ -1,21 +1,27 @@
 # Runtime settings, bundled at build time. Restart `npm run dev` after editing.
-#
+
 # Developer switches: honored only by `npm run dev`. Production builds
-# (`npm run build`) force both off. Keep both `false` in commits; to use one,
-# set it to `true` locally and do not commit the change.
-
-# When true, every start rolls a new island seed and deletes all placed animals
-# (sessions and settings are kept). Handy for testing terrain generation.
-resetMapOnStart: false
-
+# (`npm run build`) force all of them off. Keep them `false` in commits; to use
+# one, set it to `true` locally and do not commit the change.
 testMode:
-  # When true, `speciesCount` random species are already on the island at
-  # startup (chosen per page load, in memory only, never saved).
-  enabled: false
-  speciesCount: 4
-  # When true, every species in the catalog is placed once (the island grows to
-  # fit them all) and `speciesCount` is ignored.
-  allSpecies: true
+  # When true, every start rolls a new island seed and deletes all placed
+  # animals (sessions and settings are kept). Handy for testing terrain.
+  resetMapOnStart: false
+
+  animals:
+    # When true, `speciesCount` random species are already on the island at
+    # startup (chosen per page load, in memory only, never saved).
+    enabled: false
+    speciesCount: 4
+    # When true, every species in the catalog is placed once (the island grows
+    # to fit them all) and `speciesCount` is ignored.
+    allSpecies: true
+
+  # When true, sample data for the v2 features is added at startup, in memory
+  # only (never saved or exported): ~6 weeks of focus sessions (Stats) and a
+  # few Inbox notices. Each later phase adds its own (gold, friends, groups, …).
+  # Turn on the matching `features` flag to see a feature's screen.
+  dummyData: false
 
 # Feature flags (one per guidance_v2 phase). A phase stays off until it is
 # finished and the owner turns it on. `VITE_FEATURES=stats,...` (or `all`) at

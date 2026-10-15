@@ -314,6 +314,24 @@ describe('persistence', () => {
     expect(b.get().animals).toHaveLength(1);
   });
 
+  it('dummy data shows in memory only: never saved, exported, or re-added after an import', async () => {
+    const storage = createMemoryStorage();
+    const session = { id: 'd1', startedAt: 1, plannedFocusMs: 25 * MIN, endedAt: 1 + 30 * MIN, status: 'completed' as const, togetherRoomId: null };
+    const inbox = [{ id: 'dn', createdAt: 1, notice: { kind: 'friend_request' as const, userId: 'u' } }];
+    const a = createAppStore({ storage, now: () => 1_000_000, rng: seededRng(1), uuid: () => 'x', dummy: { sessions: [session], inbox } });
+    await a.getState().init();
+    expect(a.getState().sessions).toContainEqual(session);
+    expect(a.getState().inbox).toEqual(inbox);
+    const backup = await a.getState().exportBackup();
+    expect(backup.data.sessions ?? []).toHaveLength(0);
+    expect(backup.data.inbox ?? []).toHaveLength(0);
+    await a.getState().importBackup(backup);
+    expect(a.getState().sessions).toHaveLength(0);
+    const reloaded = createAppStore({ storage, now: () => 1_000_000, rng: seededRng(1), uuid: () => 'x' });
+    await reloaded.getState().init();
+    expect(reloaded.getState().sessions).toHaveLength(0);
+  });
+
   it('resetMap starts with a new seed and no animals, and persists that', async () => {
     const storage = createMemoryStorage();
     const a = harness(storage);

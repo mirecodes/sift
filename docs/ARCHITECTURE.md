@@ -183,9 +183,11 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 ## 9. Runtime config
 
 `config/app.yaml`, bundled at build time (ADR-015, ADR-019):
-- `testMode` (`enabled`, `speciesCount`, `allSpecies`): fills the island in memory at startup; never stored, rewards untouched.
-- `resetMapOnStart`: new seed and all placed animals deleted on every start.
-- Both are honored only in development builds (`import.meta.env.DEV`); production builds force them off (`resolveRuntimeConfig`). Committed value is `false`; enable locally, never commit.
+- All developer switches live under `testMode`:
+  - `resetMapOnStart`: new seed and all placed animals deleted on every start.
+  - `animals` (`enabled`, `speciesCount`, `allSpecies`): fills the island in memory at startup; never stored, rewards untouched.
+  - `dummyData`: `app/devDummy.ts` adds deterministic sample data in memory at startup (store dep `dummy`): ~6 weeks of sessions and a few Inbox notices. Never committed to storage, never exported, not re-added after an import. **Every phase adds sample data for its feature there** (gold, cosmetics, friends, groups, war, …) so it can be seen without real play (ADR-038).
+- They are honored only in development builds (`import.meta.env.DEV`); production builds force them off (`resolveRuntimeConfig`). Committed value is `false`; enable locally, never commit.
 - `features.<name>`: one flag per guidance_v2 phase (`FEATURES` in `runtimeConfig.ts`), read in every build. Committed values are all `false` (a unit test enforces it); the owner turns a phase on once it is finished. The build variable `VITE_FEATURES=stats,…` (or `all`) turns flags on for test builds: `npm run e2e` builds `dist-e2e` with the finished phases' flags (ADR-036).
 
 ## 10. Directory structure
