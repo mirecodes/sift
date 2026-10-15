@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { VoxelModel } from './model';
-import { buildPack, compareVersions, ContentError, expandFamily, transformPalette, type PackSource } from './pack';
+import { assemblePack, buildPack, compareVersions, ContentError, expandFamily, transformPalette, type PackSource } from './pack';
 import type { SkinFamilyDef, SpeciesDef } from './schema';
 
 const model: VoxelModel = { size: [1, 1, 1], keys: { 1: 'body', 2: 'eye' }, palette: { body: '#F28C28', eye: '#1E1E1E' }, voxels: [[0, 0, 0, 1]] };
@@ -45,6 +45,12 @@ describe('content pack (Step 3.1)', () => {
       expect(text).toMatch(/palette\.body: colors are #RRGGBB/);
       expect(text).toMatch(/palette\.grassTop/);
     }
+  });
+
+  it('assemblePack keeps the valid entries next to the problems', () => {
+    const { pack, problems } = assemblePack(source([species('a'), { ...species('b'), model: 'species/none' }, { kind: 'nope' }, release]));
+    expect(pack.items.map((i) => i.id)).toEqual(['a', 'base']);
+    expect(problems).toHaveLength(2);
   });
 
   it('rejects unknown presets when a preset list is given', () => {

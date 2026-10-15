@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ContentPack } from '../../../shared/content/pack';
 import type { BlockThemeDef } from '../../../shared/content/schema';
 import { CATALOG } from '../animals/catalog';
-import { baselinePack, contentFiles } from './baseline';
+import { baselinePack, baselineProblems, contentFiles } from './baseline';
 import { ContentRegistry, isAvailable } from './registry';
 
 const theme = (id: string, extra: Partial<BlockThemeDef> = {}): BlockThemeDef => ({
@@ -14,6 +14,7 @@ const NOW = Date.parse('2026-11-10T12:00:00Z');
 
 describe('baseline pack (Step 3.1)', () => {
   it('accepts every shipped content file', () => {
+    expect(baselineProblems).toEqual([]);
     expect(contentFiles().length).toBeGreaterThan(0);
     expect(baselinePack.contentVersion).toMatch(/^\d{4}-\d{2}-\d{2}\.\d+$/);
   });

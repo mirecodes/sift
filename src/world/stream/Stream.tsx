@@ -4,6 +4,7 @@ import { BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, DoubleSide
 import { config } from '../../domain/config';
 import { hash01 } from '../../domain/random';
 import type { Cell, StreamTile } from '../../domain/island/island';
+import type { BlockPalette } from '../../../shared/content/palette';
 import { defaultBlocks, palette } from '../palette';
 import { toGeometry } from '../voxel/geometry';
 import { bankMesh, buildStreamMesh } from './streamMesh';
@@ -19,14 +20,14 @@ const cube = new BoxGeometry(1, 1, 1);
 const splashMaterial = new MeshBasicMaterial({ color: palette.splash });
 
 /** Small pixel-art texture: water with a few lighter streaks. */
-function streakTexture(): CanvasTexture {
+function streakTexture(blocks: BlockPalette): CanvasTexture {
   const c = document.createElement('canvas');
   c.width = 8;
   c.height = 16;
   const ctx = c.getContext('2d')!;
-  ctx.fillStyle = defaultBlocks.water;
+  ctx.fillStyle = blocks.water;
   ctx.fillRect(0, 0, 8, 16);
-  ctx.fillStyle = defaultBlocks.waterStreak;
+  ctx.fillStyle = blocks.waterStreak;
   for (let i = 0; i < 6; i++) ctx.fillRect(Math.floor(hash01(3, i, 1) * 7), Math.floor(hash01(3, i, 2) * 14), 1, 2 + (i % 3));
   const t = new CanvasTexture(c);
   t.wrapS = t.wrapT = RepeatWrapping;
@@ -44,10 +45,12 @@ interface Props {
   /** 1 on Home and Break, slowed on Focus. */
   timeScale: number;
   reducedMotion: boolean;
+  /** Block theme colors for water and banks (Step 3.8). */
+  blocks?: BlockPalette;
 }
 
 /** The stream: a smoothed water ribbon with curved falls, scrolling streaks and white splash at every landing. */
-export function Stream({ streams, tiles, timeScale, reducedMotion }: Props) {
+export function Stream({ streams, tiles, timeScale, reducedMotion, blocks = defaultBlocks }: Props) {
   const meshes = useMemo(() => streams.map((run) => buildStreamMesh(run)), [streams]);
   const geometries = useMemo(
     () =>
@@ -61,7 +64,7 @@ export function Stream({ streams, tiles, timeScale, reducedMotion }: Props) {
       }),
     [meshes],
   );
-  const texture = useMemo(streakTexture, []);
+  const texture = useMemo(() => streakTexture(blocks), [blocks]);
   const material = useMemo(
     () => new MeshLambertMaterial({ map: texture, side: DoubleSide }),
     [texture],
@@ -78,8 +81,8 @@ export function Stream({ streams, tiles, timeScale, reducedMotion }: Props) {
   // The bank: grass around the channel, following the ribbon edge.
   const banks = useMemo(() => {
     const top = new Map(tiles.map((t) => [`${t.x},${t.z}`, t.top + 0.5]));
-    return streams.map((run, i) => toGeometry(bankMesh(run, meshes[i]!, (x, z) => top.get(`${x},${z}`))));
-  }, [streams, meshes, tiles]);
+    return streams.map((run, i) => toGeometry(bankMesh(run, meshes[i]!, (x, z) => top.get(`${x},${z}`), blocks)));
+  }, [streams, meshes, tiles, blocks]);
   useEffect(() => () => banks.forEach((g) => g.dispose()), [banks]);
 
   const splashes = useMemo(() => meshes.flatMap((m) => m.splashes), [meshes]);

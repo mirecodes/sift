@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-07.5';
+export const BALANCE_VERSION = '2026-10-07.6';
 
 const MINUTE = 60_000;
 
@@ -48,6 +48,10 @@ export const balance = deepFreeze({
     goldByTierRank: [1, 3, 8, 25],
     /** Coin pile visual levels 1..6 start at these balances (the pile shows a bucket, not exact gold). */
     pileThresholds: [1, 10, 30, 100, 300, 1000],
+  },
+  build: {
+    /** Tiles that must stay free for animals after placing a building (Step 3.11). */
+    minFreeTiles: 6,
   },
 } as const);
 

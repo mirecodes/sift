@@ -110,9 +110,10 @@ export function expandFamily(family: SkinFamilyDef, species: readonly SpeciesDef
 
 /**
  * Validates every file and assembles a pack: schemas, unique ids, references (species, models,
- * releases, presets), family expansion. Collects all problems and throws one `ContentError`.
+ * releases, presets), family expansion. Returns every problem; invalid entries are left out of the
+ * pack (the Content Studio keeps working while a file is broken).
  */
-export function buildPack(src: PackSource): ContentPack {
+export function assemblePack(src: PackSource): { pack: ContentPack; problems: string[] } {
   const problems: string[] = [];
   const defs: ContentDef[] = [];
   for (const { path, data } of [...src.files].sort((a, b) => a.path.localeCompare(b.path))) {
@@ -141,32 +142,41 @@ export function buildPack(src: PackSource): ContentPack {
   }
   const items: PackItem[] = [...species, ...skins, ...of('blockTheme'), ...of('building'), ...releases];
 
+  const invalid = new Set<string>();
+  const bad = (id: string, message: string) => {
+    invalid.add(id);
+    problems.push(`${id}: ${message}`);
+  };
   const seen = new Set<string>();
-  for (const id of [...items.map((i) => i.id), ...families.map((f) => f.id)]) {
-    if (seen.has(id)) problems.push(`duplicate id ${id}`);
-    seen.add(id);
+  const duplicates = new Set<object>();
+  for (const entry of [...items, ...families]) {
+    if (seen.has(entry.id)) {
+      problems.push(`duplicate id ${entry.id}`);
+      duplicates.add(entry);
+    }
+    seen.add(entry.id);
   }
   const speciesIds = new Set(species.map((s) => s.id));
   const releaseIds = new Set(releases.map((r) => r.id));
   const model = (owner: string, ref: string | undefined) => {
-    if (ref && !src.models[ref]) problems.push(`${owner}: model ${ref} not found`);
+    if (ref && !src.models[ref]) bad(owner, `model ${ref} not found`);
   };
   const preset = (owner: string, kind: PresetKind, id: string | undefined) => {
-    if (id && src.presets && !src.presets[kind].includes(id)) problems.push(`${owner}: unknown ${kind} preset ${id}`);
+    if (id && src.presets && !src.presets[kind].includes(id)) bad(owner, `unknown ${kind} preset ${id}`);
   };
   for (const f of families) {
-    if (!releaseIds.has(f.release)) problems.push(`${f.id}: unknown release ${f.release}`);
-    for (const id of Object.keys(f.overrides ?? {})) if (!speciesIds.has(id)) problems.push(`${f.id}: override for unknown species ${id}`);
+    if (!releaseIds.has(f.release)) bad(f.id, `unknown release ${f.release}`);
+    for (const id of Object.keys(f.overrides ?? {})) if (!speciesIds.has(id)) bad(f.id, `override for unknown species ${id}`);
   }
   for (const item of items) {
-    if (item.kind !== 'release' && !releaseIds.has(item.release)) problems.push(`${item.id}: unknown release ${item.release}`);
+    if (item.kind !== 'release' && !releaseIds.has(item.release)) bad(item.id, `unknown release ${item.release}`);
     switch (item.kind) {
       case 'species':
         model(item.id, item.model);
         preset(item.id, 'idle', item.idle);
         break;
       case 'animalSkin':
-        if (!speciesIds.has(item.speciesId)) problems.push(`${item.id}: unknown species ${item.speciesId}`);
+        if (!speciesIds.has(item.speciesId)) bad(item.id, `unknown species ${item.speciesId}`);
         model(item.id, item.overlay);
         break;
       case 'blockTheme':
@@ -177,17 +187,23 @@ export function buildPack(src: PackSource): ContentPack {
         preset(item.id, 'light', item.light);
         for (const p of item.parts ?? []) {
           preset(item.id, 'part', p.preset);
-          if (src.models[item.model] && !src.models[item.model]!.parts?.[p.name]) problems.push(`${item.id}: model ${item.model} has no part ${p.name}`);
+          if (src.models[item.model] && !src.models[item.model]!.parts?.[p.name]) bad(item.id, `model ${item.model} has no part ${p.name}`);
         }
         break;
       case 'release':
-        for (const id of item.featured) if (!seen.has(id)) problems.push(`${item.id}: featured item ${id} not found`);
+        for (const id of item.featured) if (!seen.has(id)) bad(item.id, `featured item ${id} not found`);
         break;
     }
   }
-  if (problems.length) throw new ContentError(problems);
-
-  const usedModels = new Set(items.flatMap((i) => ('model' in i ? [i.model] : 'overlay' in i && i.overlay ? [i.overlay] : [])));
+  const kept = items.filter((i) => !invalid.has(i.id) && !duplicates.has(i) && !(i.kind === 'animalSkin' && i.family && invalid.has(i.family)));
+  const usedModels = new Set(kept.flatMap((i) => ('model' in i ? [i.model] : 'overlay' in i && i.overlay ? [i.overlay] : [])));
   const models = Object.fromEntries(Object.entries(src.models).filter(([ref]) => usedModels.has(ref)));
-  return { contentVersion: src.contentVersion, items, models, ...(src.atlas ? { atlas: src.atlas } : {}) };
+  return { pack: { contentVersion: src.contentVersion, items: kept, models, ...(src.atlas ? { atlas: src.atlas } : {}) }, problems };
+}
+
+/** Validates and builds; throws one `ContentError` listing every problem. */
+export function buildPack(src: PackSource): ContentPack {
+  const { pack, problems } = assemblePack(src);
+  if (problems.length) throw new ContentError(problems);
+  return pack;
 }

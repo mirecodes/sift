@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
+import { useEffect, useMemo, useRef, type MutableRefObject, type ReactNode } from 'react';
 import { Color, type AmbientLight, type DirectionalLight } from 'three';
 import { config } from '../domain/config';
 import { hash01 } from '../domain/random';
@@ -10,6 +10,7 @@ import { islandExtent } from './island/Island';
 import { IslandScene } from './IslandScene';
 import { lighting, night as nightPalette, palette } from './palette';
 import { RenderDriver } from './RenderDriver';
+import { themeDef } from './voxel/geometry';
 import type { WorldMode } from './types';
 import styles from './Scene.module.css';
 
@@ -19,6 +20,8 @@ interface SceneProps {
   islands: readonly { model: IslandModel; mode: IslandMode }[];
   reducedMotion: boolean;
   theme: 'light' | 'dark';
+  /** Extra objects in the first island's space, bobbing with it (build mode ghost, Studio overlays). */
+  children?: ReactNode;
 }
 
 /** Empty space between neighbouring islands, in blocks along the screen. */
@@ -91,7 +94,7 @@ function useLayout(islands: SceneProps['islands']) {
 }
 
 /** The one persistent canvas shared by Home, Focus, and Break. It is never remounted. */
-export function Scene({ mode, islands, reducedMotion, theme }: SceneProps) {
+export function Scene({ mode, islands, reducedMotion, theme, children }: SceneProps) {
   const dark = theme === 'dark';
   const night = useRef(dark ? 1 : 0);
   const controls = useRef<CameraControls>({ azimuth: 0, zoom: 1 });
@@ -129,10 +132,12 @@ export function Scene({ mode, islands, reducedMotion, theme }: SceneProps) {
             dark={dark}
             reducedMotion={reducedMotion}
             position={positions[i]}
-          />
+          >
+            {i === 0 && children}
+          </IslandScene>
         ))}
         {primary && (
-          <Clouds seed={primary.seed} side={side} depth={depth} visible={mode === 'home' || mode === 'break'} reducedMotion={reducedMotion} night={night} />
+          <Clouds seed={primary.seed} side={side} depth={depth} visible={mode === 'home' || mode === 'break'} reducedMotion={reducedMotion} night={night} tint={themeDef(primary.blockThemeId)?.cloudTint} />
         )}
       </Canvas>
     </div>

@@ -4,6 +4,7 @@ import { Color, InstancedMesh, MeshLambertMaterial, Object3D } from 'three';
 import { config } from '../../domain/config';
 import { hash01 } from '../../domain/random';
 import { generateIsland, type Block, type BlockKind } from '../../domain/island/island';
+import type { BlockPalette } from '../../../shared/content/palette';
 import { blockGeometries } from '../voxel/geometry';
 
 const KINDS: BlockKind[] = ['grass', 'dirt', 'stone'];
@@ -24,15 +25,17 @@ interface Props {
   seed: number;
   level: number;
   animate: boolean;
+  /** Block theme colors (Step 3.8); the layout is unchanged when they change. */
+  blocks?: BlockPalette;
 }
 
 /** The floating island: one InstancedMesh per block type. Grows with a scale-in of the new blocks. */
-export function Island({ seed, level, animate }: Props) {
+export function Island({ seed, level, animate, blocks }: Props) {
   const layout = useMemo(() => generateIsland(seed, level), [seed, level]);
   const meshes = useRef<Record<BlockKind, InstancedMesh | null>>({ grass: null, dirt: null, stone: null });
   const previous = useRef<Set<string> | null>(null);
   const growth = useRef<{ active: boolean; start: number | null }>({ active: false, start: null });
-  const geometries = blockGeometries();
+  const geometries = blockGeometries(blocks);
 
   const perKind = useMemo(() => {
     const seen = previous.current;
@@ -110,7 +113,10 @@ export function Island({ seed, level, animate }: Props) {
           ref={(m) => {
             meshes.current[kind] = m;
           }}
-          args={[geometries[kind], material, perKind[kind].blocks.length]}
+          // Geometry and material are props, not args: a theme swap assigns new block meshes and keeps the instances.
+          args={[undefined, undefined, perKind[kind].blocks.length]}
+          geometry={geometries[kind]}
+          material={material}
           frustumCulled={false}
         />
       ))}

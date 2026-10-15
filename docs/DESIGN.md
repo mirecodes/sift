@@ -488,6 +488,12 @@ Terrain, water and camp colors are one keyed record, `defaultBlocks` (`grassTop`
 - The level follows the gold the user has been told about: departure gold joins the pile when its notice shows (coins land there, see 18).
 - Night: the pile is lit by the campfire like every block plus a faint warm glow (emissive 30% of `coin`, following the day/night blend) so it catches the firelight, and 3 tiny white sparkles twinkle on its top voxels. No sparkles on Focus or with reduced motion.
 
+### 15.7 Block Themes and Buildings
+
+- A block theme replaces the terrain, water and camp colors (14.2 keys) and may tint the clouds (`cloudTint`) and add ambient particles (18, presets) that drift over the island on Home and Break only. The island's shape never changes with the theme.
+- Buildings and decorations are voxel models at **1/8 block per voxel**: a 1×1 footprint is 8 voxels wide, a 3×3 one 24. They stand on the surface of their tiles (all at one height) and turn in 90° steps.
+- Footprint tint (build mode, Content Studio): flat squares 0.94 block wide on each covered tile, `build-ok` `#5ED67A` when the building fits, `build-bad` `#FF5A5F` when not, 45% opacity.
+
 ### 15.5 Stream
 
 - One winding stream per island (deterministic from the seed). It starts about 2.3 tiles from the center on the back side of a chord, crosses the front half of the island (downhill on average) and leaves through the rim. It never touches the campfire or hut (at least 1.5 tiles away).

@@ -32,7 +32,10 @@ await page.addInitScript(() => {
 });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
-await page.clock.install();
+// Start at 10:00 today: the run fast-forwards about an hour, and day-based checks (Stats) must not cross midnight.
+const morning = new Date();
+morning.setHours(10, 0, 0, 0);
+await page.clock.install({ time: morning });
 
 let failed = 0;
 const check = (name, ok) => {

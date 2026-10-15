@@ -1,4 +1,4 @@
-import { buildPack, type ContentPack, type PresetIds } from '../../../shared/content/pack';
+import { assemblePack, buildPack, type ContentPack, type PresetIds } from '../../../shared/content/pack';
 import type { VoxelModel } from '../../../shared/content/model';
 import { voxelModels } from '../../assets/voxels';
 
@@ -32,9 +32,16 @@ export function contentFiles(): { path: string; data: unknown }[] {
 /** Preset ids the app's code implements (`content/presets.json`, Step 3.2). */
 export const presetIds = raw[`${PREFIX}presets.json`] as PresetIds;
 
-export const baselinePack: ContentPack = buildPack({
+const source = {
   contentVersion: (raw[`${PREFIX}pack.json`] as { contentVersion: string }).contentVersion,
   files: contentFiles(),
   models: builtinModels(),
   presets: presetIds,
-});
+};
+const assembled = assemblePack(source);
+
+/** Content problems (development builds keep running without the broken entries; the Studio lists them). */
+export const baselineProblems: readonly string[] = assembled.problems;
+
+/** Production builds fail on any problem; `content:validate` and the unit tests keep that from happening. */
+export const baselinePack: ContentPack = import.meta.env.DEV ? assembled.pack : buildPack(source);

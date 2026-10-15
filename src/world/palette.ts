@@ -16,6 +16,9 @@ export const palette = {
   coin: '#F2C230',
   coinDark: '#D9A21E',
   puff: '#EEEEEE',
+  /** Build mode footprint tint (DESIGN.md 15.7). */
+  buildOk: '#5ED67A',
+  buildBad: '#FF5A5F',
 } as const;
 
 /**

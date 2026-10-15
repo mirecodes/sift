@@ -8,7 +8,7 @@ import { config } from '../../domain/config';
 import { getSpecies } from '../../domain/animals/catalog';
 import type { IslandAnimal } from '../../domain/island/model';
 import { palette } from '../palette';
-import { animalGeometry, flutterParts, modelById, VOXEL_SIZE } from '../voxel/geometry';
+import { animalGeometry, flutterParts, skinnedModel, VOXEL_SIZE } from '../voxel/geometry';
 import { HUT_APPROACH, HUT_DOOR } from '../props/Camp';
 import { CAMP_RESERVED, COIN_PILE_TILE, HUT_TILE } from '../../domain/island/island';
 import { DEPART_SHRINK_S, DEPART_STAGGER_S, DepartureEffects } from './Departures';
@@ -112,8 +112,8 @@ interface AnimalProps {
 
 const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale, reducedMotion, spawn, routine, slot }: AnimalProps) {
   const species = getSpecies(animal.speciesId);
-  const geometry = useMemo(() => animalGeometry(species.modelId), [species.modelId]);
-  const model = modelById(species.modelId);
+  const geometry = useMemo(() => animalGeometry(species.modelId, animal.skinId), [species.modelId, animal.skinId]);
+  const model = skinnedModel(species.modelId, animal.skinId);
   const bodyW = model.size[0] * VOXEL_SIZE;
   const bodyH = model.size[1] * VOXEL_SIZE;
   const side = hashId(animal.id) % 2 === 0 ? 1 : -1;
@@ -128,7 +128,7 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
   const wingL = useRef<Group>(null);
   const wingR = useRef<Group>(null);
   const flutter = species.idleAnimation === 'flutter';
-  const parts = useMemo(() => (flutter ? flutterParts() : undefined), [flutter]);
+  const parts = useMemo(() => (flutter ? flutterParts(animal.skinId) : undefined), [flutter, animal.skinId]);
   const scaleRef = useRef(timeScale);
   scaleRef.current = timeScale;
 

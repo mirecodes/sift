@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import type { ModelColors } from '../../../shared/content/model';
 import { resolveColors } from '../../assets/voxels/types';
 import { modelById } from '../../world/voxel/geometry';
 import { colors } from '../../ui/tokens';
@@ -9,10 +10,12 @@ interface Props {
   silhouette?: boolean;
   /** CSS size in px. */
   size?: number;
+  /** Palette override (a skin), e.g. for live previews in the Content Studio. */
+  colors?: ModelColors;
 }
 
 /** 2D pixel-art sprite: front view (looking toward -Z) of a voxel model, nearest-neighbor scaled. */
-export function VoxelSprite({ modelId, silhouette, size = 96 }: Props) {
+export function VoxelSprite({ modelId, silhouette, size = 96, colors: override }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -20,7 +23,7 @@ export function VoxelSprite({ modelId, silhouette, size = 96 }: Props) {
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
     const model = modelById(modelId);
-    const palette = resolveColors(model);
+    const palette = resolveColors(model, override);
     const [W, H] = model.size;
     const px = Math.max(1, Math.floor(size / Math.max(W, H)));
     canvas.width = size;
@@ -41,7 +44,7 @@ export function VoxelSprite({ modelId, silhouette, size = 96 }: Props) {
       ctx.fillStyle = silhouette ? colors.muteSoft : (palette[c] as string);
       ctx.fillRect(offX + x * px, offY + (H - 1 - y) * px, px, px);
     }
-  }, [modelId, silhouette, size]);
+  }, [modelId, silhouette, size, override]);
 
   return <canvas ref={ref} width={size} height={size} style={{ width: size, height: size, imageRendering: 'pixelated' }} aria-hidden="true" />;
 }

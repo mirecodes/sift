@@ -1,5 +1,26 @@
+import { content } from '../content';
 import type { PlacedAnimal } from '../types';
 import { CAMP_RESERVED, islandSide, islandTiles, type Tile } from './island';
+
+export type Rotation = 0 | 90 | 180 | 270;
+export interface Footprint {
+  w: number;
+  d: number;
+}
+
+/** Tiles under a building: `tile` is the corner with the lowest x and z; 90° and 270° swap width and depth. */
+export function footprintTiles(tile: Tile, footprint: Footprint, rotation: Rotation = 0): Tile[] {
+  const [w, d] = rotation === 90 || rotation === 270 ? [footprint.d, footprint.w] : [footprint.w, footprint.d];
+  const out: Tile[] = [];
+  for (let dx = 0; dx < w; dx++) for (let dz = 0; dz < d; dz++) out.push({ x: tile.x + dx, z: tile.z + dz });
+  return out;
+}
+
+/** Footprint and water rule of a building definition (1×1 for unknown ids). */
+export function buildingShape(defId: string | undefined): { footprint: Footprint; allowOnWater: boolean } {
+  const def = defId ? content.get(defId) : undefined;
+  return def?.kind === 'building' ? { footprint: def.footprint, allowOnWater: def.allowOnWater === true } : { footprint: { w: 1, d: 1 }, allowOnWater: false };
+}
 
 /** `"x,z"` */
 export type TileKey = string;
@@ -17,6 +38,8 @@ export interface TileInfo extends Tile {
   walkable: boolean;
   /** A building may be placed here (animals on it hop away). */
   buildable: boolean;
+  /** Covered by a building animals walk over (footbridge): walkable, even on water. */
+  bridge?: boolean;
 }
 
 /** The parts of an `IslandModel` that decide what is on a tile. */
@@ -24,7 +47,8 @@ export interface OccupancyInput {
   seed: number;
   islandLevel: number;
   animals: readonly { id: string; tile: Tile }[];
-  buildings: readonly { id: string; tile: Tile }[];
+  /** `defId` gives the footprint (from content); without it a building covers its tile only. */
+  buildings: readonly { id: string; tile: Tile; defId?: string; rotation?: Rotation }[];
 }
 
 const CAMP = new Set(CAMP_RESERVED.map(tileKey));
@@ -41,20 +65,27 @@ export function getOccupancy(model: OccupancyInput): Map<TileKey, TileInfo> {
     const campReserved = CAMP.has(tileKey(cell));
     grid.set(tileKey(cell), { x: cell.x, z: cell.z, height: cell.top, water, campReserved, animalIds: [], walkable: !water && !campReserved, buildable: !water && !campReserved });
   }
-  // ponytail: buildings occupy their anchor tile only; footprints arrive with BuildingDef (Step 3.1).
   for (const b of model.buildings) {
-    const info = grid.get(tileKey(b.tile));
-    if (!info) continue;
-    info.buildingId = b.id;
-    info.walkable = false;
-    info.buildable = false;
+    const { footprint, allowOnWater } = buildingShape(b.defId);
+    for (const t of footprintTiles(b.tile, footprint, b.rotation)) {
+      const info = grid.get(tileKey(t));
+      if (!info) continue;
+      info.buildingId = b.id;
+      info.buildable = false;
+      // A footbridge is walked over; any other building blocks the tile.
+      info.bridge = allowOnWater;
+      info.walkable = allowOnWater && !info.campReserved;
+    }
   }
   for (const a of model.animals) grid.get(tileKey(a.tile))?.animalIds.push(a.id);
   return grid;
 }
 
-/** Free for a new or moved animal: walkable and nobody on it. */
-export const isFreeForAnimal = (info: TileInfo): boolean => info.walkable && info.animalIds.length === 0;
+/** An animal may live here: walkable and on land (a footbridge over water is walked over, not lived on). */
+export const isStandable = (info: TileInfo): boolean => info.walkable && !info.water;
+
+/** Free for a new or moved animal: standable and nobody on it. */
+export const isFreeForAnimal = (info: TileInfo): boolean => isStandable(info) && info.animalIds.length === 0;
 
 export const animalTile = (a: Pick<PlacedAnimal, 'tileX' | 'tileZ'>): Tile => ({ x: a.tileX, z: a.tileZ });
 
@@ -65,7 +96,10 @@ export const animalTile = (a: Pick<PlacedAnimal, 'tileX' | 'tileZ'>): Tile => ({
  */
 export function repairPlacements(input: Omit<OccupancyInput, 'animals'>, active: readonly PlacedAnimal[]): PlacedAnimal[] {
   const grid = getOccupancy({ ...input, animals: active.map((a) => ({ id: a.id, tile: animalTile(a) })) });
-  const misplaced = active.filter((a) => !grid.get(tileKey(animalTile(a)))?.walkable);
+  const misplaced = active.filter((a) => {
+    const info = grid.get(tileKey(animalTile(a)));
+    return !info || !isStandable(info);
+  });
   const moved: PlacedAnimal[] = [];
   for (const a of misplaced) {
     const dist = (t: Tile) => Math.hypot(t.x - a.tileX, t.z - a.tileZ);

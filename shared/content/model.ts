@@ -64,6 +64,27 @@ export function canonicalModel(m: VoxelModel): VoxelModel {
   return { size: m.size, keys, palette, voxels, ...(partNames.length ? { parts } : {}) };
 }
 
+/**
+ * A species model with a skin overlay drawn over it (Step 3.8): the overlay shares the model's origin;
+ * its voxels win where both fill a cell and the size grows to fit both.
+ */
+export function withOverlay(base: VoxelModel, overlay: VoxelModel): VoxelModel {
+  const keys: Record<number, PaletteKey> = { ...base.keys };
+  const index = new Map(Object.entries(base.keys).map(([i, k]) => [k, Number(i)]));
+  let next = Math.max(0, ...index.values()) + 1;
+  const cells = new Map(base.voxels.map((v) => [`${v[0]},${v[1]},${v[2]}`, v]));
+  for (const [x, y, z, c] of overlay.voxels) {
+    const key = overlay.keys[c]!;
+    if (!index.has(key)) {
+      index.set(key, next);
+      keys[next++] = key;
+    }
+    cells.set(`${x},${y},${z}`, [x, y, z, index.get(key)!]);
+  }
+  const size = [0, 1, 2].map((i) => Math.max(base.size[i]!, overlay.size[i]!)) as unknown as VoxelModel['size'];
+  return { size, keys, palette: { ...overlay.palette, ...base.palette }, voxels: [...cells.values()] };
+}
+
 /** Number of voxels including parts. */
 export const voxelCount = (m: VoxelModel): number =>
   m.voxels.length + Object.values(m.parts ?? {}).reduce((n, p) => n + p.voxels.length, 0);

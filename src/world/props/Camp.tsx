@@ -11,6 +11,7 @@ import {
   PointLight,
 } from 'three';
 import { CAMP_LEVEL, FIRE_TILE, HUT_TILE, levelTop } from '../../domain/island/island';
+import type { BlockPalette } from '../../../shared/content/palette';
 import { defaultBlocks, night as nightPalette } from '../palette';
 import { glowTexture } from '../presets/lights';
 
@@ -21,21 +22,31 @@ export const HUT_DOOR = { x: HUT_TILE.x + 0.67, z: HUT_TILE.z } as const;
 
 const box = new BoxGeometry(1, 1, 1);
 const lambert = (color: string) => new MeshLambertMaterial({ color, flatShading: true });
-const logLight = lambert(defaultBlocks.cabinLog);
-const logDark = lambert(defaultBlocks.cabinLogDark);
-const beam = lambert(defaultBlocks.cabinBeam);
-const roofLight = lambert(defaultBlocks.cabinRoof);
-const roofDark = lambert(defaultBlocks.cabinRoofDark);
-const stone = lambert(defaultBlocks.campStone);
-const stoneDark = lambert(defaultBlocks.campStoneDark);
+const materialCache = new WeakMap<BlockPalette, ReturnType<typeof buildMaterials>>();
+const buildMaterials = (b: BlockPalette) => ({
+  logLight: lambert(b.cabinLog),
+  logDark: lambert(b.cabinLogDark),
+  beam: lambert(b.cabinBeam),
+  roofLight: lambert(b.cabinRoof),
+  roofDark: lambert(b.cabinRoofDark),
+  stone: lambert(b.campStone),
+  stoneDark: lambert(b.campStoneDark),
+  log: lambert(b.firewood),
+});
+/** Cabin and campfire materials for one block theme, built once per theme. */
+const campMaterials = (b: BlockPalette) => {
+  let m = materialCache.get(b);
+  if (!m) materialCache.set(b, (m = buildMaterials(b)));
+  return m;
+};
 const smokeMaterial = new MeshBasicMaterial({ color: '#D9DCE6', transparent: true, opacity: 0 });
-const log = new MeshLambertMaterial({ color: defaultBlocks.firewood, flatShading: true });
 const doorDay = new Color('#3B2A1E');
 const doorNight = new Color('#FFB050');
 const flameColors = ['#FF7A1A', '#FFB33D', '#FFE38A'].map((c) => new MeshBasicMaterial({ color: c }));
 
 /** Hut and campfire on their reserved tiles. `night` is the shared 0..1 day/night factor. */
-export function Camp({ night, reducedMotion }: { night: MutableRefObject<number>; reducedMotion: boolean }) {
+export function Camp({ night, reducedMotion, blocks = defaultBlocks }: { night: MutableRefObject<number>; reducedMotion: boolean; blocks?: BlockPalette }) {
+  const { logLight, logDark, beam, roofLight, roofDark, stone, stoneDark, log } = campMaterials(blocks);
   const light = useRef<PointLight>(null);
   const flames = useRef<Group>(null);
   const glow = useRef<Mesh>(null);

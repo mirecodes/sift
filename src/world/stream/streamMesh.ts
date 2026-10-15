@@ -1,5 +1,6 @@
 import { config } from '../../domain/config';
 import { levelTop, type StreamTile } from '../../domain/island/island';
+import type { BlockPalette } from '../../../shared/content/palette';
 import { defaultBlocks } from '../palette';
 import { hexToLinearRgb, type MeshData } from '../voxel/meshData';
 
@@ -186,6 +187,8 @@ export function bankMesh(
   mesh: Pick<StreamMeshData, 'points' | 'halves'>,
   /** Surface height of the island tile at (x, z), or undefined past the rim. */
   surfaceAt: (x: number, z: number) => number | undefined = () => undefined,
+  /** Block theme colors (Step 3.8). */
+  blocks: BlockPalette = defaultBlocks,
 ): MeshData {
   const { points, halves } = mesh;
   // Distance from (x, z) to the ribbon edge: negative inside the water.
@@ -207,9 +210,9 @@ export function bankMesh(
   const normals: number[] = [];
   const colors: number[] = [];
   const indices: number[] = [];
-  const grass = hexToLinearRgb(defaultBlocks.grassTop);
-  const lip = hexToLinearRgb(defaultBlocks.grassSide);
-  const dirt = hexToLinearRgb(defaultBlocks.dirtSide);
+  const grass = hexToLinearRgb(blocks.grassTop);
+  const lip = hexToLinearRgb(blocks.grassSide);
+  const dirt = hexToLinearRgb(blocks.dirtSide);
   const vertex = (x: number, y: number, z: number, n: readonly [number, number, number], c: readonly number[]): number => {
     positions.push(x, y, z);
     normals.push(...n);

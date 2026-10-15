@@ -24,15 +24,18 @@ interface Puff {
 }
 
 /** 3–6 low-poly voxel clouds drifting slowly behind the island (Home and Break only). */
-export function Clouds({ seed, side, depth, visible, reducedMotion, night }: {
+export function Clouds({ seed, side, depth, visible, reducedMotion, night, tint }: {
   night: MutableRefObject<number>;
   seed: number;
   side: number;
   depth: number;
   visible: boolean;
   reducedMotion: boolean;
+  /** Day color from the block theme (`cloudTint`, Step 3.8). */
+  tint?: string;
 }) {
   const groups = useRef<Group[]>([]);
+  const day = useMemo(() => (tint ? new Color(tint) : dayCloud), [tint]);
   const span = side * 1.1 + 8;
 
   const clouds = useMemo(
@@ -63,7 +66,7 @@ export function Clouds({ seed, side, depth, visible, reducedMotion, night }: {
 
   useFrame(({ clock }) => {
     if (!visible) return;
-    material.color.copy(dayCloud).lerp(nightCloud, night.current);
+    material.color.copy(day).lerp(nightCloud, night.current);
     material.opacity = palette.cloudOpacity + (nightPalette.cloudOpacity - palette.cloudOpacity) * night.current;
     const t = reducedMotion ? 0 : clock.elapsedTime;
     clouds.forEach((c, i) => {
