@@ -85,7 +85,7 @@ Surface fills, badges, and indicators only. **Never button backgrounds. Never ad
 | Epic | `--color-accent-pink` | `--color-on-primary` |
 | Legendary | `--color-accent-orange` | `--color-on-primary` |
 
-Rank order, lowest to highest: Common (white), Mythic (blue), Epic (pink), Legendary (orange).
+Rank order, lowest to highest: Common (white), Mythic (blue), Epic (pink), Legendary (orange). Styles, chimes and sizes are keyed by rank 0–3 (`data-tier="0"` … `"3"`, `reveal:0` … `reveal:3`), never by name, so a rename only touches the strings file.
 
 - No gradients in the UI. (The unicorn's rainbow effects belong to Part II.)
 - Tier is never conveyed by color alone; always show the tier name.

@@ -3,14 +3,17 @@
  * so this file is plain data. Change values here only.
  */
 
+/** Stored tier label. Logic never compares it: use `TierRank` (guidance_v2 §2.8). */
 export type Tier = 'common' | 'mythic' | 'epic' | 'legendary';
 
-/** Lowest to highest rank: Common, Mythic, Epic, Legendary (ADR-027). */
+/** Tier labels by rank, lowest to highest: Common, Mythic, Epic, Legendary (ADR-027). */
 export const TIERS: readonly Tier[] = ['common', 'mythic', 'epic', 'legendary'];
 
-/** Position in `TIERS`. Logic keys off the rank, never the name (guidance_v2 §2.8). */
+/** 0 Common, 1 Mythic, 2 Epic, 3 Legendary. Odds, gold, scoring, sounds and visuals key off the rank. */
 export type TierRank = 0 | 1 | 2 | 3;
+export const TIER_RANKS: readonly TierRank[] = [0, 1, 2, 3];
 export const tierRank = (tier: Tier): TierRank => TIERS.indexOf(tier) as TierRank;
+export const tierName = (rank: TierRank): Tier => TIERS[rank] as Tier;
 
 export const DEFAULT_BLOCK_THEME = 'default';
 
@@ -22,9 +25,9 @@ export const config = {
     minFocusMs: 25 * MINUTE,
     /** Effective focus time is capped here. */
     maxFocusMs: 60 * MINUTE,
-    /** Tier probabilities at the minimum and at the cap; linearly interpolated between. */
-    tierAtMin: { common: 0.6, mythic: 0.28, epic: 0.1, legendary: 0.02 } as Record<Tier, number>,
-    tierAtMax: { common: 0.5, mythic: 0.32, epic: 0.14, legendary: 0.04 } as Record<Tier, number>,
+    /** Tier probabilities by rank at the minimum and at the cap; linearly interpolated between. */
+    tierAtMin: [0.6, 0.28, 0.1, 0.02] as readonly number[],
+    tierAtMax: [0.5, 0.32, 0.14, 0.04] as readonly number[],
   },
   settings: {
     focusMinutes: { default: 25, min: 5, max: 60, step: 5 },

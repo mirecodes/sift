@@ -90,8 +90,8 @@ type Phase =
 | Epic | 10% | 14% | 9: Horse, Cow, Deer, Fox, Wolf, Bear, Panda, Red Panda, Peacock |
 | Legendary | 2% | 4% | 2: Unicorn (rainbow mane, rainbow bursts), Tiger (forehead 王). Both sparkle |
 
-- Catalog is static data (`domain/animals/catalog.ts`): `id`, `name`, `tier`, `modelId`, `idleAnimation`, `footprint`. Duplicates allowed; each is placed.
-- Probabilities, chimes, model size limits and colors follow the **rank**, not the name. Renames migrate stored animals via a new Dexie version.
+- Catalog is static data (`domain/animals/catalog.ts`): `id`, `name`, `tierRank`, `tier` (label), `modelId`, `idleAnimation`, `footprint`. Duplicates allowed; each is placed.
+- **Tier rank, never names**: `TierRank` 0 Common … 3 Legendary. Odds (`config.reward.tierAt*` arrays), species pools, chimes (`reveal:<rank>`), styles (`data-tier="<rank>"`), and later gold, scoring and war all key off the rank. Names live only in `TIERS` (stored label) and `strings.tiers` (display); a rename touches those two lists. The only name comparisons left are the frozen Dexie v2/v3 upgrades.
 
 ## 6. 3D world
 

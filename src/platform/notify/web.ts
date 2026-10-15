@@ -24,18 +24,18 @@ const SOUNDS: Record<Sound, Note[]> = {
     { freq: G5 * 1.5, at: 0, length: 0.55, gain: 0.7 },
     { freq: C6 * 1.5, at: 0.16, length: 0.55, gain: 0.6 },
   ],
-  'reveal:common': [{ freq: E5, at: 0, length: 0.9, gain: 0.8 }],
-  'reveal:mythic': [
+  'reveal:0': [{ freq: E5, at: 0, length: 0.9, gain: 0.8 }],
+  'reveal:1': [
     { freq: E5, at: 0, length: 0.9, gain: 0.8 },
     { freq: G5, at: 0.18, length: 0.9, gain: 0.8 },
   ],
-  'reveal:epic': [
+  'reveal:2': [
     { freq: C5, at: 0, length: 0.9, gain: 0.8 },
     { freq: E5, at: 0.16, length: 0.9, gain: 0.8 },
     { freq: G5, at: 0.32, length: 0.9, gain: 0.8 },
     { freq: C6, at: 0.48, length: 0.9, gain: 0.7 },
   ],
-  'reveal:legendary': [
+  'reveal:3': [
     { freq: C5, at: 0, length: 1.0, gain: 0.8 },
     { freq: E5, at: 0.14, length: 1.0, gain: 0.8 },
     { freq: G5, at: 0.28, length: 1.0, gain: 0.8 },

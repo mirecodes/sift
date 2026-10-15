@@ -1,4 +1,4 @@
-import { config, type Tier } from '../domain/config';
+import { config, type TierRank } from '../domain/config';
 
 const minimumMinutes = Math.round(config.reward.minFocusMs / 60_000);
 
@@ -56,12 +56,8 @@ export const strings = {
     count: (n: number) => `×${n}`,
     unknownAnimal: 'Not collected yet',
   },
-  tiers: {
-    common: 'Common',
-    epic: 'Epic',
-    legendary: 'Legendary',
-    mythic: 'Mythic',
-  } satisfies Record<Tier, string>,
+  /** Tier names by rank (0 lowest). Renaming a tier only changes this list. */
+  tiers: ['Common', 'Mythic', 'Epic', 'Legendary'] satisfies Record<TierRank, string>,
   aria: {
     collection: 'Open collection',
     settings: 'Open settings',

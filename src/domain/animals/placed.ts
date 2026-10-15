@@ -1,4 +1,3 @@
-import { tierRank } from '../config';
 import type { Tile } from '../island/island';
 import type { PlacedAnimal } from '../types';
 import type { AnimalSpecies } from './catalog';
@@ -9,7 +8,7 @@ export function newPlacedAnimal(id: string, species: AnimalSpecies, tile: Tile, 
     id,
     speciesId: species.id,
     tier: species.tier,
-    tierRank: tierRank(species.tier),
+    tierRank: species.tierRank,
     tileX: tile.x,
     tileZ: tile.z,
     acquiredAt,

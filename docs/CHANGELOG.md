@@ -8,6 +8,7 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Changed** — Step 0.4: tier logic uses `tierRank` everywhere. Catalog defined by rank; reward odds are rank-indexed arrays; species pools, reveal chimes (`reveal:0…3`), tier styles (`data-tier="0…3"`) and display names (`strings.tiers[rank]`) key off the rank. Removed unused `tierFill`.
 - 2026-10-07 · **Changed** — Step 0.3: schema v4 in one migration. Animals get `tierRank`, `status='active'`, `endedAt`, `endReason`, `verified=true`, `pinned=false`; sessions `togetherRoomId`; world `blockThemeId`; settings `weekStartsOn`, `showFocusPresence`, `liveProgress`; new stores ledger, cosmetics, placedBuildings, islandHistory, inbox, contentPacks, kv `equipped`. Row upgrades in `db/migrations.ts` also upgrade v3 backups on import. Tested against a v3 fixture database.
 - 2026-10-07 · **Added** — Step 0.2: Settings → Data exports a versioned JSON backup of every store and imports one after validation, a summary and confirmation, replacing all local data in one transaction. New `FilesAdapter` (download / file picker). E2E covers export → fresh profile → import.
 - 2026-10-07 · **Fixed** — Step 0.1: `testMode` and `resetMapOnStart` are honored only in development builds; production forces both off. Committed `app.yaml` sets both to `false`. E2E smoke fixed for the 50-species catalog and checks that saved animals survive a reload.

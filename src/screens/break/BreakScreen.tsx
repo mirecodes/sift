@@ -37,7 +37,7 @@ export function BreakScreen() {
   useEffect(() => {
     if (!revealPending || !animal || revealId.current === revealPending) return;
     revealId.current = revealPending;
-    if (soundEnabled) platform.notify.play(`reveal:${animal.tier}`);
+    if (soundEnabled) platform.notify.play(`reveal:${animal.tierRank}`);
     const id = window.setTimeout(finishReveal, config.ui.revealMs);
     return () => window.clearTimeout(id);
   }, [revealPending, animal, soundEnabled, finishReveal]);
@@ -62,13 +62,13 @@ export function BreakScreen() {
       <Panel className={styles.panel}>
         {animal && species ? (
           <TierCard
-            tier={animal.tier}
+            rank={animal.tierRank}
             elevated
             className={`${styles.card} ${revealPending ? styles.cardSkippable : ''}`}
             onClick={revealPending ? finishReveal : undefined}
             title={revealPending ? strings.aria.revealSkip : undefined}
           >
-            <TierBadge tier={animal.tier} />
+            <TierBadge rank={animal.tierRank} />
             <RewardModel modelId={species.modelId} reducedMotion={reducedMotion} />
             <p className={`${styles.name} type-display-lg`}>{species.name}</p>
           </TierCard>

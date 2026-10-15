@@ -84,23 +84,23 @@
   }
 }
 
-/* Tier mapping (DESIGN.md 2.4) */
-[data-tier='common'] {
+/* Tier mapping by rank (DESIGN.md 2.4): 0 Common, 1 Mythic, 2 Epic, 3 Legendary */
+[data-tier='0'] {
   --tier-fill: var(--color-canvas);
   --tier-ink: var(--color-ink);
   --tier-border: var(--color-hairline);
 }
-[data-tier='mythic'] {
+[data-tier='1'] {
   --tier-fill: var(--color-accent-blue);
   --tier-ink: var(--color-on-primary);
   --tier-border: transparent;
 }
-[data-tier='epic'] {
+[data-tier='2'] {
   --tier-fill: var(--color-accent-pink);
   --tier-ink: var(--color-on-primary);
   --tier-border: transparent;
 }
-[data-tier='legendary'] {
+[data-tier='3'] {
   --tier-fill: var(--color-accent-orange);
   --tier-ink: var(--color-on-primary);
   --tier-border: transparent;

@@ -1,5 +1,3 @@
-import type { Tier } from '../domain/config';
-
 /** Mirror of tokens.css for the few places that need values in JS (e.g. canvas drawing). */
 export const colors = {
   primary: '#080808',
@@ -15,10 +13,3 @@ export const colors = {
 } as const;
 
 export const motion = { fast: 150, base: 300, slow: 600, scene: 1000 } as const;
-
-export const tierFill: Record<Tier, string> = {
-  common: colors.canvas,
-  mythic: colors.accentBlue,
-  epic: colors.accentPink,
-  legendary: colors.accentOrange,
-};

@@ -50,10 +50,10 @@ export function CollectionScreen() {
             return (
               <li key={species.id}>
                 {count > 0 ? (
-                  <TierCard tier={species.tier} className={styles.card}>
+                  <TierCard rank={species.tierRank} className={styles.card}>
                     <VoxelSprite modelId={species.modelId} />
                     <p className={`${styles.name} type-display-xs`}>{species.name}</p>
-                    <TierBadge tier={species.tier} />
+                    <TierBadge rank={species.tierRank} />
                     {count > 1 && <p className={`${styles.count} type-caption`}>{strings.collection.count(count)}</p>}
                   </TierCard>
                 ) : (

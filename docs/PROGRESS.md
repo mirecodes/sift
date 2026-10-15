@@ -13,7 +13,8 @@
   - `domain/backup.ts` + generic `exportAll`/`importAll` on both adapters, `FilesAdapter`, Settings → Data. E2E: export → new browser context → import → re-export identical.
 - [x] 0.3 Schema v4 migration (§4.1)
   - Dexie v4 + pure `db/migrations.ts` (also used by memory adapter and backup import). v3 fixture DB test: animals active/verified, other values unchanged.
-- [ ] 0.4 Tier rank everywhere (§2.8)
+- [x] 0.4 Tier rank everywhere (§2.8)
+  - Grep for tier-name comparisons in logic is empty except the frozen Dexie v2/v3 upgrades. Reward/catalog tests moved to the rank API with identical assertions; mapping tests added.
 - [ ] 0.5 Shared module + seeded RNG + balance config (§2.6, §2.7)
 - [ ] 0.6 Monotonic island level (§2.2)
 - [ ] 0.7 Occupancy grid + save repair (§2.5)

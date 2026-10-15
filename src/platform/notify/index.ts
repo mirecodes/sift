@@ -1,6 +1,7 @@
-import type { Tier } from '../../domain/config';
+import type { TierRank } from '../../domain/config';
 
-export type Sound = 'focusEnd' | 'breakEnd' | `reveal:${Tier}`;
+/** Reveal chimes are keyed by tier rank. */
+export type Sound = 'focusEnd' | 'breakEnd' | `reveal:${TierRank}`;
 
 export interface NotifyAdapter {
   /** Call from a user gesture once so audio can play later. */
