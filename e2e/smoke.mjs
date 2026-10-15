@@ -251,6 +251,26 @@ await page.reload();
 await settle(1500);
 check('the purchase survives a reload', (await goldShown()) === goldBefore - 10);
 
+// Build mode (Phase 3): place the fence; it stays placed after a reload.
+await page.getByRole('button', { name: 'Build' }).click();
+await settle(500);
+await page.getByRole('button', { name: 'Place Fence' }).click();
+await settle(500);
+check('the fence ghost starts on a spot where it fits', await page.getByRole('status').getByText('It fits here.').isVisible());
+await page.keyboard.press('r');
+await page.keyboard.press('Enter');
+await settle(500);
+check('placing empties the tray', await page.getByText('Nothing to place. Buy decorations in the shop.').isVisible());
+await page.getByRole('button', { name: 'Done' }).click();
+await page.reload();
+await settle(1500);
+await page.getByRole('button', { name: 'Build' }).click();
+await settle(500);
+check('the placed fence survives a reload', await page.getByText('Nothing to place. Buy decorations in the shop.').isVisible());
+await page.keyboard.press('Escape');
+await settle(300);
+check('Esc leaves build mode', await page.getByRole('button', { name: 'Start focus' }).isVisible());
+
 // Backup: export, then import into a fresh context (same as cleared site data).
 const exportFrom = async (p) => {
   await p.getByRole('button', { name: 'Open settings' }).click();

@@ -82,7 +82,8 @@
   - `domain/cosmetics/shop.ts` (tested: featured from the newest started release, skins only for earned species in catalog order, flag never sold, future release not featured, New for 14 days, leaves-in), `ShopScreen` + `Shop.module.css`, `ItemPreview`, HUD gold opens the Shop. Dev server with dummy data at 1280/390: sections, confirm sheet with turning preview, buy 208→178, Owned, Equip offered, no console errors. E2E 49/49 (×2): open shop, buy fence, sheet text, Owned ×1, gold −10, survives reload.
 - [x] 3.10 Collection: choose skins and island theme
   - `skinChoices` / `ownedThemes` (tested), `screens/collection/Cosmetics.tsx` (`ThemePicker`, `SpeciesSheet`), cards become buttons with cosmetics on. Dev server with dummy data at 1280/390: picked Cherry Blossom → pink roof and petals on Home, Dog back to Default → brown dog, no console errors. E2E 51/51 (theme picker, species sheet).
-- [ ] 3.11 Build mode (placing buildings)
+- [x] 3.11 Build mode (placing buildings)
+  - Store `placeBuilding` / `storeBuilding` + `selectOccupancy`, `suggestTile`, `buildState`, `BuildScreen`, `BuildLayer`, `BuildIslandLayer`, hammer icon, animals walk to a changed home tile. Tests: place + persist, none left, camp refused, move, rotate, store, displaced animal moved and saved in the same write, Home only. Dev server with dummy data at 1280/390: tray, ghost with green tint, arrows, rotate, Enter places, tray updates, no console errors. E2E 55/55: place the bought fence, empty tray, survives reload, Esc leaves.
 - [ ] 3.12 Pathfinding for walking animals
 - [ ] 3.13 Animal placement with buildings
 
@@ -155,6 +156,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 3.11 · Build mode feel on a phone: tap a tile to move the ghost, then Place (no dragging the ghost itself, because a drag turns the camera). Arrow keys step along the island axes (Up = up-right on screen). The ghost is 60% opaque; check that red/green reads well on every theme.
 - 3.10 · Collection theme picker and species sheet (rows with Equip / price + Open shop). `Open shop` lands at the top of the Shop, not at that skin.
 - 3.9 · Shop look (cards, badges, confirm sheet) at phone and desktop width. With many animals the skin section is long (5 families × every earned species) and pushes themes and buildings far down; consider grouping skins by species or a filter. Release dates are read as UTC midnight, so the Featured row and New badges start at 02:00 in Zurich.
 - 3.6 · Look of the launch content in `/studio`: theme colors (Autumn orange grass, Snow roof, Desert sand, Cherry pink roof), the 9 building models, the 5 family transforms (Golden, Snowy, Shadow, Pastel, Ghost) and the two handcrafted skins. Prices: themes 120–200, buildings 10–80, family skins 25–60 by tier, handcrafted 80.
@@ -180,6 +182,9 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 3.11 · Touch: a tap moves the ghost and Place confirms; the ghost is not dragged. · Drag already turns the camera (DESIGN.md 7.1); two gestures on one finger would conflict.
+- 3.11 · Build mode keeps the Home camera (drag to turn ±30°, zoom) and hides the Home panel, HUD and notices. · "Camera stays isometric; rotation allowed."
+- 3.11 · Moving a building hides the original and shows only the ghost; Rotate on a placed building rotates it in place or reports why it does not fit. · Simplest consistent model.
 - 3.9 · Shop cards show the atlas sprite; the turning 3D preview is in the confirm sheet only. · One WebGL canvas per card would not scale to hundreds of items.
 - 3.9 · The Shop opens from Home only (the HUD is on Home's top bar, Break has none). · "Home and Break only" forbids Focus; adding a top bar to Break is a layout change not asked for.
 - 3.9 · After buying a skin or theme the sheet offers Equip; buildings point to build mode. · Saves a trip to the Collection.

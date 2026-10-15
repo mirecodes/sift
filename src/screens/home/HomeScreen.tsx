@@ -3,7 +3,7 @@ import { useApp } from '../../store';
 import { useSpaceKey } from '../../ui/hooks';
 import { strings } from '../../ui/strings';
 import { Button, IconButton } from '../../ui/components/Button';
-import { CollectionIcon, SettingsIcon } from '../../ui/components/Icons';
+import { BuildIcon, CollectionIcon, SettingsIcon } from '../../ui/components/Icons';
 import { Panel } from '../../ui/components/Surfaces';
 import { TopBar } from '../../ui/components/TopBar';
 import { NoticeCard } from '../NoticeCard';
@@ -29,6 +29,11 @@ export function HomeScreen() {
     <div className={layer.layer}>
       <div className={styles.top}>
         <TopBar start={features.economy && <Hud />}>
+          {features.cosmetics && (
+            <IconButton aria-label={strings.aria.build} onClick={() => setView('build')}>
+              <BuildIcon />
+            </IconButton>
+          )}
           <IconButton aria-label={strings.aria.collection} onClick={() => setView('collection')}>
             <CollectionIcon />
           </IconButton>

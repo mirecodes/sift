@@ -6,7 +6,8 @@ import { resolvePhase } from '../domain/timer/phase';
 import type { PlacedAnimal } from '../domain/types';
 import { createMemoryStorage } from '../platform/storage/memory';
 import type { StorageAdapter } from '../platform/storage';
-import { createAppStore, EquipError, selectActiveUnicorns, selectCurrentNotice, selectIslandLevel, selectShownGold, selectVisibleAnimals } from './appStore';
+import { suggestTile } from '../domain/build/placement';
+import { createAppStore, EquipError, selectOccupancy, selectActiveUnicorns, selectCurrentNotice, selectIslandLevel, selectShownGold, selectVisibleAnimals } from './appStore';
 import { InsufficientGoldError } from '../domain/economy/ledger';
 import { CATALOG } from '../domain/animals/catalog';
 import { newPlacedAnimal } from '../domain/animals/placed';
@@ -540,6 +541,72 @@ describe('inventory and equip (Step 3.7)', () => {
     const rows = await storage.exportAll();
     expect(rows.cosmetics).toEqual([]);
     expect(rows.placedBuildings).toEqual([]);
+  });
+});
+
+describe('build mode (Step 3.11)', () => {
+  async function owner(items: string[]) {
+    const storage = createMemoryStorage();
+    await storage.commit({
+      cosmeticsAdd: items.map((defId, i) => ({ id: `c${i}`, kind: 'building' as const, defId, acquiredAt: 0, source: 'shop' })),
+    });
+    let n = 0;
+    const s = createAppStore({ storage, now: () => 1000, rng: seededRng(3), uuid: () => `b-${++n}`, clientVersion: '0.1.0' });
+    await s.getState().init();
+    return { s, storage };
+  }
+  const spot = (s: ReturnType<typeof createAppStore>, defId: string) =>
+    suggestTile(selectOccupancy(s.getState()), { defId, rotation: 0, minFreeTiles: 6 })!;
+
+  it('places owned buildings, persists them and refuses when none are left or it does not fit', async () => {
+    const { s, storage } = await owner(['lantern']);
+    const tile = spot(s, 'lantern');
+    expect(await s.getState().placeBuilding({ defId: 'lantern', tile, rotation: 0 })).toBeNull();
+    expect(s.getState().placedBuildings).toMatchObject([{ defId: 'lantern', tileX: tile.x, tileZ: tile.z, rotation: 0 }]);
+    expect((await storage.load()).placedBuildings).toHaveLength(1);
+    expect(await s.getState().placeBuilding({ defId: 'lantern', tile, rotation: 0 })).toBe('none_left');
+    const { s: s2 } = await owner(['fence']);
+    expect(await s2.getState().placeBuilding({ defId: 'fence', tile: FIRE_TILE, rotation: 0 })).toBe('camp');
+  });
+
+  it('moves, rotates and stores a placed building', async () => {
+    const { s, storage } = await owner(['windmill']);
+    const tile = spot(s, 'windmill');
+    await s.getState().placeBuilding({ defId: 'windmill', tile, rotation: 0 });
+    const id = s.getState().placedBuildings[0]!.id;
+    const grid = selectOccupancy(s.getState());
+    const other = suggestTile(new Map([...grid].filter(([, t]) => t.x !== tile.x || t.z !== tile.z)), { defId: 'windmill', rotation: 0, minFreeTiles: 6, movingId: id })!;
+    expect(await s.getState().placeBuilding({ defId: 'windmill', tile: other, rotation: 0, movingId: id })).toBeNull();
+    expect(s.getState().placedBuildings).toMatchObject([{ id, tileX: other.x, tileZ: other.z }]);
+    const turned = await s.getState().placeBuilding({ defId: 'windmill', tile: other, rotation: 90, movingId: id });
+    if (turned === null) expect(s.getState().placedBuildings[0]!.rotation).toBe(90);
+    await s.getState().storeBuilding(id);
+    expect(s.getState().placedBuildings).toEqual([]);
+    expect((await storage.load()).placedBuildings).toEqual([]);
+  });
+
+  it('animals on the tiles walk to the nearest free tile in the same write', async () => {
+    const { s, storage } = await owner(['lantern']);
+    await s.getState().startFocus();
+    await s.getState().abandonFocus();
+    // Put an animal where the lantern will go.
+    const tile = spot(s, 'lantern');
+    const fox = newPlacedAnimal('fox', CATALOG.find((c) => c.id === 'fox')!, tile, 1000, 's');
+    await storage.commit({ animal: fox });
+    let n = 0;
+    const again = createAppStore({ storage, now: () => 1000, rng: seededRng(3), uuid: () => `x-${++n}`, clientVersion: '0.1.0' });
+    await again.getState().init();
+    expect(await again.getState().placeBuilding({ defId: 'lantern', tile, rotation: 0 })).toBeNull();
+    const moved = again.getState().animals.find((a) => a.id === 'fox')!;
+    expect([moved.tileX, moved.tileZ]).not.toEqual([tile.x, tile.z]);
+    expect((await storage.load()).animals.find((a) => a.id === 'fox')).toMatchObject({ tileX: moved.tileX, tileZ: moved.tileZ });
+  });
+
+  it('builds only on Home', async () => {
+    const { s } = await owner(['fence']);
+    const tile = spot(s, 'fence');
+    await s.getState().startFocus();
+    expect(await s.getState().placeBuilding({ defId: 'fence', tile, rotation: 0 })).toBe('not_idle');
   });
 });
 

@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-10-08 · **Added** — Step 3.11: build mode (with `features.cosmetics`), from a hammer icon on Home: a tray of owned, unplaced buildings; the chosen one appears as a see-through ghost over a green/red footprint on the nearest spot that fits, follows the mouse or a tap (arrow keys too), turns with R or Rotate and is placed with Place or Enter; tapping a placed building offers Move, Rotate and Store. Animals on the new tiles walk to the nearest free tile. Placed buildings persist. E2E places the bought fence and checks it after a reload (55 checks) (DESIGN.md 7.8).
+
 - 2026-10-08 · **Added** — Step 3.10: with `features.cosmetics` the Collection has an Island theme picker (owned themes, Default first; a tap re-themes the island at once) and collected cards open a species sheet: Default and every owned or for-sale skin, with Equip for owned ones and price + Open shop for the rest; equipping changes every animal of that species (DESIGN.md 7.5). E2E 51 checks.
 
 - 2026-10-08 · **Added** — Step 3.9: the Shop (with `features.cosmetics`), opened by tapping the gold counter on Home: Featured row from the newest release, Animal skins (only species you have earned), Island themes, Decorations & buildings by category; cards with sprite, New / Leaves-in badges, price and Buy / Owned / `Need 12 more`; a confirm sheet with a turning preview that buys (debit and item in one write), then offers Equip (skins, themes) or points to build mode (`balance.shop.newBadgeDays` = 14, `BALANCE_VERSION` 2026-10-08.2). `npm run e2e` builds with `cosmetics` too and buys a fence (49 checks) (DESIGN.md 7.7).

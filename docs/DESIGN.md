@@ -248,6 +248,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - Set: `collection` (2×2 grid of squares), `settings` (three horizontal sliders), `close` (×). Every icon button has an `aria-label`.
 - Tab icons: `island` (cabin on a block), `stats` (three bars on a baseline), `friends` (two heads), `group` (flag).
 - HUD icons: `gold` (a coin: circle with a smaller inner ring, filled `--color-accent-yellow` under the stroke), `unicorn` (a spiral horn: a tall narrow triangle with two diagonal bands).
+- `build` (a hammer: a rectangular head across the top and a diagonal handle), on Home's top bar before `collection`, only with `features.cosmetics`.
 
 ### 6.7 Tab Bar
 - Tabs **Island**, **Stats**, **Friends**, **Group**; a tab appears only when its feature flag is on. With only Island visible there is no tab bar (the app looks as before).
@@ -332,6 +333,12 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
   - Badges: `New` (`badge-info`) for items whose release started in the last 14 days (`balance.shop.newBadgeDays`); `Leaves in 3d` (`badge-overtime` colors) for limited items (`Leaves in 5h` under a day).
 - Grid: 2 columns on phones, 3 from 768px, 4 from 992px; `--space-md` gaps; sprites stay 96px.
 - **Buy** opens a confirm sheet (the Day-detail `<dialog>`): `display-sm` `Buy Golden Fox?`, a 180px preview that turns slowly (skins and buildings: the model; themes: a small island in the theme; static with reduced motion), `body-md` `45 gold · you have 208`, buttons `Cancel` (secondary) and `Buy` (primary). On success the sheet says `It's yours.`; for a skin or theme it offers `Equip` (primary) and `Done`; for a building `Place it in build mode.` and `Done`. A failed write shows `Could not buy. Try again.` and changes nothing.
+
+### 7.8 Build mode (cosmetics)
+- Entered from the `build` icon on Home (never Focus or Break). The island stays interactive like Home (drag to rotate within ±30°, wheel to zoom); the Home panel, HUD and notices are hidden. Top bar: `display-xs` `Build` on the left, `Done` (`button-secondary`) on the right. Esc or Done returns Home.
+- **Tray** (bottom `panel`, like the Home panel, max width 560px): `eyebrow` `YOUR BUILDINGS`, then a sideways-scrolling row of owned, unplaced buildings: 88px-wide buttons with the 48px sprite, the name (`caption`) and `×2` when more than one. Empty: `body-sm` `Nothing to place. Buy decorations in the shop.` and `Open shop` (`button-secondary`).
+- **Placing** (after picking one from the tray, or Move): a see-through copy of the building (60% opacity) stands on the chosen tiles over the footprint tint (15.7): green when it fits, red when not. It starts on the free tile nearest the camp that fits. Desktop: it follows the pointer; a click on a tile moves it there. Touch: a tap moves it. Arrow keys move it one tile. The panel shows the reason when it does not fit (`body-sm`, `Leave room for your animals`, `The ground is not flat`, …) and `Rotate` (or R), `Cancel` and `Place` (primary, disabled when red; Enter). Animals standing on the tiles walk to the nearest free tile when it is placed.
+- **A placed building**: tapping it (when not placing) outlines its tiles in white and the panel offers `Move`, `Rotate` (in place, only if it still fits), `Store` (back to the tray) and `Cancel`.
 
 ---
 

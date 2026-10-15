@@ -59,6 +59,8 @@ const angleDiff = (from: number, to: number) => {
 type Action = 'none' | 'turn' | 'hop' | 'shuffle' | 'flop';
 
 interface AnimState {
+  /** `"x,z"` of the home tile last seen. */
+  home: string;
   time: number;
   nextAt: number;
   action: Action;
@@ -166,6 +168,7 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     gy: ground(animal.tile.x, animal.tile.z),
     bubbleUntil: -1,
     leaveT: -1,
+    home: `${animal.tile.x},${animal.tile.z}`,
   });
 
   // With the economy on the bubble shows the time left (Step 2.6); exempt species keep the "!".
@@ -198,6 +201,20 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     const dt = Math.min(delta, 0.1);
     s.time += dt * scaleRef.current;
     s.clock += dt;
+
+    // The home tile changed (a building was placed on it, Step 3.11): walk there instead of jumping.
+    const home = `${animal.tile.x},${animal.tile.z}`;
+    if (s.home !== home) {
+      s.home = home;
+      if (s.routine === 'none' && !reducedMotion) {
+        s.returning = true;
+        s.routineAt = s.clock;
+        s.delay = 0;
+        s.action = 'none';
+        s.offX = 0;
+        s.offZ = 0;
+      }
+    }
 
     const wanted = routineRef.current;
     if (wanted !== s.routine) {

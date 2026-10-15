@@ -1,9 +1,10 @@
 import { createStore } from 'zustand/vanilla';
 import { config, DEFAULT_BLOCK_THEME } from '../domain/config';
 import type { Equipped, FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../domain/types';
-import { buyProblem, DEFAULT_EQUIPPED, equipSkin, equipTheme, grantFor, ownedCount, sanitizeEquipped, type BuyProblem, type EquipProblem } from '../domain/cosmetics/inventory';
+import { buyProblem, DEFAULT_EQUIPPED, equipSkin, equipTheme, grantFor, ownedCount, sanitizeEquipped, unplacedBuildings, type BuyProblem, type EquipProblem } from '../domain/cosmetics/inventory';
 import { content } from '../domain/content';
-import { placementProblem } from '../domain/build/placement';
+import { placementProblem, type PlaceProblem } from '../domain/build/placement';
+import type { Tile } from '../domain/island/island';
 import { balance } from '../../shared/balance/balance';
 import { debitEntry, goldBalance, goldEntry, hasStarterGrant, LEDGER_REASON } from '../domain/economy/ledger';
 import { computeExpirations } from '../../shared/rules/expiry';
@@ -21,13 +22,13 @@ import type { AnimalSpecies } from '../domain/animals/catalog';
 import { rollReward } from '../domain/reward/reward';
 import { isActive, newPlacedAnimal } from '../domain/animals/placed';
 import { islandLevel, pickNewAnimalTile } from '../domain/island/level';
-import { animalTile, getOccupancy, repairPlacements } from '../domain/island/occupancy';
+import { animalTile, getOccupancy, repairPlacements, type Rotation } from '../domain/island/occupancy';
 import { clamp, type Rng } from '../domain/random';
 import { createBackup, type Backup } from '../domain/backup';
 import type { StorageAdapter } from '../platform/storage';
 import { createMemoryStorage } from '../platform/storage/memory';
 
-export type View = 'home' | 'settings' | 'collection' | 'shop';
+export type View = 'home' | 'settings' | 'collection' | 'shop' | 'build';
 /** Top-level tabs (guidance_v2 §2.10). `view` is the page inside the Island tab. */
 export type Tab = 'island' | 'stats' | 'friends' | 'group';
 
@@ -118,6 +119,24 @@ export interface AppState {
   equipSkin(speciesId: string, skinId: string): Promise<void>;
   /** Equips an owned block theme (or `default`). Rejects with an `EquipError`. */
   equipTheme(themeId: string): Promise<void>;
+  /**
+   * Places an owned, unplaced building, or moves / rotates a placed one (`movingId`), on Home only
+   * (Step 3.11). Animals on its tiles walk to the nearest free tile, in the same write. Returns why it
+   * does not fit, or null when placed.
+   */
+  placeBuilding(p: { defId: string; tile: Tile; rotation: Rotation; movingId?: string }): Promise<PlaceProblem | 'none_left' | 'not_idle' | null>;
+  /** Puts a placed building back into the inventory. */
+  storeBuilding(id: string): Promise<void>;
+}
+
+/** Occupancy of the own island now: active animals and placed buildings. */
+export function selectOccupancy(s: Pick<AppState, 'world' | 'animals' | 'placedBuildings'>) {
+  return getOccupancy({
+    seed: s.world.seed,
+    islandLevel: islandLevel(s.animals),
+    animals: s.animals.filter(isActive).map((a) => ({ id: a.id, tile: animalTile(a) })),
+    buildings: s.placedBuildings.map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation })),
+  });
 }
 
 export class BuyError extends Error {
@@ -523,6 +542,38 @@ export function createAppStore(initialDeps: AppDeps) {
       if (typeof next === 'string') throw new EquipError(next);
       await commit({ equipped: next });
       set({ equipped: next });
+    },
+
+    async placeBuilding({ defId, tile, rotation, movingId }) {
+      const s = get();
+      if (s.phase.kind !== 'idle') return 'not_idle';
+      const moving = movingId ? s.placedBuildings.find((b) => b.id === movingId) : undefined;
+      if (!moving && (unplacedBuildings(s.cosmetics, s.placedBuildings).get(defId) ?? 0) < 1) return 'none_left';
+      const problem = placementProblem(selectOccupancy(s), { defId, tile, rotation, minFreeTiles: balance.build.minFreeTiles, ...(moving && { movingId: moving.id }) });
+      if (problem) return problem;
+
+      const building: PlacedBuilding = moving
+        ? { ...moving, tileX: tile.x, tileZ: tile.z, rotation }
+        : { id: deps.uuid(), defId, tileX: tile.x, tileZ: tile.z, rotation, placedAt: deps.now() };
+      const buildings = [...s.placedBuildings.filter((b) => b.id !== building.id), building];
+      // Animals on the new tiles walk to the nearest free tile (save repair does exactly that).
+      const moved = repairPlacements(
+        { seed: s.world.seed, islandLevel: islandLevel(s.animals), buildings: buildings.map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation })) },
+        s.animals.filter(isActive),
+      );
+      await commit({
+        ...(!memoryOnly.has(building.id) && { buildingsPut: [building] }),
+        animals: moved.filter((a) => !memoryOnly.has(a.id)),
+      });
+      const byId = new Map(moved.map((a) => [a.id, a]));
+      set({ placedBuildings: buildings, animals: get().animals.map((a) => byId.get(a.id) ?? a) });
+      return null;
+    },
+
+    async storeBuilding(id) {
+      if (!get().placedBuildings.some((b) => b.id === id)) return;
+      if (!memoryOnly.has(id)) await commit({ buildingsRemove: [id] });
+      set({ placedBuildings: get().placedBuildings.filter((b) => b.id !== id) });
     },
 
     applyExpirations() {

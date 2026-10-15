@@ -17,6 +17,14 @@ export const CollectionIcon = () => (
   </Icon>
 );
 
+/** Build mode (DESIGN.md 6.6): a hammer, head across the top, diagonal handle. */
+export const BuildIcon = () => (
+  <Icon>
+    <path d="M5.5 4.5h8l2 2.5h-10z" />
+    <path d="M10.5 7l-6 9" strokeWidth="2" />
+  </Icon>
+);
+
 export const SettingsIcon = () => (
   <Icon>
     <path d="M3 5.5h14M3 10h14M3 14.5h14" />

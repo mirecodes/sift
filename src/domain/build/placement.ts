@@ -14,6 +14,15 @@ export interface PlaceCheck {
   minFreeTiles: number;
 }
 
+/** The tile nearest the island center where the building fits (where a new ghost starts), or null. */
+export function suggestTile(grid: ReadonlyMap<TileKey, TileInfo>, check: Omit<PlaceCheck, 'tile'>): Tile | null {
+  const tiles = [...grid.values()].sort((a, b) => Math.hypot(a.x, a.z) - Math.hypot(b.x, b.z) || a.x - b.x || a.z - b.z);
+  // Prefer tiles without animals, so nobody has to move.
+  const fits = (t: Tile) => placementProblem(grid, { ...check, tile: t }) === null;
+  const best = tiles.find((t) => !t.animalIds.length && fits(t)) ?? tiles.find(fits);
+  return best ? { x: best.x, z: best.z } : null;
+}
+
 /**
  * Placement validity via the occupancy grid: every footprint tile on the island, all at one height,
  * no water unless `allowOnWater`, no camp tile, no other building, and the island keeps at least
