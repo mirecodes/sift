@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FocusSession } from '../types';
-import { addDays, addMonths, aggregateByDay, heatLevel, localDate, monthRange, monthSummary, weekStart } from './days';
+import { addDays, addMonths, aggregateByDay, countsInStats, heatLevel, localDate, monthRange, monthSummary, sessionsOnDay, weekStart } from './days';
 
 const MIN = 60_000;
 const ZH = 'Europe/Zurich';
@@ -105,6 +105,21 @@ describe('aggregateByDay', () => {
     const sun = aggregateByDay(sessions, { timeZone: ZH, from: weekStart('2026-10-11', 0), to: addDays(weekStart('2026-10-11', 0), 6) });
     expect(mon[6]).toMatchObject({ date: '2026-10-11', sessionCount: 1 });
     expect(sun[0]).toMatchObject({ date: '2026-10-11', sessionCount: 1 });
+  });
+});
+
+describe('sessionsOnDay', () => {
+  it('lists finished sessions that started that local day, oldest first, including abandoned', () => {
+    const late = session('2026-10-07T20:00:00Z', 30);
+    const early = session('2026-10-07T06:00:00Z', 10, 'abandoned');
+    const list = [late, session('2026-10-06T21:50:00Z', 50), early, session('2026-10-07T21:00:00Z', 0, 'running'), session('2026-10-07T22:30:00Z', 30)];
+    expect(sessionsOnDay(list, '2026-10-07', ZH).map((s) => s.id)).toEqual([early.id, late.id]);
+  });
+
+  it('counted sessions match the day aggregate', () => {
+    const list = [session('2026-10-07T06:00:00Z', 10, 'abandoned'), session('2026-10-07T08:00:00Z', 40)];
+    const [day] = aggregateByDay(list, { timeZone: ZH, from: '2026-10-07', to: '2026-10-07' });
+    expect(sessionsOnDay(list, '2026-10-07', ZH).filter(countsInStats)).toHaveLength(day?.sessionCount ?? -1);
   });
 });
 

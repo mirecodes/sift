@@ -3,6 +3,7 @@ import { addDays, addMonths, aggregateByDay, localDate, monthRange, monthSummary
 import { useApp } from '../../store';
 import { strings } from '../../ui/strings';
 import { TabPage } from '../TabPage';
+import { DayDetail } from './DayDetail';
 import { MonthCalendar } from './MonthCalendar';
 import { Nav } from './Nav';
 import { Overview } from './Overview';
@@ -20,7 +21,7 @@ export function StatsScreen() {
   const [month, setMonth] = useState(today.slice(0, 7));
   /** Weeks back from the current week (0 = this week), so a Week-starts-on change keeps the view. */
   const [weeksBack, setWeeksBack] = useState(0);
-  const [, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
 
   const monthDays = useMemo(() => aggregateByDay(sessions, { timeZone, ...monthRange(month) }), [sessions, timeZone, month]);
   const from = addDays(thisWeek, -7 * weeksBack);
@@ -45,6 +46,7 @@ export function StatsScreen() {
         onShift={(by) => setWeeksBack(weeksBack - by)}
         onSelect={setSelected}
       />
+      {selected && <DayDetail key={selected} date={selected} timeZone={timeZone} onClose={() => setSelected(null)} />}
     </TabPage>
   );
 }

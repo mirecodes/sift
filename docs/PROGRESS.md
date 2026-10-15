@@ -38,7 +38,8 @@
   - `WeekView` + shared `Nav`; week kept as "weeks back" so a week-start change keeps the view. Day buttons set the selected day; the sheet itself lands in 1.6. E2E: 7 day buttons, no future weeks, ← / →. 33/33 e2e (×2).
 - [x] 1.5 Stats tab: Month calendar
   - `MonthCalendar` + pure `heatLevel` (tested); compact `1h38` time so cells fit 390px. E2E: one button per day of the month + 7 week days. 33/33 e2e (×2).
-- [ ] 1.6 Day detail
+- [x] 1.6 Day detail
+  - `DayDetail` (native `<dialog>`: focus trap, Esc), pure `sessionsOnDay` / `countsInStats` (tested). E2E: today = 1 counted session; sheet shows 3 rows, 2 "Stopped after", 1 reward; Esc closes. 36/36 e2e (×2).
 - [ ] 1.7 Settings
 
 ## Phase 2 — Gold economy (F3)
@@ -136,6 +137,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 1.6 · Day detail sheet: bottom sheet on phones, centered dialog from 768px. Small models (e.g. Unicorn) look tiny as 48px sprites.
 - 1.5 · Heatmap steps are greys (hairline → mute-soft → body-mid → primary) at 1 / 30 / 60 / 120 min; no new accent. Check they read as "more focus" and the thresholds feel right.
 - 1.3 · Stats Overview look (figures row, day strip). Days are bucketed in the device's time zone.
 - 1.1 · Tab bar look and the `island` tab icon (cabin on a block). Turn on with `features.stats: true` locally. Home/Break panels move up 64px while the bar shows; on phones the Break panel now covers more of the island (camera insets unchanged).
@@ -150,6 +152,7 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 1.6 · Day detail is a native `<dialog>` with `showModal()`. · Platform focus trap, Esc and inert background without code.
 - 1.5 · Stats order: month selector → Overview → Month calendar → Week (own navigation). Calendar cells also open the Day detail. · Keeps the calendar next to the month selector it follows.
 - 1.5 · Heatmap thresholds are absolute minutes (`config.ui.heatMinutes`, client-only), not relative to the month's best day. · A day's color means the same in every month.
 - 1.2 · No date library: `Intl.DateTimeFormat` for epoch → local date, UTC arithmetic on `YYYY-MM-DD` strings for the rest. · The guidance's "e.g. date-fns + tz" is a suggestion; the platform covers the only DST-sensitive step, tested on both Zurich DST weeks.

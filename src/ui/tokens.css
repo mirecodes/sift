@@ -8,6 +8,7 @@
   --color-hairline-inverse: rgba(255, 255, 255, 0.16);
   --color-overlay-focus: rgba(8, 8, 8, 0.82);
   --color-overlay-focus-night: rgba(8, 8, 8, 0.6);
+  --color-backdrop: rgba(8, 8, 8, 0.4);
 
   /* Text */
   --color-ink: #080808;

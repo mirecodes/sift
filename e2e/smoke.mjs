@@ -151,6 +151,25 @@ await page.getByRole('button', { name: 'Open collection' }).click();
 await settle();
 check('saved animals survive a reload (developer switches off in production)', await page.getByText(collected).isVisible());
 await page.getByRole('button', { name: 'Close' }).click();
+
+// Day detail: today has two stopped sessions and one completed with a reward.
+await tabs.getByRole('button', { name: 'Stats' }).click();
+await settle();
+const today = page.getByRole('button', { name: /day \d+ \w+: \d+m, 1 session$/ }).first();
+check('today counts only the completed session', await today.isVisible());
+await today.click();
+await settle(500);
+const sheet = page.getByRole('dialog');
+check(
+  'the day sheet lists every session, stopped ones marked, with the reward',
+  (await sheet.getByText(/^Stopped after/).count()) === 2 && (await sheet.getByRole('img').count()) === 1 && (await sheet.getByText(/^\d\d:\d\d$/).count()) === 3,
+);
+await page.keyboard.press('Escape');
+await settle(300);
+check('Esc closes the day sheet', (await page.getByRole('dialog').count()) === 0);
+await tabs.getByRole('button', { name: 'Island' }).click();
+await settle();
+
 await page.getByRole('button', { name: 'Open settings' }).click();
 await page.getByRole('button', { name: 'Increase Focus length' }).click();
 await page.getByRole('button', { name: 'Decrease Break length' }).click();

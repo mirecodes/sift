@@ -107,6 +107,14 @@ export const strings = {
     weekTotal: (total: string, average: string) => `Total ${total} · ${average} / day`,
     weekday: (date: string) => dateFormat({ weekday: 'short' }, date),
     dayOfMonth: (date: string) => String(Number(date.slice(8))),
+    /** Day detail sheet. */
+    dayTitle: (date: string) => dateFormat({ weekday: 'long', day: 'numeric', month: 'long' }, date),
+    daySummary: (time: string, sessions: number) => `${time} · ${sessions} ${sessions === 1 ? 'session' : 'sessions'}`,
+    /** Local wall-clock time of an epoch-ms instant: `09:12`. */
+    clock: (ms: number) => new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(ms),
+    overtime: (time: string) => `+${time} overtime`,
+    stopped: (time: string) => `Stopped after ${time}`,
+    noSessions: 'No sessions.',
     /** Accessible name of a day button: `Wednesday 7 October: 1h 42m, 3 sessions`. */
     dayLabel: (date: string, time: string, sessions: number) =>
       `${dateFormat({ weekday: 'long', day: 'numeric', month: 'long' }, date)}: ${time}, ${sessions} ${sessions === 1 ? 'session' : 'sessions'}`,

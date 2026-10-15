@@ -66,7 +66,7 @@ export function addMonths(month: string, n: number): string {
 }
 
 /** Sessions that count: completed (and abandoned if the balance says so) with an end time. */
-function counts(s: FocusSession): s is FocusSession & { endedAt: number } {
+export function countsInStats(s: FocusSession): s is FocusSession & { endedAt: number } {
   if (s.endedAt === undefined) return false;
   return s.status === 'completed' || (s.status === 'abandoned' && balance.stats.includeAbandoned);
 }
@@ -87,13 +87,20 @@ export function aggregateByDay(
     byDate.set(d, day);
   }
   for (const s of sessions) {
-    if (!counts(s)) continue;
+    if (!countsInStats(s)) continue;
     const day = byDate.get(localDate(s.startedAt, timeZone));
     if (!day) continue;
     day.focusMinutes += Math.max(0, s.endedAt - s.startedAt) / 60_000;
     day.sessionCount += 1;
   }
   return days;
+}
+
+/** Finished sessions (completed or abandoned) that started on `date` in `timeZone`, oldest first. */
+export function sessionsOnDay(sessions: readonly FocusSession[], date: string, timeZone: string): (FocusSession & { endedAt: number })[] {
+  return sessions
+    .filter((s): s is FocusSession & { endedAt: number } => s.endedAt !== undefined && s.status !== 'running' && localDate(s.startedAt, timeZone) === date)
+    .sort((a, b) => a.startedAt - b.startedAt);
 }
 
 /** Heatmap level 0…steps.length: how many thresholds (ascending, in minutes) the day reaches. */
