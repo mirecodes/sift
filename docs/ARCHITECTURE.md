@@ -163,7 +163,7 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 `config/app.yaml`, bundled at build time (ADR-015, ADR-019):
 - `testMode` (`enabled`, `speciesCount`, `allSpecies`): fills the island in memory at startup; never stored, rewards untouched.
 - `resetMapOnStart`: new seed and all placed animals deleted on every start.
-- **Both are ON for development. Set both to `false` before release.**
+- Both are honored only in development builds (`import.meta.env.DEV`); production builds force them off (`resolveRuntimeConfig`). Committed value is `false`; enable locally, never commit.
 
 ## 10. Directory structure
 

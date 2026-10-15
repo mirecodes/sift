@@ -1,13 +1,17 @@
 # Runtime settings, bundled at build time. Restart `npm run dev` after editing.
+#
+# Developer switches: honored only by `npm run dev`. Production builds
+# (`npm run build`) force both off. Keep both `false` in commits; to use one,
+# set it to `true` locally and do not commit the change.
 
 # When true, every start rolls a new island seed and deletes all placed animals
 # (sessions and settings are kept). Handy for testing terrain generation.
-resetMapOnStart: true
+resetMapOnStart: false
 
 testMode:
   # When true, `speciesCount` random species are already on the island at
   # startup (chosen per page load, in memory only, never saved).
-  enabled: true
+  enabled: false
   speciesCount: 4
   # When true, every species in the catalog is placed once (the island grows to
   # fit them all) and `speciesCount` is ignored.

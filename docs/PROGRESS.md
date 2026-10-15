@@ -7,7 +7,8 @@
 
 ## Phase 0 — Foundations
 
-- [ ] 0.1 Developer switches can never reach users
+- [x] 0.1 Developer switches can never reach users
+  - `resolveRuntimeConfig(file, import.meta.env.DEV)` gates both switches; unit-tested. Accept verified: prod build with both `true` → e2e animal survives reload.
 - [ ] 0.2 Export / import backup
 - [ ] 0.3 Schema v4 migration (§4.1)
 - [ ] 0.4 Tier rank everywhere (§2.8)
@@ -125,4 +126,7 @@
 ## Decisions taken by the agent
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
+
+- 0.1 · Guidance says next ADR is ADR-028, but ADR-028/029 already exist in `DECISIONS.md`; new ADRs start at ADR-030. · Avoid duplicate numbers.
+- 0.1 · Updated the stale e2e collection check (`/ 20` → `/ 50`). · The catalog grew to 50 in guidance_v1; this was not a weakened test.
 

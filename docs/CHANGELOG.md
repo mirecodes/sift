@@ -6,6 +6,10 @@
 
 ---
 
+## guidance_v2
+
+- 2026-10-07 · **Fixed** — Step 0.1: `testMode` and `resetMapOnStart` are honored only in development builds; production forces both off. Committed `app.yaml` sets both to `false`. E2E smoke fixed for the 50-species catalog and checks that saved animals survive a reload.
+
 ## guidance_v1
 
 - 2026-10-07 · **Docs** — Docs restructured: `ARCHITECTURE.md` condensed and now holds all settled decisions; `DECISIONS.md` is a human-only log; changelog grouped by guidance file; work follows `docs/guidance_vN.md` (ADR-029).
