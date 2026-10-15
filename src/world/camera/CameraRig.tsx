@@ -13,6 +13,8 @@ const RATE = 5; // damping rate, ~99% settled after 1s
 export interface CameraControls {
   azimuth: number; // radians offset from the isometric default, Home only
   zoom: number; // user zoom factor, Home only
+  /** The offset the camera actually shows this frame (damped); the sun and clouds turn with it. */
+  shown?: number;
 }
 
 interface Insets {
@@ -47,7 +49,7 @@ export function CameraRig({ mode, side, depth, rise, reducedMotion, controls }: 
   const modeRef = useRef(mode);
   modeRef.current = mode;
 
-  // Home: drag to rotate within ±30°, wheel to zoom within limits.
+  // Home: drag to rotate within ±135°, wheel to zoom within limits.
   useEffect(() => {
     const el = gl.domElement;
     const limit = MathUtils.degToRad(config.render.azimuthLimitDeg);
@@ -109,6 +111,7 @@ export function CameraRig({ mode, side, depth, rise, reducedMotion, controls }: 
     c.right += (insets.right - c.right) * k;
     c.bottom += (insets.bottom - c.bottom) * k;
     c.init = true;
+    controls.current.shown = c.azimuth - BASE_AZIMUTH;
 
     const targetY = (1 + rise - depth * config.render.undersideFit) / 2;
     camera.position.set(

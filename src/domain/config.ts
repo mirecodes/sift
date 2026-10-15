@@ -110,7 +110,7 @@ export const config = {
     /** World scale of animals relative to their 1/6-block voxel models. */
     animalScale: 0.25,
     /** Home camera limits. */
-    azimuthLimitDeg: 30,
+    azimuthLimitDeg: 135,
     zoomMin: 0.8,
     zoomMax: 2.1,
     /** Focus camera pull-back factor (zoom multiplier). */

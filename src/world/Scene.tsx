@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type MutableRefObject, type ReactNode } from 'react';
-import { Color, type AmbientLight, type DirectionalLight } from 'three';
+import { Color, type AmbientLight, type DirectionalLight, type Group } from 'three';
 import { config } from '../domain/config';
 import { hash01 } from '../domain/random';
 import type { IslandMode, IslandModel } from '../domain/island/model';
@@ -93,6 +93,18 @@ function useLayout(islands: SceneProps['islands']) {
   }, [key]); // `key` captures everything the layout depends on
 }
 
+/**
+ * Turns its children with the Home camera (up to ±135°): the sun keeps lighting the faces the camera
+ * sees the same way (top light, left medium, right dark) and the clouds stay behind the island.
+ */
+function TurnWithCamera({ controls, children }: { controls: MutableRefObject<CameraControls>; children: ReactNode }) {
+  const group = useRef<Group>(null);
+  useFrame(() => {
+    if (group.current) group.current.rotation.y = controls.current.shown ?? 0;
+  });
+  return <group ref={group}>{children}</group>;
+}
+
 /** The one persistent canvas shared by Home, Focus, and Break. It is never remounted. */
 export function Scene({ mode, islands, reducedMotion, theme, children }: SceneProps) {
   const dark = theme === 'dark';
@@ -119,7 +131,9 @@ export function Scene({ mode, islands, reducedMotion, theme, children }: ScenePr
         camera={{ near: 0.1, far: 400, zoom: 40, position: [40, 40 * Math.tan(ELEVATION), 40] }}
         frameloop="always"
       >
-        <Lights night={night} target={dark ? 1 : 0} reducedMotion={reducedMotion} />
+        <TurnWithCamera controls={controls}>
+          <Lights night={night} target={dark ? 1 : 0} reducedMotion={reducedMotion} />
+        </TurnWithCamera>
         <RenderDriver mode={mode} />
         <CameraRig mode={mode} side={side} depth={depth} rise={rise} reducedMotion={reducedMotion} controls={controls} />
         {islands.map(({ model, mode: islandMode }, i) => (
@@ -137,7 +151,9 @@ export function Scene({ mode, islands, reducedMotion, theme, children }: ScenePr
           </IslandScene>
         ))}
         {primary && (
-          <Clouds seed={primary.seed} side={side} depth={depth} visible={mode === 'home' || mode === 'break'} reducedMotion={reducedMotion} night={night} tint={themeDef(primary.blockThemeId)?.cloudTint} />
+          <TurnWithCamera controls={controls}>
+            <Clouds seed={primary.seed} side={side} depth={depth} visible={mode === 'home' || mode === 'break'} reducedMotion={reducedMotion} night={night} tint={themeDef(primary.blockThemeId)?.cloudTint} />
+          </TurnWithCamera>
         )}
       </Canvas>
     </div>

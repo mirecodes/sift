@@ -335,7 +335,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - **Buy** opens a confirm sheet (the Day-detail `<dialog>`): `display-sm` `Buy Golden Fox?`, a 180px preview that turns slowly (skins and buildings: the model; themes: a small island in the theme; static with reduced motion), `body-md` `45 gold · you have 208`, buttons `Cancel` (secondary) and `Buy` (primary). On success the sheet says `It's yours.`; for a skin or theme it offers `Equip` (primary) and `Done`; for a building `Place it in build mode.` and `Done`. A failed write shows `Could not buy. Try again.` and changes nothing.
 
 ### 7.8 Build mode (cosmetics)
-- Entered from the `build` icon on Home (never Focus or Break). The island stays interactive like Home (drag to rotate within ±30°, wheel to zoom); the Home panel, HUD and notices are hidden. Top bar: `display-xs` `Build` on the left, `Done` (`button-secondary`) on the right. Esc or Done returns Home.
+- Entered from the `build` icon on Home (never Focus or Break). The island stays interactive like Home (drag to rotate within ±135°, wheel to zoom); the Home panel, HUD and notices are hidden. Top bar: `display-xs` `Build` on the left, `Done` (`button-secondary`) on the right. Esc or Done returns Home.
 - **Tray** (bottom `panel`, like the Home panel, max width 560px): `eyebrow` `YOUR BUILDINGS`, then a sideways-scrolling row of owned, unplaced buildings: 88px-wide buttons with the 48px sprite, the name (`caption`) and `×2` when more than one. Empty: `body-sm` `Nothing to place. Buy decorations in the shop.` and `Open shop` (`button-secondary`).
 - **Placing** (after picking one from the tray, or Move): a see-through copy of the building (60% opacity) stands on the chosen tiles over the footprint tint (15.7): green when it fits, red when not. It starts on the free tile nearest the camp that fits. Desktop: it follows the pointer; a click on a tile moves it there. Touch: a tap moves it. Arrow keys move it one tile. The panel shows the reason when it does not fit (`body-sm`, `Leave room for your animals`, `The ground is not flat`, …) and `Rotate` (or R), `Cancel` and `Place` (primary, disabled when red; Enter). Animals standing on the tiles walk to the nearest free tile when it is placed.
 - **A placed building**: tapping it (when not placing) outlines its tiles in white and the panel offers `Move`, `Rotate` (in place, only if it still fits), `Store` (back to the tray) and `Cancel`.
@@ -416,7 +416,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - One persistent `<Canvas>` shared by Home, Focus, and Break (never remounted between them).
 - **Orthographic camera**, isometric angle: azimuth 45°, elevation ≈ 35.26°.
 - Island centered; zoom fits the island's top surface (plus 35% of the underside, which may crop at the bottom edge) with a 5% margin, recalculated when the island grows. This shows blocks about 2x larger than fitting the whole floating island; larger islands make the camera pull back to keep the top surface in view.
-- Home: limited rotation/zoom `[ASSUMPTION]`. Focus and Break: camera fixed.
+- Home (and build mode): drag to turn the view up to ±135° around the island (owner request), wheel/pinch to zoom 0.8–2.1×. The sun and the clouds turn with the camera, so faces keep the same shading (top light, left medium, right dark) and clouds stay behind the island. Focus and Break: camera fixed at the default angle.
 - Renderer: antialias on, `outputColorSpace = SRGBColorSpace`, pixel ratio capped at 2.
 
 ## 14. World Palette
