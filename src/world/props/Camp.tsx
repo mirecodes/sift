@@ -3,7 +3,6 @@ import { useMemo, useRef, type MutableRefObject } from 'react';
 import {
   AdditiveBlending,
   BoxGeometry,
-  CanvasTexture,
   Color,
   Group,
   Mesh,
@@ -13,6 +12,7 @@ import {
 } from 'three';
 import { CAMP_LEVEL, FIRE_TILE, HUT_TILE, levelTop } from '../../domain/island/island';
 import { defaultBlocks, night as nightPalette } from '../palette';
+import { glowTexture } from '../presets/lights';
 
 const SURFACE_Y = levelTop(CAMP_LEVEL) + 0.5;
 /** Where animals enter the hut: in front of the door (+x face, toward the fire) and at the door. */
@@ -33,19 +33,6 @@ const log = new MeshLambertMaterial({ color: defaultBlocks.firewood, flatShading
 const doorDay = new Color('#3B2A1E');
 const doorNight = new Color('#FFB050');
 const flameColors = ['#FF7A1A', '#FFB33D', '#FFE38A'].map((c) => new MeshBasicMaterial({ color: c }));
-
-function glowTexture(): CanvasTexture {
-  const c = document.createElement('canvas');
-  c.width = c.height = 128;
-  const ctx = c.getContext('2d')!;
-  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-  g.addColorStop(0, 'rgba(255,255,255,1)');
-  g.addColorStop(0.4, 'rgba(255,255,255,0.35)');
-  g.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 128, 128);
-  return new CanvasTexture(c);
-}
 
 /** Hut and campfire on their reserved tiles. `night` is the shared 0..1 day/night factor. */
 export function Camp({ night, reducedMotion }: { night: MutableRefObject<number>; reducedMotion: boolean }) {

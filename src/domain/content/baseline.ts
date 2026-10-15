@@ -1,4 +1,4 @@
-import { buildPack, type ContentPack } from '../../../shared/content/pack';
+import { buildPack, type ContentPack, type PresetIds } from '../../../shared/content/pack';
 import type { VoxelModel } from '../../../shared/content/model';
 import { voxelModels } from '../../assets/voxels';
 
@@ -23,8 +23,12 @@ export function contentFiles(): { path: string; data: unknown }[] {
     .filter((f) => !META.has(f.path));
 }
 
+/** Preset ids the app's code implements (`content/presets.json`, Step 3.2). */
+export const presetIds = raw[`${PREFIX}presets.json`] as PresetIds;
+
 export const baselinePack: ContentPack = buildPack({
   contentVersion: (raw[`${PREFIX}pack.json`] as { contentVersion: string }).contentVersion,
   files: contentFiles(),
   models: builtinModels(),
+  presets: presetIds,
 });

@@ -48,7 +48,9 @@ describe('content pack (Step 3.1)', () => {
   });
 
   it('rejects unknown presets when a preset list is given', () => {
-    expect(() => buildPack({ ...source([species('a'), release], ['a']), presets: ['flop'] })).toThrow(/unknown preset default/);
+    const presets = { idle: ['flop'], part: ['default'], particles: [], light: [] };
+    expect(() => buildPack({ ...source([species('a'), release], ['a']), presets })).toThrow(/a: unknown idle preset default/);
+    expect(() => buildPack({ ...source([species('a'), release], ['a']), presets: { ...presets, idle: ['default'] } })).not.toThrow();
   });
 
   it('expands a family into one skin per species with stable ids and tier prices', () => {

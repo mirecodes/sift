@@ -1,6 +1,7 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { memo, useEffect, useMemo, useRef } from 'react';
-import { CircleGeometry, Color, Group, Mesh, MeshBasicMaterial, MeshLambertMaterial, BoxGeometry, PlaneGeometry } from 'three';
+import { CircleGeometry, Group, Mesh, MeshBasicMaterial, MeshLambertMaterial, BoxGeometry, PlaneGeometry } from 'three';
+import { IdleEffects } from '../presets';
 import { strings } from '../../ui/strings';
 import { labelTexture } from './label';
 import { config } from '../../domain/config';
@@ -16,9 +17,6 @@ import type { WorldMode } from '../types';
 const material = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
 const shadowGeometry = new CircleGeometry(0.28, 16).rotateX(-Math.PI / 2);
 const shadowMaterial = new MeshBasicMaterial({ color: palette.shadow, transparent: true, opacity: 0.22, depthWrite: false });
-const sparkGeometry = new BoxGeometry(1, 1, 1);
-const SPARK_COLORS = ['#FF9AA2', '#FFD08A', '#FFF3A3', '#A8E6B0', '#9CCBFF', '#C9A6FF', '#FFFFFF', '#FFB3E6'];
-const sparkMaterials = SPARK_COLORS.map((c) => new MeshBasicMaterial({ color: new Color(c), transparent: true, opacity: 0.95 }));
 
 // Poke bubble (DESIGN.md 18): white voxel bubble with a dark "!".
 const bubbleBox = new BoxGeometry(1, 1, 1);
@@ -424,93 +422,11 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
         ) : (
           <mesh geometry={geometry} material={material} />
         )}
-        {(species.idleAnimation === 'sparkle' || species.idleAnimation === 'rainbow') && <Sparkles timeScale={timeScale} reducedMotion={reducedMotion} />}
-        {species.idleAnimation === 'rainbow' && !reducedMotion && <RainbowBursts timeScale={timeScale} />}
+        <IdleEffects idle={species.idleAnimation} timeScale={timeScale} reducedMotion={reducedMotion} />
       </group>
     </group>
   );
 });
-
-/** Unicorn effect: at most 8 small rising sparkles. Gradients are allowed in the world only. */
-function Sparkles({ timeScale, reducedMotion }: { timeScale: number; reducedMotion: boolean }) {
-  const group = useRef<Group>(null);
-  const t = useRef(Math.random() * 10);
-  const scaleRef = useRef(timeScale);
-  scaleRef.current = timeScale;
-
-  useFrame((_, delta) => {
-    const g = group.current;
-    if (!g) return;
-    t.current += Math.min(delta, 0.1) * scaleRef.current;
-    g.children.forEach((child, i) => {
-      const phase = (t.current * 0.5 + i / 8) % 1;
-      const angle = i * 2.4 + t.current * 0.3;
-      const radius = 0.16 + (i % 3) * 0.05;
-      child.position.set(Math.cos(angle) * radius, 0.1 + phase * 0.55, Math.sin(angle) * radius);
-      child.scale.setScalar(reducedMotion ? 0.03 : Math.sin(phase * Math.PI) * 0.045);
-    });
-  });
-
-  return (
-    <group ref={group}>
-      {sparkMaterials.map((mat, i) => (
-        <mesh key={i} geometry={sparkGeometry} material={mat} />
-      ))}
-    </group>
-  );
-}
-
-const RAINBOW = ['#FF5A5F', '#FFA24D', '#FFE14D', '#5ED67A', '#4DA6FF', '#8E6BFF', '#FF8AD8'];
-const rainbowMaterials = RAINBOW.map((c) => new MeshBasicMaterial({ color: new Color(c) }));
-const BURST_COUNT = 14;
-const BURST_LIFE = 0.9;
-const GRAVITY = 4;
-
-/** Unicorn: every 2-5s a burst of rainbow cubes pops out around the body, arcs up and falls back shrinking. */
-function RainbowBursts({ timeScale }: { timeScale: number }) {
-  const group = useRef<Group>(null);
-  const scaleRef = useRef(timeScale);
-  scaleRef.current = timeScale;
-  const s = useRef({ t: 0, nextAt: rand(1, 3), start: -1, vel: Array.from({ length: BURST_COUNT }, () => [0, 0, 0]) });
-
-  useFrame((_, delta) => {
-    const g = group.current;
-    if (!g) return;
-    const st = s.current;
-    st.t += Math.min(delta, 0.1) * scaleRef.current;
-    if (st.start < 0 && st.t >= st.nextAt) {
-      st.start = st.t;
-      for (const v of st.vel) {
-        const a = Math.random() * Math.PI * 2;
-        const r = rand(0.3, 1);
-        v[0] = Math.cos(a) * r;
-        v[1] = rand(1.2, 2.2);
-        v[2] = Math.sin(a) * r;
-      }
-    }
-    const age = st.start < 0 ? 1 : (st.t - st.start) / BURST_LIFE;
-    if (st.start >= 0 && age >= 1) {
-      st.start = -1;
-      st.nextAt = st.t + rand(2, 5);
-    }
-    g.visible = st.start >= 0;
-    if (!g.visible) return;
-    const sec = age * BURST_LIFE;
-    g.children.forEach((child, i) => {
-      const v = st.vel[i]!;
-      child.position.set(v[0]! * sec * 0.5, 1 + v[1]! * sec - 0.5 * GRAVITY * sec * sec, v[2]! * sec * 0.5);
-      child.scale.setScalar(0.06 * (1 - age));
-    });
-  });
-
-  return (
-    <group ref={group} visible={false}>
-      {Array.from({ length: BURST_COUNT }, (_, i) => (
-        <mesh key={i} geometry={sparkGeometry} material={rainbowMaterials[i % rainbowMaterials.length]} />
-      ))}
-    </group>
-  );
-}
 
 interface AnimalsProps {
   animals: readonly IslandAnimal[];

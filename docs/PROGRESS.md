@@ -64,7 +64,8 @@
   - Owner approved the Phase 2 gate by requesting Phase 3. Model palettes are `index → [key, color]` (`defineModel` emits `keys` + default `palette`); `resolveColors` applies a palette override. Terrain/camp colors in `defaultBlocks`. Parity: resolved `[x,y,z,color]` of all 50 models + butterfly parts and terrain colors byte-identical before/after. New test: every model uses known keys, `eye` is `#1E1E1E`.
 - [x] 3.1 Content format, registry and packs
   - `content/` JSON + `shared/content/{schema,pack,model,color}.ts` + `domain/content/{registry,baseline}.ts` + `npm run content:build`. Tests: all shipped content accepted, error collection (duplicate id, missing model, missing locale, bad color, unknown release/preset), registry merge (newer wins, older ignored, removed = retired but renderable), availability window + `minClientVersion`, family expansion (50 stable ids, tier prices, overrides). `CATALOG` dumped before/after: identical. E2E 44/44. ADR-041.
-- [ ] 3.2 Behavior presets
+- [x] 3.2 Behavior presets
+  - `world/presets/{index,parts,particles,lights}`; `buildPack` checks preset ids per kind. Tests: presets.json equals the code's ids, part presets move and stay bounded, particles deterministic/bounded/falling, unknown idle preset rejected. Sparkle/rainbow code moved verbatim from `Animals.tsx`; Camp reuses the shared glow texture.
 - [ ] 3.3 Authoring paths
 - [ ] 3.4 Content Studio (development builds only)
 - [ ] 3.5 Sprite generation, validation, release process
@@ -166,6 +167,8 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 3.2 · Preset ids are checked per kind (`idle`, `part`, `particles`, `light`); `sparkle` and `rainbow` are both an idle set and a particle effect. Added `petals` for the Cherry Blossom theme. · A theme's `ambient` must be a particle preset, not, say, `spin`.
+- 3.2 · `lantern_glow` is a glow sprite, not a three.js point light. · Each real light costs every lit shader; lanterns can be many.
 - 3.1 · Species models stay TypeScript builder files in `src/assets/voxels` (model ref `species/<id>`); only the catalog data moved to `content/species/*.json` (one file per tier). · Models are code-authored (Step 3.3 DSL path); moving 50 files gains nothing.
 - 3.1 · The app builds its baseline pack at startup from `content/**/*.json` (`import.meta.glob`) instead of loading a generated pack file; `content:build` emits the same pack for publishing. · No committed build output that can drift from the sources.
 - 3.1 · `shared/shared.test.ts` allows exactly one package import, `zod`. · The guidance puts zod schemas in `shared/content/schema.ts`.

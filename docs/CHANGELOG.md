@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Added** — Step 3.2: behavior presets referenced by id (`world/presets/`, ids in `content/presets.json`): idle sets (`default`, `flop`, `flutter`, `sparkle`, `rainbow`; the Legendary sparkles and Unicorn bursts moved here unchanged), part animations (`spin`, `sway`, `bob`, `flap`), particle fields (`smoke`, `leaves`, `petals`, `snow`, `fireflies`) and the `lantern_glow` light. Content with an unknown preset fails validation (DESIGN.md 18).
+
 - 2026-10-07 · **Added** — Step 3.1: content as data (ADR-041). The 50 species (now with Korean names) and the default block theme are JSON under `content/`, validated by zod schemas (`shared/content/schema.ts`; new dependency `zod`). `buildPack` checks ids and references and expands skin families into one skin per species; the app bundles the baseline pack and reads content through `ContentRegistry` (newer pack wins, removed items stay renderable, availability and `minClientVersion` filtering). `CATALOG` comes from the registry, identical to before. `npm run content:build` writes the pack to `dist-content/`.
 
 - 2026-10-07 · **Changed** — Step 3.0: voxel models paint with named palette keys (`body`, `belly`, `accent`, `eye`, `horn`, …; `shared/content/palette.ts`) and carry a default palette; terrain, water and camp colors are one keyed record (`defaultBlocks`: `grassTop`, `cabinLog`, …). Visual parity verified: every model's resolved voxel colors and the terrain colors are byte-identical to before.

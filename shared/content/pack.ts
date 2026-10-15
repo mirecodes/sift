@@ -18,6 +18,10 @@ export interface Atlas { image: string; size: number; frames: Readonly<Record<st
 
 export type PackItem = SpeciesDef | ItemDef | ReleaseDef;
 
+/** Behavior presets are code (Step 3.2); items reference them by id within one kind. */
+export type PresetKind = 'idle' | 'part' | 'particles' | 'light';
+export type PresetIds = Readonly<Record<PresetKind, readonly string[]>>;
+
 /** A content pack (guidance_v2 Step 3.1): the app bundles a baseline pack; newer ones arrive remotely (Step 5.8). */
 export interface ContentPack {
   contentVersion: string;
@@ -32,8 +36,8 @@ export interface PackSource {
   /** Parsed JSON files under `content/` (one item or an array per file), path relative to `content/`. */
   files: readonly { path: string; data: unknown }[];
   models: Readonly<Record<string, VoxelModel>>;
-  /** Known code preset ids (`content/presets.json`); omitted = not checked. */
-  presets?: readonly string[];
+  /** Known code preset ids by kind (`content/presets.json`, Step 3.2); omitted = not checked. */
+  presets?: PresetIds;
   atlas?: Atlas;
 }
 
@@ -144,12 +148,11 @@ export function buildPack(src: PackSource): ContentPack {
   }
   const speciesIds = new Set(species.map((s) => s.id));
   const releaseIds = new Set(releases.map((r) => r.id));
-  const presets = src.presets && new Set(src.presets);
   const model = (owner: string, ref: string | undefined) => {
     if (ref && !src.models[ref]) problems.push(`${owner}: model ${ref} not found`);
   };
-  const preset = (owner: string, id: string | undefined) => {
-    if (id && presets && !presets.has(id)) problems.push(`${owner}: unknown preset ${id}`);
+  const preset = (owner: string, kind: PresetKind, id: string | undefined) => {
+    if (id && src.presets && !src.presets[kind].includes(id)) problems.push(`${owner}: unknown ${kind} preset ${id}`);
   };
   for (const f of families) {
     if (!releaseIds.has(f.release)) problems.push(`${f.id}: unknown release ${f.release}`);
@@ -160,20 +163,20 @@ export function buildPack(src: PackSource): ContentPack {
     switch (item.kind) {
       case 'species':
         model(item.id, item.model);
-        preset(item.id, item.idle);
+        preset(item.id, 'idle', item.idle);
         break;
       case 'animalSkin':
         if (!speciesIds.has(item.speciesId)) problems.push(`${item.id}: unknown species ${item.speciesId}`);
         model(item.id, item.overlay);
         break;
       case 'blockTheme':
-        preset(item.id, item.ambient);
+        preset(item.id, 'particles', item.ambient);
         break;
       case 'building':
         model(item.id, item.model);
-        preset(item.id, item.light);
+        preset(item.id, 'light', item.light);
         for (const p of item.parts ?? []) {
-          preset(item.id, p.preset);
+          preset(item.id, 'part', p.preset);
           if (src.models[item.model] && !src.models[item.model]!.parts?.[p.name]) problems.push(`${item.id}: model ${item.model} has no part ${p.name}`);
         }
         break;
