@@ -8,6 +8,7 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Added** — Step 1.2: `domain/stats/days.ts` (`aggregateByDay`, `monthSummary`, calendar helpers) with `balance.stats.includeAbandoned = false` (`BALANCE_VERSION` 2026-10-07.2). Tested across midnight, both Zurich DST weeks, empty/current/past months and Monday vs Sunday weeks (ADR-037).
 - 2026-10-07 · **Added** — Step 1.1: tab shell (Island, Stats, Friends, Group) with a bottom tab bar, behind feature flags (`features.*` in `config/app.yaml`, all off; `VITE_FEATURES` for test builds). Stats covers the canvas, which stays mounted and draws no frames; during a break other tabs show a `Break 03:12` pill back to Island; Focus hides the bar. Break-end chime extracted so it plays on every tab. `npm run e2e` now builds its own bundle with the finished flags (ADR-036).
 - 2026-10-07 · **Added** — Step 0.9: Inbox of deferred notices (persisted store, `enqueueNotice` / `dismissNotice`, `NoticeCard` on Home and Break). Notices queued during Focus wait until Focus ends; nothing is dequeued while focusing (ADR-035). E2E covers showing, order and dismissal.
 - 2026-10-07 · **Changed** — Step 0.8: the world renders `IslandModel` data (`buildIslandModel`) through `<IslandScene model mode>`; `Scene` takes a list of islands and fits them side by side. Dev-only `?twoIslands` view. No visible change (screenshot parity verified for Home, Focus and Break, day and night) (ADR-034).

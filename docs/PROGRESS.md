@@ -30,7 +30,8 @@
 
 - [x] 1.1 App shell with tabs
   - Feature flags (`features.*`, all off; `VITE_FEATURES` for test builds), `activeTab` + `setTab`, `TabBar`, `BreakPill`, `TabPage`. E2E (built with `stats` on): canvas element kept, zero WebGL draws on Stats, Space inert there, bar hidden on Focus, pill returns to Break. ADR-036.
-- [ ] 1.2 Stats aggregation (domain)
+- [x] 1.2 Stats aggregation (domain)
+  - `domain/stats/days.ts` + 16 tests (midnight, DST March/October Zurich, empty/current/past/future month, Mon vs Sun week, real minutes not the cap). No new dependency. ADR-037 (Proposed).
 - [ ] 1.3 Stats tab: Overview
 - [ ] 1.4 Stats tab: Week
 - [ ] 1.5 Stats tab: Month calendar
@@ -143,6 +144,9 @@
 ## Decisions taken by the agent
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
+
+- 1.2 · No date library: `Intl.DateTimeFormat` for epoch → local date, UTC arithmetic on `YYYY-MM-DD` strings for the rest. · The guidance's "e.g. date-fns + tz" is a suggestion; the platform covers the only DST-sensitive step, tested on both Zurich DST weeks.
+- 1.2 · Best-day ties keep the earliest day; a future month's average is 0. · Deterministic; avoids division by zero.
 
 - 1.1 · `activeTab` is in memory only ("persisted for the session") — a reload opens on Island. · Simplest; a reload into Focus/Break must land on Island anyway.
 - 1.1 · With only the Island tab enabled, no tab bar is drawn. · Production stays unchanged while `features.stats` is off.
