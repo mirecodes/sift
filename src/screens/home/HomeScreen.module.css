@@ -4,6 +4,8 @@
   left: 0;
   right: 0;
   pointer-events: none;
+  /* The gold info bubble opens over the notice card. */
+  z-index: 1;
 }
 .top > * {
   pointer-events: auto;

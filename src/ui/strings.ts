@@ -123,6 +123,12 @@ export const strings = {
     dayLabel: (date: string, time: string, sessions: number) =>
       `${dateFormat({ weekday: 'long', day: 'numeric', month: 'long' }, date)}: ${time}, ${sessions} ${sessions === 1 ? 'session' : 'sessions'}`,
   },
+  hud: {
+    /** Accessible names; the visible text is the number. */
+    gold: (n: number) => `${n} gold. What is gold?`,
+    unicorns: (n: number) => `${n} ${n === 1 ? 'Unicorn' : 'Unicorns'} on the island`,
+    goldInfo: 'Animals leave gold when they move on after 7 days. You will spend it in the shop.',
+  },
   notice: {
     ok: 'OK',
     /** "Fox left 1 gold." / "4 animals left 9 gold." */

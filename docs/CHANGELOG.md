@@ -8,6 +8,7 @@
 
 ## guidance_v2
 
+- 2026-10-07 · **Added** — Step 2.5: HUD counters on Home's top bar (left): gold (counts up over 1 s when a departure notice shows; jumps with reduced motion) and Unicorns on the island; tapping gold opens a short explanation until the Shop exists. New `gold` and `unicorn` icons; `TopBar` gets a left slot (DESIGN.md 6.8).
 - 2026-10-07 · **Added** — Step 2.4: coin pile on the reserved camp tile next to the cabin: 6 sizes of gold voxel heap from `balance.economy.pileThresholds` [1, 10, 30, 100, 300, 1000] (`BALANCE_VERSION` 2026-10-07.5), one instanced mesh; warm glow and 3 twinkling sparkles at night (none on Focus or with reduced motion). Departure gold joins it when its notice shows (DESIGN.md 15.6).
 - 2026-10-07 · **Added** — Step 2.3: departure presentation: departed animals stay on the island until their notice ("4 animals left 9 gold." / "Fox left 1 gold.") shows on Home or Break, then shrink away with a puff while a gold coin arcs into the pile tile, 0.12 s apart; more than 10 vanish with one combined coin burst; reduced motion: they vanish. New world colors `coin`, `puff` (DESIGN.md 14.4, 18).
 - 2026-10-07 · **Added** — Step 2.2: animal expiry (`shared/rules/expiry.ts`): active animals depart 7 days after they were earned (Unicorn exempt) and leave 1 / 3 / 8 / 25 gold by tier; statuses, credits and one `animals_departed` notice in one write; runs at start, on the way to Home or Break and every minute, never during Focus (`BALANCE_VERSION` 2026-10-07.4). Behind `features.economy`. Dummy data adds animals of every age (ADR-040).

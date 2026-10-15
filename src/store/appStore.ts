@@ -4,7 +4,7 @@ import type { FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, 
 import { balance } from '../../shared/balance/balance';
 import { debitEntry, goldBalance, goldEntry, hasStarterGrant, LEDGER_REASON } from '../domain/economy/ledger';
 import { computeExpirations } from '../../shared/rules/expiry';
-import { canShowNotices, currentNotice, type Notice } from '../domain/inbox/inbox';
+import { canShowNotices, currentNotice, pendingDepartures, type Notice } from '../domain/inbox/inbox';
 import {
   IDLE,
   effectiveFocusMs,
@@ -130,6 +130,16 @@ export function sanitizeSettings(input: Partial<Settings> | undefined): Settings
  */
 export function selectVisibleAnimals(s: Pick<AppState, 'animals' | 'revealPending'>, leaving?: ReadonlySet<string>): PlacedAnimal[] {
   return s.animals.filter((a) => (isActive(a) || leaving?.has(a.id)) && a.id !== s.revealPending);
+}
+
+/** Gold the user has been told about: departure gold joins when its notice shows (Step 2.5). */
+export function selectShownGold(s: Pick<AppState, 'gold' | 'inbox' | 'phase'>): number {
+  return s.gold - pendingDepartures(s.inbox, s.phase).heldGold;
+}
+
+/** Unicorns on the island (the island-move currency). */
+export function selectActiveUnicorns(s: Pick<AppState, 'animals'>): number {
+  return s.animals.filter((a) => isActive(a) && a.speciesId === 'unicorn').length;
 }
 
 /** The notice to show now, or `undefined` (always while focusing). */

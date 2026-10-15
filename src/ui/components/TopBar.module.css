@@ -8,6 +8,7 @@
 .actions {
   display: flex;
   gap: var(--space-sm);
+  margin-left: auto;
 }
 .wordmark {
   margin: 0;

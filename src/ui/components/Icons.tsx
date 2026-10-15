@@ -66,6 +66,21 @@ export const GroupIcon = () => (
   </Icon>
 );
 
+/** HUD icons (DESIGN.md 6.6). */
+export const GoldIcon = () => (
+  <Icon>
+    <circle cx="10" cy="10" r="6.75" fill="var(--color-accent-yellow)" />
+    <circle cx="10" cy="10" r="3.75" />
+  </Icon>
+);
+
+export const UnicornIcon = () => (
+  <Icon>
+    <path d="M10 2.5l3.5 15h-7z" />
+    <path d="M8.2 12.5l4.3-2.5M7.2 16.2l5.7-3.2" />
+  </Icon>
+);
+
 export const PrevIcon = () => (
   <Icon>
     <path d="M12 4.5L6.5 10l5.5 5.5" />

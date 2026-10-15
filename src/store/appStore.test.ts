@@ -6,7 +6,7 @@ import { resolvePhase } from '../domain/timer/phase';
 import type { PlacedAnimal } from '../domain/types';
 import { createMemoryStorage } from '../platform/storage/memory';
 import type { StorageAdapter } from '../platform/storage';
-import { createAppStore, selectCurrentNotice, selectIslandLevel, selectVisibleAnimals } from './appStore';
+import { createAppStore, selectActiveUnicorns, selectCurrentNotice, selectIslandLevel, selectShownGold, selectVisibleAnimals } from './appStore';
 import { InsufficientGoldError } from '../domain/economy/ledger';
 import { CATALOG } from '../domain/animals/catalog';
 import { newPlacedAnimal } from '../domain/animals/placed';
@@ -554,6 +554,17 @@ describe('expiry (Step 2.2)', () => {
     await off.get().applyExpirations();
     expect(off.get().animals[0]?.status).toBe('active');
     expect(off.get().gold).toBe(0);
+  });
+
+  it('HUD: shown gold holds departure gold back until its notice shows; unicorns count active ones (Step 2.5)', async () => {
+    const friend = { id: 'f', createdAt: 0, notice: { kind: 'friend_request' as const, userId: 'u' } };
+    const h = await setup([stored('fox', 'fox', 0, 1), stored('u1', 'unicorn', 0, 2), { ...stored('u2', 'unicorn', 0, 0), status: 'spent' }], 8 * DAY);
+    expect(selectActiveUnicorns(h.get())).toBe(1);
+    expect(selectShownGold(h.get())).toBe(38); // the departure notice is the current one
+    h.store.setState({ inbox: [friend, ...h.get().inbox] });
+    expect(selectShownGold(h.get())).toBe(30); // an older notice is in front
+    await h.get().dismissNotice('f');
+    expect(selectShownGold(h.get())).toBe(38);
   });
 
   it('memory-only animals depart in memory and never reach storage', async () => {

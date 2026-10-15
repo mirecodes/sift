@@ -7,8 +7,12 @@ import { CollectionIcon, SettingsIcon } from '../../ui/components/Icons';
 import { Panel } from '../../ui/components/Surfaces';
 import { TopBar } from '../../ui/components/TopBar';
 import { NoticeCard } from '../NoticeCard';
+import { runtimeConfig } from '../../app/runtimeConfig';
+import { Hud } from './Hud';
 import layer from '../Screen.module.css';
 import styles from './HomeScreen.module.css';
+
+const { features } = runtimeConfig;
 
 export function HomeScreen() {
   const settings = useApp((s) => s.settings);
@@ -24,7 +28,7 @@ export function HomeScreen() {
   return (
     <div className={layer.layer}>
       <div className={styles.top}>
-        <TopBar>
+        <TopBar start={features.economy && <Hud />}>
           <IconButton aria-label={strings.aria.collection} onClick={() => setView('collection')}>
             <CollectionIcon />
           </IconButton>

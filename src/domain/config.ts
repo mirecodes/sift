@@ -87,6 +87,9 @@ export const config = {
     heatMinutes: [1, 30, 60, 120],
     /** How often expired animals are checked for while not focusing (Step 2.2). */
     expiryCheckMs: 60_000,
+    /** HUD gold count-up (DESIGN.md 6.8): starts once the first coins have landed. */
+    goldCountDelayMs: 600,
+    goldCountMs: 1000,
   },
   render: {
     /** Frame rate cap on the Focus screen. */

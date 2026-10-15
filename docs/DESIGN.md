@@ -241,11 +241,13 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - Transparent over the island (Home) or canvas (others), padding `--space-lg` `--space-3xl`.
 - No wordmark. Right-aligned: `button-icon-circular` theme toggle (moon in day mode, sun in night mode) as the rightmost button, after for Collection and Settings (on Settings and Collection, a single close icon returns Home).
 - Never on Focus.
+- With the economy on, Home's top bar also holds the HUD counters on the left (6.8).
 
 ### 6.6 Icons
 - Inline SVG, 20×20 viewBox, 1.5px stroke, `currentColor`, no fill, square line caps. Inside a 40px `button-icon-circular`.
 - Set: `collection` (2×2 grid of squares), `settings` (three horizontal sliders), `close` (×). Every icon button has an `aria-label`.
 - Tab icons: `island` (cabin on a block), `stats` (three bars on a baseline), `friends` (two heads), `group` (flag).
+- HUD icons: `gold` (a coin: circle with a smaller inner ring, filled `--color-accent-yellow` under the stroke), `unicorn` (a spiral horn: a tall narrow triangle with two diagonal bands).
 
 ### 6.7 Tab Bar
 - Tabs **Island**, **Stats**, **Friends**, **Group**; a tab appears only when its feature flag is on. With only Island visible there is no tab bar (the app looks as before).
@@ -254,6 +256,12 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - While it is shown, floating panels over the island move up by `--tabbar-space` (64px) so they clear it.
 - `break-pill`: on any tab other than Island during a break, a `--color-primary` button with white `body-sm-strong` tabular text `Break 03:12` (`Break over` once the time is up), `--radius-sm`, Level 2, centered just above the tab bar. Tapping it returns to Island. The break-end chime plays on every tab.
 - Tab pages (Stats, Friends, Group) use the canvas page layout of Settings/Collection, with a top bar holding only the theme toggle.
+
+### 6.8 HUD Counters (economy)
+- Left side of Home's top bar, only with `features.economy`; hidden on Focus with the rest of the top bar (and absent from Break, Settings, Collection and tab pages).
+- `hud-counter`: 40px tall pill (`--radius-full`), canvas fill, 1px `--color-hairline` border (like `button-icon-circular`), padding 0 `--space-md`, `--space-xs` gap, 20px icon then `body-sm-strong` tabular number. Two of them, `--space-sm` apart: **gold** (a button) and **unicorns** (count of Unicorns on the island; display only).
+- The gold number shows the gold the user has been told about. When it rises (a departure notice was shown), it counts up over 1s, starting 0.6s later so the first coins have landed; spending makes it jump. Reduced motion: it jumps.
+- Tapping gold (until the Shop exists, Phase 3) toggles a `gold-info` bubble below it: canvas, `--radius-md`, Level 2, padding `--space-md`, max width 260px, `body-sm` text `Animals leave gold when they move on after 7 days. You will spend it in the shop.` Any tap elsewhere or Esc closes it. The button has `aria-expanded`.
 
 ---
 

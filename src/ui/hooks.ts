@@ -26,6 +26,33 @@ export function useNow(tickMs: number = config.ui.tickMs): number {
   return now;
 }
 
+/**
+ * Displays `target`, counting up to it when it rises (after `delayMs`, over `ms`).
+ * Drops, the first value and reduced motion show at once.
+ */
+export function useCountUp(target: number, reduced: boolean, delayMs: number = config.ui.goldCountDelayMs, ms: number = config.ui.goldCountMs): number {
+  const [shown, setShown] = useState(target);
+  const shownRef = useRef(target);
+  shownRef.current = shown;
+  useEffect(() => {
+    const from = shownRef.current;
+    if (reduced || target <= from) {
+      setShown(target);
+      return;
+    }
+    const start = performance.now() + delayMs;
+    let raf = 0;
+    const step = (t: number) => {
+      const p = Math.min(1, Math.max(0, (t - start) / ms));
+      setShown(Math.round(from + (target - from) * p));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, reduced, delayMs, ms]);
+  return shown;
+}
+
 export function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   useEffect(() => {

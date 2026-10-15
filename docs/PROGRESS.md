@@ -53,7 +53,8 @@
   - Pure `pendingDepartures` (tested: leaving set, notice order, held gold, nothing during Focus) + model `leaving`/`departing` (tested) + `DepartureEffects`. Card copy existed since 0.9. Dev server with dummy data: "5 animals left 38 gold.", frames show puffs and coin arcs, no console errors. The HUD count-up lands in 2.5 (uses `heldGold`).
 - [x] 2.4 Coin pile prop
   - `goldPileLevel` (tested at every threshold), `pileVoxels` (tested: empty at 0, grows per level, inside its tile, < 200 voxels), `CoinPile` instanced mesh. Dev server with dummy data (level 4): day and night at 1280 and 390, no console errors.
-- [ ] 2.5 HUD counters
+- [x] 2.5 HUD counters
+  - `Hud` + `useCountUp`; store `selectShownGold` / `selectActiveUnicorns` (tested: held gold until the notice shows, spent Unicorns not counted). Dev server: 170 → 208 counted up after the notice showed, info bubble opens over the notice card, Esc closes it, no console errors (390 and 1280). Top bar hidden on Focus as before.
 - [ ] 2.6 Collection and poke updates
 
 ## Phase 3 — Content pipeline, cosmetics, buildings, shop (F10, F4)
@@ -142,6 +143,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 2.5 · HUD counters (pill look, coin and horn icons) and the gold info copy. Break has no top bar, so a departure shown on Break counts up out of sight (the Home counter shows the new total).
 - 2.4 · Coin pile look (dummy data shows level 4) and its night glow. The 0.7 spot review from Phase 0 is settled by this: it sits left of the cabin, camera side.
 - 2.3 · Departure animation (turn on `features.economy` + `testMode.dummyData`; dismiss the first notice): puff and coin sizes, timing, whether it reads as neutral. On desktop the coins land behind the notice card (the pile tile is at the back, next to the cabin).
 - 1.6 · Day detail sheet: bottom sheet on phones, centered dialog from 768px. Small models (e.g. Unicorn) look tiny as 48px sprites.
@@ -159,6 +161,8 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 2.5 · HUD only on Home's top bar (not Break, Settings, Collection or tab pages). · The guidance places it in "the top bar", which only Home shows over the island.
+- 2.5 · Unicorn counter shown even at 0, display only (not a button). · Phase 4 will make it the island-move entry; a count of 0 tells the user the currency exists.
 - 2.4 · The pile shows `gold − heldGold` (gold the user has been told about), so it grows when a departure notice shows. · Matches §2.9: visuals play when the notice shows.
 - 2.4 · Added a faint night emissive glow on the pile besides sparkles. · With firelight alone it read as dull brown at night.
 - 2.3 · Leaving animals keep being drawn while their notice is queued, but their tiles are already free; a new animal could land on one during a break. · Rare and brief; occupancy stays the single truth.
