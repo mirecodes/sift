@@ -1,0 +1,74 @@
+.wide {
+  max-width: 720px;
+}
+.wide p {
+  margin: 0;
+}
+
+/* Month / week navigation */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.navLabel {
+  margin: 0;
+  text-align: center;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--card-padding);
+}
+.label {
+  color: var(--color-body-mid);
+}
+.note {
+  color: var(--color-body-mid);
+}
+.average {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+.figures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+  margin-top: var(--space-lg);
+}
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+.value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* One bar per day of the month */
+.strip {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 48px;
+  margin-top: var(--space-2xl);
+  border-bottom: 2px solid var(--color-hairline);
+}
+.stripDay {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.bar {
+  width: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+}

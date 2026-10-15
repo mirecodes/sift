@@ -66,6 +66,18 @@ export const GroupIcon = () => (
   </Icon>
 );
 
+export const PrevIcon = () => (
+  <Icon>
+    <path d="M12 4.5L6.5 10l5.5 5.5" />
+  </Icon>
+);
+
+export const NextIcon = () => (
+  <Icon>
+    <path d="M8 4.5l5.5 5.5L8 15.5" />
+  </Icon>
+);
+
 export const CloseIcon = () => (
   <Icon>
     <path d="M4.5 4.5l11 11M15.5 4.5l-11 11" />

@@ -299,6 +299,11 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - **Card contents.** A 96px pixel-art sprite of the animal (front view, nearest-neighbor scaled), the name in `display-xs`, `badge-tier`, and a `caption` count `×3` when more than one is owned. Silhouettes are solid `--color-mute-soft` shapes.
 - **Stats strip** above the grid: three `card-feature`s (`FOCUS TIME` as `12 h 40 min`, `SESSIONS`, `ANIMALS` as `7 / 50`), each with an `eyebrow` label and a `display-sm` value. Stacked 1-up on Mobile, 3-up from Tablet.
 
+### 7.6 Stats (tab)
+- Canvas tab page (6.7), `display-md` title `Stats`, content max width 720px. Plain HTML/CSS bars, no chart library; every control is a real button (keyboard reachable). Durations read `0m`, `42m`, `1h 42m`, `2h 05m`.
+- **Month selector**: `button-icon-circular` ← / → around the month name in `display-xs` (`October 2026`). → is disabled on the current month (no future months).
+- **Overview** (`card-feature`): `eyebrow` `DAILY AVERAGE`, the figure in `display-lg` (`1h 42m`) followed by `body-md` `--color-body-mid` `/ day`. Below, three figures in a row (`eyebrow-sm` label over `display-xs` value): `TOTAL`, `ACTIVE DAYS`, `BEST DAY` (value plus a `caption` date, `—` when none). Then a strip with one bar per day of the month: 48px tall, bars `--color-primary` on a 2px `--color-hairline` floor, height scaled to the month's best day, future days left empty; `aria-hidden` (the figures carry the data).
+
 ---
 
 ## 8. UI Motion

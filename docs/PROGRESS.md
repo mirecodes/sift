@@ -31,8 +31,9 @@
 - [x] 1.1 App shell with tabs
   - Feature flags (`features.*`, all off; `VITE_FEATURES` for test builds), `activeTab` + `setTab`, `TabBar`, `BreakPill`, `TabPage`. E2E (built with `stats` on): canvas element kept, zero WebGL draws on Stats, Space inert there, bar hidden on Focus, pill returns to Break. ADR-036.
 - [x] 1.2 Stats aggregation (domain)
-  - `domain/stats/days.ts` + 16 tests (midnight, DST March/October Zurich, empty/current/past/future month, Mon vs Sun week, real minutes not the cap). No new dependency. ADR-037 (Proposed).
-- [ ] 1.3 Stats tab: Overview
+  - `domain/stats/days.ts` + 15 tests (midnight, DST March/October Zurich, empty/current/past/future month, Mon vs Sun week, real minutes not the cap). No new dependency. ADR-037 (Proposed).
+- [x] 1.3 Stats tab: Overview
+  - `screens/stats/{StatsScreen,Overview}.tsx`, `Stats.module.css`; duration/date strings + tests. E2E: average shown, → disabled on this month, ← / → navigate. Screenshots at 1280 and 390 with 6 weeks of sessions.
 - [ ] 1.4 Stats tab: Week
 - [ ] 1.5 Stats tab: Month calendar
 - [ ] 1.6 Day detail
@@ -133,6 +134,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 1.3 · Stats Overview look (figures row, day strip). Days are bucketed in the device's time zone.
 - 1.1 · Tab bar look and the `island` tab icon (cabin on a block). Turn on with `features.stats: true` locally. Home/Break panels move up 64px while the bar shows; on phones the Break panel now covers more of the island (camera insets unchanged).
 - 1.1 · Feature flags: Phase 1 ships only when you set `features.stats: true` in `config/app.yaml` (the agent never turns flags on).
 

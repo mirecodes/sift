@@ -3,6 +3,10 @@ import { balance } from '../../shared/balance/balance';
 
 const minimumMinutes = Math.round(balance.reward.minFocusMs / 60_000);
 
+/** Formats a `YYYY-MM-DD` calendar date (no time zone shift: the date is read as UTC). */
+const dateFormat = (options: Intl.DateTimeFormatOptions, date: string) =>
+  new Intl.DateTimeFormat('en-GB', { ...options, timeZone: 'UTC' }).format(Date.parse(`${date}T00:00:00Z`));
+
 /** Every user-visible string. Add a locale by swapping this module's content. */
 export const strings = {
   appName: 'Sift',
@@ -65,6 +69,26 @@ export const strings = {
     animals: 'Animals',
     count: (n: number) => `×${n}`,
     unknownAnimal: 'Not collected yet',
+  },
+  stats: {
+    /** `0m`, `42m`, `1h 42m`, `2h 05m`. */
+    duration: (minutes: number) => {
+      const total = Math.floor(Math.max(0, minutes));
+      const h = Math.floor(total / 60);
+      return h === 0 ? `${total}m` : `${h}h ${String(total % 60).padStart(2, '0')}m`;
+    },
+    perDay: '/ day',
+    dailyAverage: 'Daily average',
+    total: 'Total',
+    activeDays: 'Active days',
+    bestDay: 'Best day',
+    none: '—',
+    /** `2026-10` → `October 2026`. */
+    month: (month: string) => dateFormat({ month: 'long', year: 'numeric' }, `${month}-01`),
+    /** `2026-10-04` → `4 Oct`. */
+    shortDate: (date: string) => dateFormat({ day: 'numeric', month: 'short' }, date),
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
   },
   notice: {
     ok: 'OK',
