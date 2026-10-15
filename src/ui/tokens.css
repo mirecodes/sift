@@ -75,6 +75,12 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Extra bottom offset for floating panels while the tab bar is shown (DESIGN.md 6.7) */
+  --tabbar-space: 0px;
+}
+:root[data-tabs] {
+  --tabbar-space: 64px;
 }
 
 @media (min-width: 768px) {

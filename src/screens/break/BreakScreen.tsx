@@ -14,6 +14,26 @@ import { NoticeCard } from '../NoticeCard';
 import layer from '../Screen.module.css';
 import styles from './BreakScreen.module.css';
 
+/**
+ * A lighter chime when the break ends while the app is open (on any tab). Returns the resolved
+ * phase and `now` so callers can render the countdown.
+ */
+export function useBreakClock() {
+  const phase = useApp((s) => s.phase);
+  const soundEnabled = useApp((s) => s.settings.soundEnabled);
+  const now = useNow();
+  const resolved = resolvePhase(phase, now);
+  const over = resolved.kind === 'breakOver';
+  const wasOver = useRef(over);
+  useEffect(() => {
+    if (over && !wasOver.current && soundEnabled && phase.kind === 'break') {
+      if (now - phase.startedAt - phase.plannedMs < config.ui.chimeFreshMs) platform.notify.play('breakEnd');
+    }
+    wasOver.current = over;
+  }, [over, soundEnabled, now, phase]);
+  return { resolved, now, over };
+}
+
 /** Reward reveal, break countdown, and one-tap ways to continue. */
 export function BreakScreen() {
   const phase = useApp((s) => s.phase);
@@ -24,10 +44,7 @@ export function BreakScreen() {
   const goHome = useApp((s) => s.goHome);
   const finishReveal = useApp((s) => s.finishReveal);
   const reducedMotion = usePrefersReducedMotion();
-  const now = useNow();
-
-  const resolved = resolvePhase(phase, now);
-  const over = resolved.kind === 'breakOver';
+  const { resolved, now, over } = useBreakClock();
   const display = timerDisplay(resolved, now);
   const rewardId = phase.kind === 'break' ? phase.rewardId : undefined;
   const animal = rewardId ? animals.find((a) => a.id === rewardId) : undefined;
@@ -42,15 +59,6 @@ export function BreakScreen() {
     const id = window.setTimeout(finishReveal, config.ui.revealMs);
     return () => window.clearTimeout(id);
   }, [revealPending, animal, soundEnabled, finishReveal]);
-
-  // A lighter chime when the break ends while we are watching.
-  const wasOver = useRef(over);
-  useEffect(() => {
-    if (over && !wasOver.current && soundEnabled && phase.kind === 'break') {
-      if (now - phase.startedAt - phase.plannedMs < config.ui.chimeFreshMs) platform.notify.play('breakEnd');
-    }
-    wasOver.current = over;
-  }, [over, soundEnabled, now, phase]);
 
   const start = () => {
     platform.notify.unlock();

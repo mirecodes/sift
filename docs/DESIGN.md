@@ -243,6 +243,15 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 ### 6.6 Icons
 - Inline SVG, 20×20 viewBox, 1.5px stroke, `currentColor`, no fill, square line caps. Inside a 40px `button-icon-circular`.
 - Set: `collection` (2×2 grid of squares), `settings` (three horizontal sliders), `close` (×). Every icon button has an `aria-label`.
+- Tab icons: `island` (cabin on a block), `stats` (three bars on a baseline), `friends` (two heads), `group` (flag).
+
+### 6.7 Tab Bar
+- Tabs **Island**, **Stats**, **Friends**, **Group**; a tab appears only when its feature flag is on. With only Island visible there is no tab bar (the app looks as before).
+- `tab-bar`: canvas, `--radius-md`, Level 2, padding `--space-xs`, fixed at the bottom center (`--space-lg` + safe area from the bottom). Each tab is a button (min 72×48px) with the tab icon over a `caption` label; inactive `--color-body-mid` on transparent, active `--color-primary` fill with `--color-on-primary` (polarity flip, like a primary button), `--radius-sm`. Active tab marked `aria-current="page"`.
+- Shown on Home, Break and the Stats / Friends / Group pages. Hidden on Focus (focus rule) and on Settings and Collection (they have their own close button).
+- While it is shown, floating panels over the island move up by `--tabbar-space` (64px) so they clear it.
+- `break-pill`: on any tab other than Island during a break, a `--color-primary` button with white `body-sm-strong` tabular text `Break 03:12` (`Break over` once the time is up), `--radius-sm`, Level 2, centered just above the tab bar. Tapping it returns to Island. The break-end chime plays on every tab.
+- Tab pages (Stats, Friends, Group) use the canvas page layout of Settings/Collection, with a top bar holding only the theme toggle.
 
 ---
 
@@ -251,7 +260,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 ### 7.1 Home
 - Background: Part II scene (sky + island), full-bleed.
 - Top bar.
-- Bottom-center `panel`: `eyebrow` `25 MIN FOCUS · 5 MIN BREAK`, `button-primary` `Start focus`.
+- Bottom-center `panel`: `eyebrow` `25 MIN FOCUS · 5 MIN BREAK`, `button-primary` `Start focus`. Above the tab bar when it is shown (6.7).
 - The panel is the only interactive DOM area over the scene; everywhere else pointer drags rotate the island (see 13).
 
 ### 7.2 Focus
@@ -259,7 +268,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - Center: `timer` in white. Above it: `eyebrow` `FOCUS` in `--color-mute-soft`.
 - Overtime: `badge-overtime` replaces the eyebrow; timer shows `+05:23`; `button-primary-inverse` `End focus` appears below.
 - Hidden control: `button-hold` `Hold to stop`, shown at 50% opacity on pointer move / tap, fades after 3s.
-- **Nothing else**: no top bar, shadows, toasts, or modals.
+- **Nothing else**: no top bar, tab bar, shadows, toasts, or modals.
 
 ### 7.2a Notice card (Inbox)
 - Deferred news (departures, weekly results, war reports, …) is shown one at a time on Home and Break only, never on Focus.
@@ -424,6 +433,7 @@ Defined in `src/world/palette.ts`. Not shared with UI tokens.
 | Home | Full: 60fps, all animations, clouds, interaction |
 | Focus | Dimmed: fixed camera, animals slowed or paused `[ASSUMPTION]`, no clouds, frame rate capped (20–30fps) or on-demand |
 | Break | Full, camera fixed, reward reveal plays |
+| Settings, Collection, Stats, Friends, Group pages | Paused: the canvas stays mounted but renders no frames |
 
 - Home → Focus: camera pulls back slightly over `--motion-scene` (1000ms) while the UI overlay fades in and the sky gradient fades out, so the dimmed island sits on the near-black `--color-primary` background.
 - The island keeps clear of floating panels: the camera fits it into the screen area not covered by the Home panel (bottom) or the Break panel (right from 992px, bottom below).

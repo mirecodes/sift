@@ -1,10 +1,10 @@
 .panel {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--space-2xl) + var(--safe-bottom));
+  bottom: calc(var(--space-2xl) + var(--safe-bottom) + var(--tabbar-space));
   transform: translateX(-50%);
   width: min(400px, calc(100% - 2 * var(--gutter)));
-  max-height: calc(100% - 2 * var(--space-lg));
+  max-height: calc(100% - 2 * var(--space-lg) - var(--tabbar-space));
   overflow-y: auto;
   display: flex;
   flex-direction: column;

@@ -1,11 +1,11 @@
-// Browser smoke test: npm run e2e (build first: npm run build).
+// Browser smoke test: npm run e2e (builds a production bundle with the finished feature flags into dist-e2e).
 // Uses a fake clock, so a 25 minute session takes a few seconds.
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
 
 const PORT = 4179;
 const URL = `http://localhost:${PORT}`;
-const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'ignore' });
+const server = spawn('npx', ['vite', 'preview', '--outDir', 'dist-e2e', '--port', String(PORT), '--strictPort'], { stdio: 'ignore' });
 const stop = () => server.kill();
 process.on('exit', stop);
 
@@ -16,6 +16,20 @@ for (let i = 0; i < 50; i++) {
 
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+// Count WebGL draw calls, to prove covered tabs consume no frames.
+await page.addInitScript(() => {
+  window.__draws = 0;
+  for (const proto of [WebGLRenderingContext.prototype, WebGL2RenderingContext.prototype]) {
+    for (const name of ['drawElements', 'drawArrays', 'drawElementsInstanced', 'drawArraysInstanced']) {
+      const original = proto[name];
+      if (original)
+        proto[name] = function (...args) {
+          window.__draws++;
+          return original.apply(this, args);
+        };
+    }
+  }
+});
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 await page.clock.install();
@@ -31,11 +45,29 @@ const startVisible = () => page.getByRole('button', { name: 'Start focus' }).isV
 
 await page.goto(URL);
 await settle(1500);
+
+// Tabs: the canvas stays mounted and draws nothing while Stats covers it.
+const tabs = page.getByRole('navigation', { name: 'Main' });
+const draws = () => page.evaluate(() => window.__draws);
+await page.evaluate(() => (document.querySelector('canvas').dataset.mark = 'kept'));
+await tabs.getByRole('button', { name: 'Stats' }).click();
+await settle();
+const before = await draws();
+await settle(1000);
+check('Stats covers the canvas and it draws no frames', (await draws()) === before);
+await page.keyboard.press('Space');
+await settle();
+check('Space does nothing on the Stats tab', (await page.getByRole('timer').count()) === 0);
+await tabs.getByRole('button', { name: 'Island' }).click();
+await settle();
+check('back on Island the same canvas renders again', (await draws()) > before && (await page.locator('canvas[data-mark="kept"]').count()) === 1);
+
 await page.getByRole('button', { name: 'Start focus' }).click();
 await settle(500);
 await page.clock.fastForward('10:00');
 await settle();
 check('timer follows the clock after a 10 minute jump', /^1[45]:\d\d$/.test(await timer()));
+check('the tab bar is hidden during Focus', (await tabs.count()) === 0);
 
 await page.reload();
 await settle(1500);
@@ -80,6 +112,14 @@ check('overtime shows +mm:ss', (await timer()).startsWith('+'));
 await page.keyboard.press('Space');
 await settle(1200);
 check('Space ends focus into the break', await page.getByText('Break', { exact: true }).isVisible());
+check('the tab bar is back on Break', await tabs.isVisible());
+await tabs.getByRole('button', { name: 'Stats' }).click();
+await settle();
+const pill = page.getByRole('button', { name: /^Break \d\d:\d\d$/ });
+check('other tabs show the running break in a pill', await pill.isVisible());
+await pill.click();
+await settle();
+check('the pill returns to the break on Island', await page.getByRole('timer').isVisible());
 await page.clock.fastForward('05:10');
 await settle();
 check('break over shows the ready prompt', await page.getByText('Ready for the next one?').isVisible());

@@ -59,6 +59,7 @@ stateDiagram-v2
 | Break | Reward reveal (card fades in, model spins, tier chime; after 3.5 s or tap the animal joins the island; buttons usable throughout, ADR-011) or a neutral no-reward message. Break countdown, then "Ready for the next one?" with chime. Never auto-starts focus |
 | Settings | Focus 5–60 min (step 5), break 1–30 min, chimes toggle; saves instantly |
 | Inbox | Deferred notices (`domain/inbox`, store `inbox`, Dexie `inbox`): queued at any time, shown one at a time (oldest first) as a `NoticeCard` on Home and Break only; `dismissNotice` is a no-op while focusing, `selectCurrentNotice` returns nothing during Focus. Visual events tied to a notice play when it is shown, not when the data changed (ADR-035) |
+| Tabs | Island (Home/Focus/Break + Settings/Collection pages), Stats, Friends, Group; non-Island tabs appear only with their feature flag, and with one tab there is no tab bar. `activeTab` lives in the store, in memory only (every launch opens on Island). Focus always runs on Island and hides the tab bar; `setTab` is ignored while focusing, and leaving Island ends a running reveal. Space and hold-Esc exist only on Island screens. Other tabs cover the canvas, which stays mounted with `frameloop="never"`; during a break they show a pill with the break timer (ADR-036) |
 | Collection | All 50 species (silhouettes if not owned, counts if duplicated) + stats: total focus time, completed sessions, species `n / 50` |
 
 ## 4. Timer engine
@@ -184,6 +185,7 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 - `testMode` (`enabled`, `speciesCount`, `allSpecies`): fills the island in memory at startup; never stored, rewards untouched.
 - `resetMapOnStart`: new seed and all placed animals deleted on every start.
 - Both are honored only in development builds (`import.meta.env.DEV`); production builds force them off (`resolveRuntimeConfig`). Committed value is `false`; enable locally, never commit.
+- `features.<name>`: one flag per guidance_v2 phase (`FEATURES` in `runtimeConfig.ts`), read in every build. Committed values are all `false` (a unit test enforces it); the owner turns a phase on once it is finished. The build variable `VITE_FEATURES=stats,…` (or `all`) turns flags on for test builds: `npm run e2e` builds `dist-e2e` with the finished phases' flags (ADR-036).
 
 ## 10. Directory structure
 
@@ -197,7 +199,7 @@ shared/          pure rules that must run identically on client and server (ADR-
 └── rules/       tier.ts, reward.ts, placement.ts (later expiry, scoring, war, …)
 src/
 ├── app/         App, routing, runtimeConfig.ts
-├── screens/     home, focus, break, settings, collection
+├── screens/     home, focus, break, settings, collection, stats; TabPage, NoticeCard
 ├── domain/      pure logic: config, types, random, timer/, reward/, animals/, island/ (+stream), stats/
 ├── world/       Scene, IslandScene, Clouds, RenderDriver, palette, voxel/, island/, animals/, camera/, props/ (camp), stream/, preview/
 ├── assets/voxels/  animal models + builder

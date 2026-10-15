@@ -134,6 +134,36 @@ describe('focus cycle', () => {
   });
 });
 
+describe('tabs (Step 1.1)', () => {
+  it('switching tabs never touches the timer, and Focus always runs on Island', async () => {
+    const h = harness();
+    await h.get().init();
+    h.get().setTab('stats');
+    expect(h.get().activeTab).toBe('stats');
+    await h.get().startFocus();
+    expect(h.get().activeTab).toBe('island');
+    const phase = h.get().phase;
+    h.get().setTab('stats'); // tab bar is hidden during Focus: ignored
+    expect(h.get().activeTab).toBe('island');
+    expect(h.get().phase).toBe(phase);
+  });
+
+  it('leaving Island during a break keeps the break and ends the reveal', async () => {
+    const h = harness();
+    await h.get().init();
+    await h.get().startFocus();
+    h.clock.t += 30 * MIN;
+    await h.get().endFocus();
+    const phase = h.get().phase;
+    expect(h.get().revealPending).not.toBeNull();
+    h.get().setTab('stats');
+    expect(h.get().phase).toBe(phase);
+    expect(h.get().revealPending).toBeNull();
+    h.get().setTab('island');
+    expect(h.get().phase).toBe(phase);
+  });
+});
+
 describe('inbox (Step 0.9)', () => {
   const departed = (gold: number) => ({ kind: 'animals_departed' as const, animalIds: ['x'], gold });
 

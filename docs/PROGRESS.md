@@ -28,7 +28,8 @@
 
 ## Phase 1 — Tabs and Stats (F1, F2)
 
-- [ ] 1.1 App shell with tabs
+- [x] 1.1 App shell with tabs
+  - Feature flags (`features.*`, all off; `VITE_FEATURES` for test builds), `activeTab` + `setTab`, `TabBar`, `BreakPill`, `TabPage`. E2E (built with `stats` on): canvas element kept, zero WebGL draws on Stats, Space inert there, bar hidden on Focus, pill returns to Break. ADR-036.
 - [ ] 1.2 Stats aggregation (domain)
 - [ ] 1.3 Stats tab: Overview
 - [ ] 1.4 Stats tab: Week
@@ -131,6 +132,9 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 1.1 · Tab bar look and the `island` tab icon (cabin on a block). Turn on with `features.stats: true` locally. Home/Break panels move up 64px while the bar shows; on phones the Break panel now covers more of the island (camera insets unchanged).
+- 1.1 · Feature flags: Phase 1 ships only when you set `features.stats: true` in `config/app.yaml` (the agent never turns flags on).
+
 - 0.2 · Settings → Data section and import confirmation card: layout and copy.
 - 0.9 · Notice card look (top center, OK button). On desktop it covers the back of the island; the camera does not avoid it. Copy for non-departure kinds is a neutral placeholder until their phases.
 - 0.8 · Open `npm run dev` with `?twoIslands` once: two islands side by side (camera fit, clouds cover both). Single-island parity was verified automatically.
@@ -139,6 +143,11 @@
 ## Decisions taken by the agent
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
+
+- 1.1 · `activeTab` is in memory only ("persisted for the session") — a reload opens on Island. · Simplest; a reload into Focus/Break must land on Island anyway.
+- 1.1 · With only the Island tab enabled, no tab bar is drawn. · Production stays unchanged while `features.stats` is off.
+- 1.1 · Tab bar hidden on Settings and Collection pages; leaving Island during the reveal ends it. · Those pages have a close button; avoids replaying the reveal chime.
+- 1.1 · `npm run e2e` now builds `dist-e2e` itself with `VITE_FEATURES=stats`. · The e2e must exercise flagged features without turning them on in `app.yaml`.
 
 - 0.1 · Guidance says next ADR is ADR-028, but ADR-028/029 already exist in `DECISIONS.md`; new ADRs start at ADR-030. · Avoid duplicate numbers.
 - 0.7 · Updated two placement tests that hard-coded two camp tiles to use `CAMP_RESERVED` (now three). · The spec adds a reserved tile; the tests got stricter, not weaker.

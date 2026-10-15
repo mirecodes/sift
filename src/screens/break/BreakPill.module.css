@@ -1,0 +1,24 @@
+.pill {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--space-lg) + var(--safe-bottom) + var(--tabbar-space));
+  transform: translateX(-50%);
+  z-index: 2;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-lg);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--elevation-2);
+  font-variant-numeric: tabular-nums;
+  transition: opacity var(--motion-fast) var(--ease);
+}
+.pill:active {
+  opacity: 0.85;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pill {
+    transition: none;
+  }
+}

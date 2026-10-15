@@ -22,6 +22,8 @@ import type { StorageAdapter } from '../platform/storage';
 import { createMemoryStorage } from '../platform/storage/memory';
 
 export type View = 'home' | 'settings' | 'collection';
+/** Top-level tabs (guidance_v2 §2.10). `view` is the page inside the Island tab. */
+export type Tab = 'island' | 'stats' | 'friends' | 'group';
 
 export interface AppDeps {
   storage: StorageAdapter;
@@ -43,6 +45,8 @@ export interface AppState {
   /** Persisted phase. Overtime / break-over are derived with `resolvePhase`. */
   phase: StoredPhase;
   view: View;
+  /** Kept in memory only: every launch opens on Island. */
+  activeTab: Tab;
   /** Animal earned this break that has not been revealed yet; hidden from the island until then. */
   revealPending: string | null;
   /** Deferred notices (ADR-035), oldest first. Shown one at a time on Home and Break only. */
@@ -58,6 +62,8 @@ export interface AppState {
   goHome(): Promise<void>;
   finishReveal(): void;
   setView(view: View): void;
+  /** Ignored while focusing: the tab bar is hidden and Focus stays on Island. */
+  setTab(tab: Tab): void;
   updateSettings(patch: Partial<Settings>): Promise<void>;
   /** Queues a notice at any time, including during Focus; it is shown later. */
   enqueueNotice(notice: Notice): Promise<void>;
@@ -98,15 +104,15 @@ export function selectVisibleAnimals(s: Pick<AppState, 'animals' | 'revealPendin
   return s.animals.filter((a) => isActive(a) && a.id !== s.revealPending);
 }
 
-/**
- * Island level (lifetime earned animals, ADR-032). During a break the reward is not counted, so
- * the island grows only once the user is back on Home (ADR-013).
- */
 /** The notice to show now, or `undefined` (always while focusing). */
 export function selectCurrentNotice(s: Pick<AppState, 'inbox' | 'phase'>): InboxRow | undefined {
   return currentNotice(s.inbox, s.phase);
 }
 
+/**
+ * Island level (lifetime earned animals, ADR-032). During a break the reward is not counted, so
+ * the island grows only once the user is back on Home (ADR-013).
+ */
 export function selectIslandLevel(s: Pick<AppState, 'animals' | 'phase'>): number {
   const holdBack = s.phase.kind === 'break' && s.phase.rewardId !== undefined ? 1 : 0;
   return Math.max(0, islandLevel(s.animals) - holdBack);
@@ -176,6 +182,7 @@ export function createAppStore(initialDeps: AppDeps) {
     sessions: [],
     phase: IDLE,
     view: 'home',
+    activeTab: 'island',
     revealPending: null,
     inbox: [],
 
@@ -200,7 +207,7 @@ export function createAppStore(initialDeps: AppDeps) {
       const session: FocusSession = { id: deps.uuid(), startedAt: now, plannedFocusMs: plannedMs, status: 'running', togetherRoomId: null };
       const next = startFocus(now, plannedMs, session.id);
       await commit({ session, phase: next });
-      set({ phase: next, sessions: [...sessions, session], revealPending: null, view: 'home' });
+      set({ phase: next, sessions: [...sessions, session], revealPending: null, view: 'home', activeTab: 'island' });
     },
 
     async endFocus() {
@@ -281,6 +288,12 @@ export function createAppStore(initialDeps: AppDeps) {
 
     setView(view) {
       set({ view });
+    },
+
+    setTab(tab) {
+      if (get().phase.kind === 'focus') return;
+      // Leaving Island ends a running reveal, so the new animal is on the island on return.
+      set({ activeTab: tab, view: 'home', ...(tab !== 'island' && { revealPending: null }) });
     },
 
     async updateSettings(patch) {

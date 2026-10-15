@@ -37,6 +37,35 @@ export const SunIcon = () => (
   </Icon>
 );
 
+/** Tab icons (DESIGN.md 6.7). */
+export const IslandIcon = () => (
+  <Icon>
+    <path d="M2.5 10.5h15l-3 4h-9z" />
+    <path d="M7.5 10.5V6.5h5v4" />
+  </Icon>
+);
+
+export const StatsIcon = () => (
+  <Icon>
+    <path d="M3.5 16.5h13" />
+    <path d="M5.75 13.5v-4M10 13.5v-9M14.25 13.5v-6" strokeWidth="2" />
+  </Icon>
+);
+
+export const FriendsIcon = () => (
+  <Icon>
+    <circle cx="7" cy="7" r="2.75" />
+    <circle cx="13.5" cy="8" r="2.25" />
+    <path d="M2.5 16.5a4.5 4.5 0 0 1 9 0M12 16.5h5.5a3.75 3.75 0 0 0-5.5-3.3" />
+  </Icon>
+);
+
+export const GroupIcon = () => (
+  <Icon>
+    <path d="M5 17.5v-14M5 4h10l-2 3.25L15 10.5H5" />
+  </Icon>
+);
+
 export const CloseIcon = () => (
   <Icon>
     <path d="M4.5 4.5l11 11M15.5 4.5l-11 11" />

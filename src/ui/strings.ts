@@ -24,6 +24,15 @@ export const strings = {
     home: 'Home',
     noReward: `Nice work. Focus for ${minimumMinutes} minutes or more to meet a new friend.`,
     newFriend: 'A new friend',
+    /** Tab-bar pill on other tabs: "Break 03:12". */
+    pill: (time: string) => `Break ${time}`,
+    over: 'Break over',
+  },
+  tabs: {
+    island: 'Island',
+    stats: 'Stats',
+    friends: 'Friends',
+    group: 'Group',
   },
   settings: {
     title: 'Settings',
@@ -76,5 +85,7 @@ export const strings = {
     increase: (what: string) => `Increase ${what}`,
     timer: 'Timer',
     revealSkip: 'Show the new friend on the island',
+    tabs: 'Main',
+    backToBreak: 'Back to the break on Island',
   },
 } as const;

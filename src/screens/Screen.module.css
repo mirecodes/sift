@@ -21,7 +21,7 @@
   width: 100%;
   max-width: 560px;
   margin: 0 auto;
-  padding: var(--space-lg) var(--gutter) calc(var(--space-layout-xl) + var(--safe-bottom));
+  padding: var(--space-lg) var(--gutter) calc(var(--space-layout-xl) + var(--safe-bottom) + var(--tabbar-space));
 }
 .title {
   margin: var(--space-2xl) 0 var(--space-3xl);

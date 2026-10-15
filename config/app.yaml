@@ -16,3 +16,22 @@ testMode:
   # When true, every species in the catalog is placed once (the island grows to
   # fit them all) and `speciesCount` is ignored.
   allSpecies: true
+
+# Feature flags (one per guidance_v2 phase). A phase stays off until it is
+# finished and the owner turns it on. `VITE_FEATURES=stats,...` (or `all`) at
+# build time turns flags on for test builds only (`npm run e2e` uses it).
+features:
+  stats: false
+  economy: false
+  cosmetics: false
+  islandMove: false
+  remoteContent: false
+  friends: false
+  presence: false
+  together: false
+  visitTraceProp: false
+  groups: false
+  missions: false
+  war: false
+  arrange: false
+  liveProgress: false
