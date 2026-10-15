@@ -198,8 +198,8 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 docs/            ARCHITECTURE, DESIGN, DECISIONS (human log), CHANGELOG, PROJECT_STATUS, guidance_vN
 config/app.yaml  runtime config
 e2e/             Playwright smoke test
-content/         data only (ADR-041): pack.json (contentVersion), species/, skins/, skinFamilies/, blockThemes/, buildings/, releases/
-tools/           node tools run through Vite's module runner (`node tools/run.mjs <file.ts>`): content-build/
+content/         data only (ADR-041): pack.json (contentVersion), presets.json, species/, skins/, skinFamilies/, blockThemes/, buildings/, releases/, models/ (DSL .ts, .vox + converted .json, palette-template.vox); guide: docs/CONTENT.md
+tools/           node tools run through Vite's module runner (`node tools/run.mjs <file.ts>`): content-build/ (pack, builder DSL), vox-import/ (MagicaVoxel → model JSON)
 shared/          pure rules that must run identically on client and server (ADR-031)
 ├── balance/     balance.ts: gameplay tunables + BALANCE_VERSION
 ├── content/     palette keys, model JSON type, zod schemas, buildPack (validation + family expansion)
@@ -219,7 +219,7 @@ src/
 
 - `shared/` imports only `shared/` (relative paths), uses no browser/Node/Deno globals, never calls `Math.random()` or `Date.now()` (inject `Rng` and `now`); `shared/shared.test.ts` enforces this.
 - `shared/` may import one package, `zod` (content schemas, ADR-041).
-- `domain/` imports only itself and `shared/` (`domain/random.ts` re-exports `shared/rng`); the one exception is `domain/content/baseline.ts`, which bundles the data under `content/` and the built-in models in `src/assets/voxels`. Game code reads species, skins, themes and buildings only through `domain/content` (`content` registry), never by importing an item file. `world/` and `screens/` may use `domain/`, `shared/` and `store/`; `world/` may also import `ui/strings` for text drawn in the scene (poke label). Capability APIs only in `platform/`.
+- `domain/` imports only itself and `shared/` (`domain/random.ts` re-exports `shared/rng`); the one exception is `domain/content/baseline.ts`, which bundles the data under `content/` (including `content/models/` builder files, which use `tools/content-build/dsl.ts`) and the built-in models in `src/assets/voxels`. Both authoring paths (MagicaVoxel import, builder DSL) emit the same canonical model JSON (`canonicalModel`). Game code reads species, skins, themes and buildings only through `domain/content` (`content` registry), never by importing an item file. `world/` and `screens/` may use `domain/`, `shared/` and `store/`; `world/` may also import `ui/strings` for text drawn in the scene (poke label). Capability APIs only in `platform/`.
 
 ## 11. Milestones
 
