@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber';
 import { useLayoutEffect, useMemo, useRef } from 'react';
-import { Color, InstancedMesh, MeshLambertMaterial, Object3D } from 'three';
+import { Color, InstancedMesh, MeshLambertMaterial, MeshPhongMaterial, Object3D } from 'three';
 import { config } from '../../domain/config';
 import { hash01 } from '../../domain/random';
 import { generateIsland, type Block, type BlockKind } from '../../domain/island/island';
@@ -11,6 +11,8 @@ const KINDS: BlockKind[] = ['grass', 'dirt', 'stone'];
 const dummy = new Object3D();
 const tint = new Color();
 const material = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
+/** `finish: glossy` themes (glass, metal): faces catch a highlight from the sun. */
+const glossy = new MeshPhongMaterial({ vertexColors: true, flatShading: true, shininess: 90, specular: new Color('#9FB8D0') });
 
 const keyOf = (b: Block) => `${b.x},${b.y},${b.z}`;
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
@@ -27,10 +29,14 @@ interface Props {
   animate: boolean;
   /** Block theme colors (Step 3.8); the layout is unchanged when they change. */
   blocks?: BlockPalette;
+  /** Theme `tileTints` (diagonal color bands on the top blocks). */
+  tints?: readonly string[];
+  /** Theme `finish: glossy`. */
+  shiny?: boolean;
 }
 
 /** The floating island: one InstancedMesh per block type. Grows with a scale-in of the new blocks. */
-export function Island({ seed, level, animate, blocks }: Props) {
+export function Island({ seed, level, animate, blocks, tints, shiny }: Props) {
   const layout = useMemo(() => generateIsland(seed, level), [seed, level]);
   const meshes = useRef<Record<BlockKind, InstancedMesh | null>>({ grass: null, dirt: null, stone: null });
   const previous = useRef<Set<string> | null>(null);
@@ -66,8 +72,11 @@ export function Island({ seed, level, animate, blocks }: Props) {
         else dummy.scale.set(1, b.h, 1);
         dummy.updateMatrix();
         mesh.setMatrixAt(i, dummy.matrix);
-        // Slight deterministic tint per block for a natural, pixel-like variation.
-        tint.setScalar(1 + (hash01(seed, b.x, b.y, b.z + 99) - 0.5) * 0.08);
+        // Slight deterministic tint per block for a natural, pixel-like variation; a theme's
+        // `tileTints` color the top blocks in diagonal bands.
+        const jitter = 1 + (hash01(seed, b.x, b.y, b.z + 99) - 0.5) * 0.08;
+        if (tints?.length && kind === 'grass') tint.set(tints[(((b.x + b.z) % tints.length) + tints.length) % tints.length]!).multiplyScalar(jitter);
+        else tint.setScalar(jitter);
         mesh.setColorAt(i, tint);
         if (hidden) growing = true;
       });
@@ -77,7 +86,7 @@ export function Island({ seed, level, animate, blocks }: Props) {
     }
     growth.current = { active: growing, start: null };
     previous.current = new Set(layout.blocks.map(keyOf));
-  }, [perKind, layout, seed]);
+  }, [perKind, layout, seed, tints]);
 
   useFrame(({ clock }) => {
     const g = growth.current;
@@ -116,7 +125,7 @@ export function Island({ seed, level, animate, blocks }: Props) {
           // Geometry and material are props, not args: a theme swap assigns new block meshes and keeps the instances.
           args={[undefined, undefined, perKind[kind].blocks.length]}
           geometry={geometries[kind]}
-          material={material}
+          material={shiny ? glossy : material}
           frustumCulled={false}
         />
       ))}

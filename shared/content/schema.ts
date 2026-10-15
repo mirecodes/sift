@@ -92,6 +92,10 @@ export const BlockThemeDef = z.object({
   cloudTint: Color.optional(),
   /** Ambient particle preset, e.g. `snow`. */
   ambient: PresetId.optional(),
+  /** Colors repeated over the top blocks in diagonal bands, multiplied with the block colors (rainbow ground). */
+  tileTints: z.array(Color).min(2).max(12).optional(),
+  /** `glossy`: blocks catch a specular highlight (glass, metal). Default matte. */
+  finish: z.enum(['matte', 'glossy']).optional(),
 }).strict();
 
 export const BuildingDef = z.object({

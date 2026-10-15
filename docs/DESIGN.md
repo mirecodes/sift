@@ -515,6 +515,7 @@ Terrain, water and camp colors are one keyed record, `defaultBlocks` (`grassTop`
 ### 15.7 Block Themes and Buildings
 
 - A block theme replaces the terrain, water and camp colors (14.2 keys) and may tint the clouds (`cloudTint`) and add ambient particles (18, presets) that drift over the island on Home and Break only. The island's shape never changes with the theme.
+- Optional theme looks: `tileTints` repeats a list of colors over the top blocks in diagonal bands (block x + z), multiplied with near-white grass colors, for patterned ground; `finish: glossy` draws the blocks with a specular highlight (glass, metal). **Future City** uses both: blue-heavy rainbow bands (`#5FB8FF`, `#7FD3FF`, `#A88BFF`, `#FF8FD0`, `#7FE8FF`, `#FFD36B`, `#7FF0B8`), deep blue glassy sides, a cyan stream, a white-and-blue cabin and `glints`. **Winter** is ice: frosted pale-blue ground, blue-grey rock, a frozen-looking stream, dark wood with a snowy roof, and snow.
 - Buildings and decorations are voxel models at **1/8 block per voxel**: a 1×1 footprint is 8 voxels wide, a 3×3 one 24. They stand on the surface of their tiles (all at one height) and turn in 90° steps.
 - Footprint tint (build mode, Content Studio): flat squares 0.94 block wide on each covered tile, `build-ok` `#5ED67A` when the building fits, `build-bad` `#FF5A5F` when not, 45% opacity.
 
@@ -589,7 +590,7 @@ export const chick: VoxelModel = {
 - **Behavior presets** (guidance_v2 Step 3.2; code in `world/presets/`, ids in `content/presets.json`). Content picks them by id:
   - Idle sets: `default`, `flop`, `flutter`, `sparkle`, `rainbow` (above).
   - Part animations, on a named model part turning around its pivot: `spin` (one turn per 4s around the part's forward axis), `sway` (±0.08 rad, 2.5s), `bob` (±0.05 block, 2s), `flap` (±0.5 rad, 3 Hz). Several copies of one building are out of step.
-  - Particle fields, small unlit cubes drifting through a box, each fading in and out over its life: `smoke` (6 grey, rising and growing), `leaves` (22 orange/red/yellow, falling with a sway), `petals` (24 pink/white), `snow` (40 white, slow fall), `fireflies` (12 yellow-green, wandering and blinking, night only). None with reduced motion.
+  - Particle fields, small unlit cubes drifting through a box, each fading in and out over its life: `smoke` (6 grey, rising and growing), `leaves` (22 orange/red/yellow, falling with a sway), `petals` (24 pink/white), `snow` (40 white, slow fall), `glints` (18 cyan/white sparks blinking in place, day and night), `fireflies` (12 yellow-green, wandering and blinking, night only). None with reduced motion.
   - Lights: `lantern_glow`, a warm `#FFC266` halo (0.9 block) that fades in with night. A glow sprite, not a real light, so any number is cheap. A building with a light draws its `flame` and `glass` voxels unlit, so the lamp itself reads as lit by day and night.
 - `prefers-reduced-motion`: disable bobbing, idle hops, and camera moves.
 

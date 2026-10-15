@@ -6,6 +6,7 @@ import {
   Group,
   Mesh,
   MeshLambertMaterial,
+  MeshPhongMaterial,
   OrthographicCamera,
   Scene,
   Vector3,
@@ -56,8 +57,16 @@ function subject(item: PackItem): Object3D | null {
       // A 3×3 patch of grass blocks with water in the middle.
       const blocks = blockGeometries(item.palette);
       const water = new Mesh(new BoxGeometry(1, 0.7, 1), new MeshLambertMaterial({ color: item.palette.water, flatShading: true }));
+      // Same look as the island: tint bands (`tileTints`) and the glossy finish.
+      const tints = item.tileTints;
+      const blockMaterial = (x: number, z: number) => {
+        const color = tints ? tints[(((x + z) % tints.length) + tints.length) % tints.length]! : '#FFFFFF';
+        return item.finish === 'glossy'
+          ? new MeshPhongMaterial({ vertexColors: true, flatShading: true, shininess: 90, specular: '#9FB8D0', color })
+          : new MeshLambertMaterial({ vertexColors: true, flatShading: true, color });
+      };
       for (let x = -1; x <= 1; x++) for (let z = -1; z <= 1; z++) {
-        const mesh = x === 0 && z === 0 ? water : new Mesh(blocks.grass, material);
+        const mesh = x === 0 && z === 0 ? water : new Mesh(blocks.grass, tints || item.finish ? blockMaterial(x, z) : material);
         mesh.position.set(x, x === 0 && z === 0 ? -0.15 : 0, z);
         g.add(mesh);
       }

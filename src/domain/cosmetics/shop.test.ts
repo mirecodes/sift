@@ -5,14 +5,16 @@ import { filterShop, itemBadges, newestRelease, NO_FILTER, shopView, type ShopFi
 
 const LAUNCH = Date.parse('2026-10-08T00:00:00Z');
 const DAY = 86_400_000;
-const ctx = (discovered: string[], now = LAUNCH + DAY) => ({ now, clientVersion: '0.1.0', discovered: new Set(discovered) });
+// Half a day after v2-launch, before the next release (themes-oct-2026 starts 2026-10-09).
+const ctx = (discovered: string[], now = LAUNCH + DAY / 2) => ({ now, clientVersion: '0.1.0', discovered: new Set(discovered) });
 
 describe('shop view (Step 3.9)', () => {
   it('features the newest started release and lists sections', () => {
     const view = shopView(ctx(['fox', 'tiger']));
     expect(view.featured?.release.id).toBe('v2-launch');
     expect(view.featured?.items.map((i) => i.id)).toEqual(['windmill', 'cherry', 'white-tiger', 'golden:fox', 'lantern']);
-    expect(view.themes.map((t) => t.id)).toEqual(['autumn', 'snow', 'desert', 'cherry']);
+    expect(view.themes.map((t) => t.id)).toEqual(['winter', 'future', 'autumn', 'snow', 'desert', 'cherry']);
+    expect(shopView(ctx([], LAUNCH + DAY)).featured?.release.id).toBe('themes-oct-2026');
     expect(view.buildings.map((g) => g.category)).toEqual(['structure', 'nature', 'light', 'decor']);
     expect(view.buildings.flatMap((g) => g.items.map((b) => b.id))).not.toContain('champion-flag');
   });
@@ -33,7 +35,7 @@ describe('shop view (Step 3.9)', () => {
     const only = (f: Partial<ShopFilter>) => filterShop(view, { ...NO_FILTER, ...f }, none);
     expect(only({}).featured).not.toBeNull();
     const themes = only({ show: 'themes' });
-    expect([themes.skins.length, themes.buildings.length, themes.themes.length, themes.featured]).toEqual([0, 0, 4, null]);
+    expect([themes.skins.length, themes.buildings.length, themes.themes.length, themes.featured]).toEqual([0, 0, view.themes.length, null]);
     expect(only({ species: 'tiger' }).skins.every((s) => s.speciesId === 'tiger')).toBe(true);
     expect(only({ family: 'golden' }).skins.map((s) => s.id)).toEqual(['golden:fox', 'golden:tiger']);
     expect(only({ family: 'handcrafted' }).skins.map((s) => s.id)).toEqual(['white-tiger']);

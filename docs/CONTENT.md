@@ -90,7 +90,7 @@ The footprint must match the model: `ceil(width / 8) = w` and `ceil(depth / 8) =
 
 - **Skin family** (`skinFamilies/<id>.json`): a `transform` (`hueShift`, `saturation`, `lightness: { offset, scale }`, `tint: { color, amount }`, `fixed` colors per key, `keep` keys; `eye` is kept by default) applied to every species' default palette, `priceByTierRank`, and optional `overrides[speciesId]` (`palette`, `overlay`, `price`). It becomes one skin per species, id `family:speciesId`.
 - **Handcrafted skin** (`skins/<id>.json`): `speciesId`, `palette` (only keys the species model uses), optional `overlay` model.
-- **Block theme**: all 16 block keys, optional `cloudTint`, optional `ambient` particle preset.
+- **Block theme**: all 16 block keys, optional `cloudTint`, optional `ambient` particle preset, optional `tileTints` (2–12 colors banded diagonally over the top blocks; use a near-white `grassTop` so they show) and `finish: "glossy"` (shiny glass/metal blocks).
 - **Building**: `category`, `footprint`, `model`, `rotatable`, optional `allowOnWater` (footbridge), `parts: [{ name, preset }]` (part animations, the model must have the part), `light` (light preset).
 - **Release** (`releases/<id>.json`): `date` (drives the shop's New badge for 14 days), `name`, `featured` item ids (the shop's Featured row while it is the newest release).
 - Prices must sit in `balance.prices`: family skins 25–60, handcrafted skins 60–80, themes 120–200, buildings 10–80. Non-purchasable items (default theme, Champion Flag) have no price.
@@ -98,7 +98,7 @@ The footprint must match the model: `ceil(width / 8) = w` and `ceil(depth / 8) =
 
 ## 5. Presets
 
-Visual behavior is code, picked by id (list in `content/presets.json`, code in `src/world/presets/`): idle sets (`default`, `flop`, `flutter`, `sparkle`, `rainbow`), part animations (`spin`, `sway`, `bob`, `flap`), particles (`smoke`, `leaves`, `petals`, `snow`, `fireflies`, plus the animal effects `sparkle`, `rainbow`), lights (`lantern_glow`). An item that needs a new preset waits for an app release and sets `minClientVersion` to it.
+Visual behavior is code, picked by id (list in `content/presets.json`, code in `src/world/presets/`): idle sets (`default`, `flop`, `flutter`, `sparkle`, `rainbow`), part animations (`spin`, `sway`, `bob`, `flap`), particles (`smoke`, `leaves`, `petals`, `snow`, `glints`, `fireflies`, plus the animal effects `sparkle`, `rainbow`), lights (`lantern_glow`). An item that needs a new preset waits for an app release and sets `minClientVersion` to it.
 
 ## 6. Sprites
 

@@ -63,10 +63,11 @@ export function IslandScene({ model, mode, worldMode, night, dark, reducedMotion
   const walkGrid = useMemo(() => getOccupancy({ seed, islandLevel, animals: [], buildings: model.buildings }), [seed, islandLevel, model.buildings]);
   const timeScale = worldMode === 'focus' ? config.render.focusAnimalTimeScale : 1;
   const blocks = themePalette(model.blockThemeId);
-  const ambient = themeDef(model.blockThemeId)?.ambient as keyof typeof FIELD_PRESETS | undefined;
+  const themeItem = themeDef(model.blockThemeId);
+  const ambient = themeItem?.ambient as keyof typeof FIELD_PRESETS | undefined;
   return (
     <Bob timeScale={timeScale} reducedMotion={reducedMotion} position={position} name={`island:${model.ownerId}:${mode}`}>
-      <Island seed={seed} level={islandLevel} animate={!reducedMotion} blocks={blocks} />
+      <Island seed={seed} level={islandLevel} animate={!reducedMotion} blocks={blocks} tints={themeItem?.tileTints} shiny={themeItem?.finish === 'glossy'} />
       <Stream streams={streams} tiles={tiles} timeScale={timeScale} reducedMotion={reducedMotion} blocks={blocks} />
       <Camp night={night} reducedMotion={reducedMotion} blocks={blocks} />
       <CoinPile level={model.goldPileLevel} night={night} sparkle={!reducedMotion && worldMode !== 'focus'} />

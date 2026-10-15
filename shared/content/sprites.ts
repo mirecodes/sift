@@ -31,7 +31,8 @@ export function spriteInputHash(item: PackItem, pack: Pick<ContentPack, 'items' 
       break;
     }
     case 'blockTheme':
-      inputs = item.palette;
+      // Matte themes without tints hash exactly as before, so their sprites stay fresh.
+      inputs = item.tileTints || item.finish ? [item.palette, item.tileTints ?? null, item.finish ?? 'matte'] : item.palette;
       break;
     case 'building':
       inputs = model(item.model);

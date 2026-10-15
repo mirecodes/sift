@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-10-08 · **Added** — Owner feedback on Phase 3: two island themes in release `themes-oct-2026` (from 2026-10-09, content version 2026-10-08.2): **Winter** (ice blue, snow, 160 gold) and **Future City** (glassy blue with rainbow tile bands and glints, 200 gold). Themes can now band colors over the ground (`tileTints`) and be glossy (`finish`); new `glints` particle preset; sprites regenerated (DESIGN.md 15.7, CONTENT.md).
+
 - 2026-10-08 · **Added** — Owner feedback on Phase 3: Shop filters: All / Skins / Themes / Buildings, animal and skin style (family or Handcrafted), Hide owned and Only what I can afford; Featured hides while a filter is on; `Clear filters` when nothing matches (`filterShop`, DESIGN.md 7.7).
 
 - 2026-10-08 · **Added** — Owner feedback on Phase 3: build mode lists the buildings on the island under the tray, each with `Store`, plus `Store all`, so placed buildings go back to the inventory without finding them on the island (DESIGN.md 7.8).

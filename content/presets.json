@@ -1,6 +1,6 @@
 {
   "idle": ["default", "flop", "flutter", "sparkle", "rainbow"],
   "part": ["spin", "sway", "bob", "flap"],
-  "particles": ["sparkle", "rainbow", "smoke", "leaves", "petals", "snow", "fireflies"],
+  "particles": ["sparkle", "rainbow", "smoke", "leaves", "petals", "snow", "glints", "fireflies"],
   "light": ["lantern_glow"]
 }
