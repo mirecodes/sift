@@ -113,5 +113,7 @@ export const config = {
     /** Focus camera pull-back factor (zoom multiplier). */
     focusZoomFactor: 0.88,
     maxPixelRatio: 2,
+    /** Departures (DESIGN.md 18): at most this many animate; the rest vanish with one pile burst. */
+    maxAnimatedDepartures: 10,
   },
 } as const;

@@ -49,7 +49,8 @@
   - Owner approved the Phase 0 and Phase 1 gates by requesting Phase 2. `domain/economy/ledger.ts`, `Commit.ledgerAdd/cosmeticsAdd`, store `gold` + `spendGold`. Tests: sum, typed error, rejected amounts, starter once and only with the flag, short balance and failed write change nothing, Dexie rollback + append-only. ADR-039 (Proposed, Q12).
 - [x] 2.2 Expiry engine (shared rule)
   - `shared/rules/expiry.ts` + store `applyExpirations` + 60 s check in `App`. Tests: exact 7-day boundary, gold by rank, Unicorn exempt, long absence (one notice), idempotent incl. concurrent calls, deferred during Focus and applied at End focus, Home/abandon transitions, flag off, memory-only animals never stored. ADR-040 (Proposed, Q14).
-- [ ] 2.3 Departure presentation
+- [x] 2.3 Departure presentation
+  - Pure `pendingDepartures` (tested: leaving set, notice order, held gold, nothing during Focus) + model `leaving`/`departing` (tested) + `DepartureEffects`. Card copy existed since 0.9. Dev server with dummy data: "5 animals left 38 gold.", frames show puffs and coin arcs, no console errors. The HUD count-up lands in 2.5 (uses `heldGold`).
 - [ ] 2.4 Coin pile prop
 - [ ] 2.5 HUD counters
 - [ ] 2.6 Collection and poke updates
@@ -140,6 +141,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 2.3 · Departure animation (turn on `features.economy` + `testMode.dummyData`; dismiss the first notice): puff and coin sizes, timing, whether it reads as neutral. On desktop the coins land behind the notice card (the pile tile is at the back, next to the cabin).
 - 1.6 · Day detail sheet: bottom sheet on phones, centered dialog from 768px. Small models (e.g. Unicorn) look tiny as 48px sprites.
 - 1.5 · Heatmap steps are greys (hairline → mute-soft → body-mid → primary) at 1 / 30 / 60 / 120 min; no new accent. Check they read as "more focus" and the thresholds feel right.
 - 1.3 · Stats Overview look (figures row, day strip). Days are bucketed in the device's time zone.
@@ -155,6 +157,8 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 2.3 · Leaving animals keep being drawn while their notice is queued, but their tiles are already free; a new animal could land on one during a break. · Rare and brief; occupancy stays the single truth.
+- 2.3 · Animations are driven by the frame clock (`useFrame`), so on a paused tab they play when the island is visible again. · No timers outside the render loop.
 - 2.2 · The 60 s expiry check runs on Home and Break (any non-Focus phase), not only idle. · A break should not hold a departure back; Break shows notices anyway.
 - 2.2 · Test-mode animals now get `acquiredAt = now` (was 0) and are memory-only like dummy animals. · With 0 they would all depart at once on every start.
 - 2.2 · Removed the fake dummy `animals_departed` notice; dummy departures now come from real dummy animals. · The fake one pointed at animals that do not exist.

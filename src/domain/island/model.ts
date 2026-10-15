@@ -11,6 +11,8 @@ export interface IslandAnimal {
   tierRank: TierRank;
   tile: Tile;
   skinId: string;
+  /** Leaving now (Step 2.3): its order in the shown departure notice. */
+  departure?: number;
 }
 
 export interface IslandBuilding {
@@ -26,7 +28,7 @@ export interface IslandModel {
   seed: number;
   islandLevel: number;
   blockThemeId: string;
-  /** Active animals only. */
+  /** Active animals, plus departed ones whose departure notice has not been dismissed. */
   animals: IslandAnimal[];
   buildings: IslandBuilding[];
   /** 0..N visual bucket, not exact gold. */
@@ -47,22 +49,30 @@ export interface IslandModelInput {
   buildings?: readonly PlacedBuilding[];
   goldPileLevel?: number;
   championWeek?: string;
+  /** Departed animals still drawn (`pendingDepartures().leaving`). */
+  leaving?: ReadonlySet<string>;
+  /** Animals whose departure plays now, in order. */
+  departing?: readonly string[];
 }
 
 export function buildIslandModel(input: IslandModelInput): IslandModel {
   const skins = input.equipped?.skinBySpecies ?? {};
+  const order = new Map((input.departing ?? []).map((id, i) => [id, i]));
   const model: IslandModel = {
     ownerId: input.ownerId ?? 'local',
     seed: input.world.seed,
     islandLevel: input.islandLevel,
     blockThemeId: input.equipped?.blockThemeId ?? input.world.blockThemeId ?? DEFAULT_BLOCK_THEME,
-    animals: input.animals.filter(isActive).map((a) => ({
-      id: a.id,
-      speciesId: a.speciesId,
-      tierRank: a.tierRank,
-      tile: { x: a.tileX, z: a.tileZ },
-      skinId: skins[a.speciesId] ?? DEFAULT_SKIN,
-    })),
+    animals: input.animals
+      .filter((a) => isActive(a) || input.leaving?.has(a.id))
+      .map((a) => ({
+        id: a.id,
+        speciesId: a.speciesId,
+        tierRank: a.tierRank,
+        tile: { x: a.tileX, z: a.tileZ },
+        skinId: skins[a.speciesId] ?? DEFAULT_SKIN,
+        ...(order.has(a.id) && { departure: order.get(a.id) }),
+      })),
     buildings: (input.buildings ?? []).map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation })),
     goldPileLevel: input.goldPileLevel ?? 0,
   };

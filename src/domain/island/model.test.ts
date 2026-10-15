@@ -40,6 +40,13 @@ describe('buildIslandModel', () => {
     expect(m.buildings).toEqual([{ id: 'b1', defId: 'well', tile: { x: 2, z: -2 }, rotation: 90 }]);
   });
 
+  it('keeps leaving animals drawn and marks the ones departing now, in order (Step 2.3)', () => {
+    const goneToo = { ...gone, id: 'a4' };
+    const m = buildIslandModel({ world, islandLevel: 4, animals: [fox, gone, goneToo], leaving: new Set(['a3', 'a4']), departing: ['a4', 'a3'] });
+    expect(m.animals.map((a) => [a.id, a.departure])).toEqual([['a1', undefined], ['a3', 1], ['a4', 0]]);
+    expect(buildIslandModel({ world, islandLevel: 4, animals: [fox, gone], leaving: new Set() }).animals.map((a) => a.id)).toEqual(['a1']);
+  });
+
   it('is pure: the same input gives an equal model and inputs are not mutated', () => {
     const input = { world, islandLevel: 3, animals: [fox, cat] };
     const copy = structuredClone(input);

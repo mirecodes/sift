@@ -124,9 +124,12 @@ export function sanitizeSettings(input: Partial<Settings> | undefined): Settings
   };
 }
 
-/** Animals that should be drawn right now: active ones, minus the pending reward until the reveal. */
-export function selectVisibleAnimals(s: Pick<AppState, 'animals' | 'revealPending'>): PlacedAnimal[] {
-  return s.animals.filter((a) => isActive(a) && a.id !== s.revealPending);
+/**
+ * Animals that should be drawn right now: active ones, minus the pending reward until the reveal,
+ * plus departed ones still `leaving` (their departure notice has not been dismissed, Step 2.3).
+ */
+export function selectVisibleAnimals(s: Pick<AppState, 'animals' | 'revealPending'>, leaving?: ReadonlySet<string>): PlacedAnimal[] {
+  return s.animals.filter((a) => (isActive(a) || leaving?.has(a.id)) && a.id !== s.revealPending);
 }
 
 /** The notice to show now, or `undefined` (always while focusing). */

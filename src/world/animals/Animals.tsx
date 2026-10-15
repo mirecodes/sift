@@ -7,7 +7,8 @@ import type { IslandAnimal } from '../../domain/island/model';
 import { palette } from '../palette';
 import { animalGeometry, flutterParts, modelById, VOXEL_SIZE } from '../voxel/geometry';
 import { HUT_APPROACH, HUT_DOOR } from '../props/Camp';
-import { CAMP_RESERVED, HUT_TILE } from '../../domain/island/island';
+import { CAMP_RESERVED, COIN_PILE_TILE, HUT_TILE } from '../../domain/island/island';
+import { DEPART_SHRINK_S, DEPART_STAGGER_S, DepartureEffects } from './Departures';
 import type { WorldMode } from '../types';
 
 const material = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
@@ -88,6 +89,8 @@ interface AnimState {
   gy: number;
   /** `clock` time until which the poke bubble shows. */
   bubbleUntil: number;
+  /** Seconds since its departure started (-1 = not leaving). */
+  leaveT: number;
 }
 
 /** World y of the walkable surface at a point (nearest tile). */
@@ -159,12 +162,13 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     stride: 0,
     gy: ground(animal.tile.x, animal.tile.z),
     bubbleUntil: -1,
+    leaveT: -1,
   });
 
   // Poke: cancel the current action and start a new one right away (picked in the idle block below).
   const poke = (e: ThreeEvent<MouseEvent>) => {
     const s = state.current;
-    if (s.routine !== 'none' || s.returning || s.appear < 1) return;
+    if (s.routine !== 'none' || s.returning || s.appear < 1 || animal.departure !== undefined) return;
     e.stopPropagation();
     s.action = 'none';
     s.nextAt = 0;
@@ -351,10 +355,18 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
       }
       if (hitRef.current) hitRef.current.position.y = bodyH / 2 + y;
     }
+    // Departure: shrink away in notice order; beyond the animated cap (or reduced motion) vanish at once.
+    let leave = 1;
+    if (animal.departure !== undefined) {
+      s.leaveT = Math.max(0, s.leaveT) + dt;
+      const instant = reducedMotion || animal.departure >= config.render.maxAnimatedDepartures;
+      leave = instant ? 0 : 1 - Math.min(1, Math.max(0, (s.leaveT - animal.departure * DEPART_STAGGER_S) / DEPART_SHRINK_S));
+    }
+
     const breath = 1 + Math.sin(s.clock * 2.2 + side) * 0.035 * lie;
     const ox = side * lie * (bodyH / 2);
-    const size = spawnScale * s.appear * breath;
-    g.visible = s.appear > 0.001;
+    const size = spawnScale * s.appear * breath * leave;
+    g.visible = s.appear > 0.001 && leave > 0.001;
     g.scale.setScalar(config.render.animalScale);
     const gy = ground(s.px, s.pz);
     s.gy = reducedMotion ? gy : s.gy + (gy - s.gy) * Math.min(1, delta * 12);
@@ -515,11 +527,22 @@ export function Animals({ animals, tiles, mode, dark, timeScale, reducedMotion }
   // Animals present at first render appear instantly; later arrivals (the reveal) pop in.
   const initial = useRef<Set<string> | null>(null);
   initial.current ??= new Set(animals.map((a) => a.id));
+  const departing = useMemo(() => animals.filter((a) => a.departure !== undefined).sort((a, b) => a.departure! - b.departure!), [animals]);
+  const max = config.render.maxAnimatedDepartures;
   return (
     <group>
       {animals.map((a) => (
         <AnimalInstance ground={ground} key={a.id} animal={a} timeScale={timeScale} reducedMotion={reducedMotion} spawn={!initial.current!.has(a.id)} routine={routine} slot={slots.get(a.id)!} />
       ))}
+      {departing.length > 0 && !reducedMotion && mode !== 'focus' && (
+        <DepartureEffects
+          key={departing.map((a) => a.id).join()}
+          from={departing.slice(0, max).map((a) => a.tile)}
+          burst={departing.length > max}
+          pile={COIN_PILE_TILE}
+          ground={ground}
+        />
+      )}
     </group>
   );
 }

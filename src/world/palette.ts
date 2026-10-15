@@ -11,6 +11,8 @@ export const palette = {
   water: '#4FA8E8',
   waterStreak: '#9AD4FF',
   splash: '#FFFFFF',
+  coin: '#F2C230',
+  puff: '#EEEEEE',
 } as const;
 
 /**

@@ -417,6 +417,13 @@ Defined in `src/world/palette.ts`. Not shared with UI tokens.
 | `water-streak` | `#9AD4FF` (flow streaks) |
 | `splash` | `#FFFFFF` |
 
+### 14.4 Gold
+
+| Token | Value |
+|---|---|
+| `coin` | `#F2C230` (lit like blocks, so faces shade) |
+| `puff` | `#EEEEEE` (departure puff) |
+
 ## 15. Island
 
 ### 15.1 Structure
@@ -518,6 +525,7 @@ export const chick: VoxelModel = {
 - **Butterfly (`flutter`):** flat design. The model is a 2-wide body plus flat wings spread in the horizontal plane (the isometric camera sees it from above). In the world the wings are separate meshes hinged at the body: they flap continuously (about 3 Hz, angle 0.15 to 0.85 rad, folded up when asleep) while the butterfly flies 0.6 block above the ground along random waypoints within 1.2 tiles of its tile (0.8 blocks/s, facing its heading, altitude bobbing), its blob shadow staying on the ground. Poke: new waypoint at once and faster flapping for 1.2s. Focus slows it by `focusAnimalTimeScale` like every animal. Reduced motion: wings static at 0.3 rad, no wandering. The Break card and Collection show the rest pose (wings flat).
 - **Legendary (Unicorn, Tiger):** sparkle particles (max 8), shared by every Legendary species. The unicorn also has a rainbow mane and, every 2 to 5 seconds, a rainbow burst (`rainbow` idle): 14 small cubes in the rainbow colors (`#FF5A5F`, `#FFA24D`, `#FFE14D`, `#5ED67A`, `#4DA6FF`, `#8E6BFF`, `#FF8AD8`) pop out around its body, arc up and fall back while shrinking over about 0.9s. Slowed by `focusAnimalTimeScale` like every animal; none with reduced motion. Gradients allowed here only.
 - **Species added in ADR-023** follow 16.2 to 16.3 unchanged (same tier heights, at most 6 wide and deep, palette budget). Models are symmetric where possible (`boxM`) and keep limbs, wings and tails as separate voxel groups so the idle hop, turn and shuffle read well. The Tiger is orange with black stripes, a white muzzle and a forehead `王` mark (palette: orange, `#1E1E1E`, white, pink nose).
+- **Departure** (F3, guidance_v2 Step 2.3; neutral, no farewell): animals named in a queued `animals_departed` notice stay on their tiles until that notice is shown on Home or Break. Then, 0.12s apart, each one shrinks to nothing over 0.3s while a puff of 6 `puff` cubes (0.09 block) bursts outward and shrinks away over 0.6s, and one `coin` (a flat gold voxel 0.16 × 0.064 × 0.16 block, spinning) arcs from its tile into the coin pile (0.7s, peak 1.2 blocks up); the HUD gold counter counts up (6.5). At most 10 animate; the rest vanish at once and the pile throws one combined burst of 8 coins that pop up and fall back (0.8s). Never in Focus. Reduced motion: animals vanish, no puffs, arcs or bursts; the counter jumps.
 - `prefers-reduced-motion`: disable bobbing, idle hops, and camera moves.
 
 ## 19. Performance
