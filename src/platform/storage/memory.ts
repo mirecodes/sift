@@ -1,4 +1,4 @@
-import type { FocusSession, InboxRow, LedgerEntry, PlacedAnimal } from '../../domain/types';
+import type { FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding } from '../../domain/types';
 import type { BackupData } from '../../domain/backup';
 import { migrateRows, SCHEMA_VERSION } from '../../db/migrations';
 import type { Commit, PersistedState, StorageAdapter } from './index';
@@ -34,8 +34,10 @@ export function createMemoryStorage(): StorageAdapter {
         sessions: rows<FocusSession>('sessions').sort((a, b) => a.startedAt - b.startedAt),
         inbox: rows<InboxRow>('inbox').sort((a, b) => a.createdAt - b.createdAt),
         ledger: rows<LedgerEntry>('ledger').sort((a, b) => a.at - b.at),
+        cosmetics: rows<OwnedCosmetic>('cosmetics').sort((a, b) => a.acquiredAt - b.acquiredAt),
+        placedBuildings: rows<PlacedBuilding>('placedBuildings').sort((a, b) => a.placedAt - b.placedAt),
       };
-      for (const { key, value } of rows<{ key: 'settings' | 'world' | 'phase'; value: never }>('kv')) state[key] = value;
+      for (const { key, value } of rows<{ key: 'settings' | 'world' | 'phase' | 'equipped'; value: never }>('kv')) state[key] = value;
       return state;
     },
     async exportAll() {
@@ -63,6 +65,9 @@ export function createMemoryStorage(): StorageAdapter {
       if (change.ledgerAdd?.some((e) => tables.ledger.has(e.id))) throw new Error('Ledger entries are append-only');
       for (const e of change.ledgerAdd ?? []) put('ledger', e);
       for (const c of change.cosmeticsAdd ?? []) put('cosmetics', c);
+      if (change.equipped) kv('equipped', change.equipped);
+      for (const b of change.buildingsPut ?? []) put('placedBuildings', b);
+      for (const id of change.buildingsRemove ?? []) tables.placedBuildings.delete(id);
       if (change.session) put('sessions', change.session);
       if (change.animal) put('animals', change.animal);
       for (const a of change.animals ?? []) put('animals', a);

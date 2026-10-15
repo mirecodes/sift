@@ -45,6 +45,8 @@ export function App() {
   const theme = useApp((s) => s.settings.theme);
   const inbox = useApp((s) => s.inbox);
   const gold = useApp((s) => s.gold);
+  const equipped = useApp((s) => s.equipped);
+  const placedBuildings = useApp((s) => s.placedBuildings);
   const reducedMotion = usePrefersReducedMotion();
 
   // Overtime and break-over share the render mode of their base phase, so no clock is needed here.
@@ -53,11 +55,13 @@ export function App() {
     const animals = selectVisibleAnimals({ animals: allAnimals, revealPending }, leaving);
     // The pile shows the gold the user has been told about (Step 2.4).
     const goldPileLevel = features.economy ? goldPileLevelOf(gold - heldGold, balance.economy.pileThresholds) : 0;
-    const own = buildIslandModel({ world, islandLevel, animals, leaving, departing, goldPileLevel, showExpiry: features.economy });
+    // Skins, theme and buildings show only with the cosmetics feature (Phase 3).
+    const cosmetics = features.cosmetics ? { equipped, buildings: placedBuildings } : {};
+    const own = buildIslandModel({ world, islandLevel, animals, leaving, departing, goldPileLevel, showExpiry: features.economy, ...cosmetics });
     const list: { model: IslandModel; mode: IslandMode }[] = [{ model: own, mode: 'own' }];
     if (DEV_TWO_ISLANDS !== null) list.push({ model: devSecondIsland(own, DEV_TWO_ISLANDS), mode: 'visit' });
     return list;
-  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold]);
+  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings]);
 
   const focusing = phase.kind === 'focus';
   const tab = focusing || !TABS.some((t) => t.id === activeTab) ? 'island' : activeTab;

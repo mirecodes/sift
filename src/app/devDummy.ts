@@ -1,7 +1,7 @@
 import { seededRng } from '../domain/random';
 import { balance } from '../../shared/balance/balance';
 import { CATALOG, type AnimalSpecies } from '../domain/animals/catalog';
-import type { FocusSession, InboxRow, LedgerEntry } from '../domain/types';
+import type { CosmeticKind, Equipped, FocusSession, InboxRow, LedgerEntry, OwnedCosmetic } from '../domain/types';
 
 /** Sample data added in memory by `testMode.dummyData` (dev builds only). Never saved or exported. */
 export interface DummyData {
@@ -9,7 +9,27 @@ export interface DummyData {
   inbox: InboxRow[];
   ledger: LedgerEntry[];
   animals: { species: AnimalSpecies; acquiredAt: number }[];
+  /** Phase 3: owned skins, themes and buildings, what is equipped and what stands on the island. */
+  cosmetics: OwnedCosmetic[];
+  equipped: Equipped;
+  buildings: string[];
 }
+
+/** [item id, kind, count] owned in the sample inventory. */
+const DUMMY_ITEMS: [string, CosmeticKind, number][] = [
+  ['golden:dog', 'animalSkin', 1],
+  ['pastel:cat', 'animalSkin', 1],
+  ['night-unicorn', 'animalSkin', 1],
+  ['snowy:panda', 'animalSkin', 1],
+  ['autumn', 'blockTheme', 1],
+  ['cherry', 'blockTheme', 1],
+  ['windmill', 'building', 1],
+  ['lantern', 'building', 2],
+  ['fence', 'building', 4],
+  ['flower-bed', 'building', 1],
+  ['small-tree', 'building', 2],
+  ['well', 'building', 1],
+];
 
 const MIN = 60_000;
 const DAY = 24 * 60 * MIN;
@@ -84,5 +104,13 @@ export function createDummyData(now: number): DummyData {
   const species = (id: string) => CATALOG.find((s) => s.id === id)!;
   const animals = DUMMY_ANIMALS.map(([id, age]) => ({ species: species(id), acquiredAt: now - age }));
 
-  return { sessions, inbox, ledger, animals };
+  // Cosmetics: equipped skins on the dog, cat and unicorn, the Autumn theme, four buildings placed
+  // (the rest wait in the build tray). Seen with `features.cosmetics` on.
+  const cosmetics: OwnedCosmetic[] = DUMMY_ITEMS.flatMap(([defId, kind, count]) =>
+    Array.from({ length: count }, (_, i) => ({ id: `dummy-item-${defId}-${i}`, kind, defId, acquiredAt: now - 2 * DAY, source: 'dummy' })),
+  );
+  const equipped: Equipped = { skinBySpecies: { dog: 'golden:dog', cat: 'pastel:cat', unicorn: 'night-unicorn' }, blockThemeId: 'autumn' };
+  const buildings = ['windmill', 'lantern', 'small-tree', 'flower-bed'];
+
+  return { sessions, inbox, ledger, animals, cosmetics, equipped, buildings };
 }

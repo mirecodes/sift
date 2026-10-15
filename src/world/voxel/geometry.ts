@@ -110,6 +110,8 @@ export interface BuildingMeshes {
   def: BuildingDef;
   model: VoxelModel;
   main: BufferGeometry;
+  /** With a light preset: the `flame`/`glass` voxels, drawn unlit so the lamp itself shines. */
+  glow: BufferGeometry | null;
   /** Each part's geometry is relative to its pivot; place it in a group at `pivot`. */
   parts: { name: string; preset: string; pivot: [number, number, number]; geometry: BufferGeometry }[];
   /** Where a light preset glows: middle of the `flame`/`glass` voxels, else the top center. */
@@ -144,12 +146,15 @@ export function buildingMeshes(defId: string): BuildingMeshes | null {
       geometry.translate(-pivot[0], -pivot[1], -pivot[2]);
       return [{ name: p.name, preset: p.preset, pivot, geometry }];
     });
-    const lit = model.voxels.filter(([, , , c]) => model.keys[c] === 'flame' || model.keys[c] === 'glass');
+    const isLit = (c: number) => model.keys[c] === 'flame' || model.keys[c] === 'glass';
+    const lit = model.voxels.filter(([, , , c]) => isLit(c));
     const mean = (i: 0 | 1 | 2) => lit.reduce((s, vx) => s + vx[i], 0) / lit.length;
+    const glowing = def.light !== undefined && lit.length > 0;
     out = {
       def,
       model,
-      main: toGeometry(buildVoxelMesh({ ...model, parts: undefined }, v)),
+      main: toGeometry(buildVoxelMesh({ ...model, parts: undefined, voxels: glowing ? model.voxels.filter(([, , , c]) => !isLit(c)) : model.voxels }, v)),
+      glow: glowing ? toGeometry(buildVoxelMesh({ ...model, parts: undefined, voxels: lit }, v)) : null,
       parts,
       lightAt: lit.length ? world(mean(0), mean(1), mean(2)) : [0, H * v, 0],
     };

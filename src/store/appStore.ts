@@ -1,6 +1,9 @@
 import { createStore } from 'zustand/vanilla';
 import { config, DEFAULT_BLOCK_THEME } from '../domain/config';
-import type { FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, Settings, WorldState } from '../domain/types';
+import type { Equipped, FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../domain/types';
+import { buyProblem, DEFAULT_EQUIPPED, equipSkin, equipTheme, grantFor, ownedCount, sanitizeEquipped, type BuyProblem, type EquipProblem } from '../domain/cosmetics/inventory';
+import { content } from '../domain/content';
+import { placementProblem } from '../domain/build/placement';
 import { balance } from '../../shared/balance/balance';
 import { debitEntry, goldBalance, goldEntry, hasStarterGrant, LEDGER_REASON } from '../domain/economy/ledger';
 import { computeExpirations } from '../../shared/rules/expiry';
@@ -18,7 +21,7 @@ import type { AnimalSpecies } from '../domain/animals/catalog';
 import { rollReward } from '../domain/reward/reward';
 import { isActive, newPlacedAnimal } from '../domain/animals/placed';
 import { islandLevel, pickNewAnimalTile } from '../domain/island/level';
-import { repairPlacements } from '../domain/island/occupancy';
+import { animalTile, getOccupancy, repairPlacements } from '../domain/island/occupancy';
 import { clamp, type Rng } from '../domain/random';
 import { createBackup, type Backup } from '../domain/backup';
 import type { StorageAdapter } from '../platform/storage';
@@ -44,9 +47,16 @@ export interface AppDeps {
     ledger?: LedgerEntry[];
     /** Placed on free tiles at startup, like test species. */
     animals?: { species: AnimalSpecies; acquiredAt: number }[];
+    /** Owned items (Phase 3). */
+    cosmetics?: OwnedCosmetic[];
+    equipped?: Equipped;
+    /** Owned buildings placed on the first valid tiles near the center at startup. */
+    buildings?: string[];
   };
   /** `features.economy`: starter gold and animal expiry run only when on. */
   economy?: boolean;
+  /** Running app version, for content `minClientVersion`. */
+  clientVersion?: string;
 }
 
 export interface AppState {
@@ -66,6 +76,11 @@ export interface AppState {
   inbox: InboxRow[];
   /** Wallet balance: the ledger sum, recomputed on load. */
   gold: number;
+  /** Owned items, one row per instance (Step 3.7). */
+  cosmetics: OwnedCosmetic[];
+  /** Equipped skins (per species) and block theme. */
+  equipped: Equipped;
+  placedBuildings: PlacedBuilding[];
 
   init(): Promise<void>;
   exportBackup(): Promise<Backup>;
@@ -94,6 +109,34 @@ export interface AppState {
    * Rejects with `InsufficientGoldError` when the balance is short.
    */
   spendGold(amount: number, reason: string, refId: string | null, grant: OwnedCosmetic): Promise<void>;
+  /**
+   * Buys one shop item (Step 3.9): debit and inventory row in one write. Rejects with a `BuyError`
+   * (not for sale, already owned, species not found) or `InsufficientGoldError`.
+   */
+  buyItem(defId: string): Promise<void>;
+  /** Equips an owned skin (or `default`) for every animal of a species. Rejects with an `EquipError`. */
+  equipSkin(speciesId: string, skinId: string): Promise<void>;
+  /** Equips an owned block theme (or `default`). Rejects with an `EquipError`. */
+  equipTheme(themeId: string): Promise<void>;
+}
+
+export class BuyError extends Error {
+  constructor(readonly problem: BuyProblem) {
+    super(`Cannot buy: ${problem}`);
+    this.name = 'BuyError';
+  }
+}
+
+export class EquipError extends Error {
+  constructor(readonly problem: EquipProblem) {
+    super(`Cannot equip: ${problem}`);
+    this.name = 'EquipError';
+  }
+}
+
+/** Species earned at least once, whatever happened to the animal (their skins are for sale). */
+export function selectDiscoveredSpecies(s: Pick<AppState, 'animals'>): Set<string> {
+  return new Set(s.animals.map((a) => a.speciesId));
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -227,7 +270,19 @@ export function createAppStore(initialDeps: AppDeps) {
     }
 
     const dummy = devSwitches ? deps.dummy : undefined;
+    const cosmetics = [...loaded.cosmetics, ...(dummy?.cosmetics ?? [])];
+    // ponytail: placed buildings beyond the owned count (e.g. placed with dummy items) are ignored, not deleted.
+    const placedBuildings = loaded.placedBuildings.filter((b, i, all) => all.slice(0, i + 1).filter((x) => x.defId === b.defId).length <= ownedCount(cosmetics, b.defId));
+    for (const defId of dummy?.buildings ?? []) {
+      const building = placeDummyBuilding(defId, world.seed, animals, placedBuildings);
+      if (!building) continue;
+      memoryOnly.add(building.id);
+      placedBuildings.push(building);
+    }
     return {
+      cosmetics,
+      equipped: sanitizeEquipped(dummy?.equipped ?? loaded.equipped, cosmetics),
+      placedBuildings,
       gold: goldBalance([...ledger, ...(dummy?.ledger ?? [])]),
       ready: true,
       settings,
@@ -238,6 +293,19 @@ export function createAppStore(initialDeps: AppDeps) {
       revealPending,
       inbox: dummy ? [...loaded.inbox, ...dummy.inbox] : loaded.inbox,
     };
+  }
+
+  /** Dummy data: the first free, valid tile from the center (no animal on it). */
+  function placeDummyBuilding(defId: string, seed: number, animals: readonly PlacedAnimal[], placed: readonly PlacedBuilding[]): PlacedBuilding | null {
+    const grid = getOccupancy({
+      seed,
+      islandLevel: islandLevel(animals),
+      animals: animals.filter(isActive).map((a) => ({ id: a.id, tile: animalTile(a) })),
+      buildings: placed.map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation })),
+    });
+    const tiles = [...grid.values()].filter((t) => !t.animalIds.length).sort((a, b) => Math.hypot(a.x, a.z) - Math.hypot(b.x, b.z) || a.x - b.x || a.z - b.z);
+    const tile = tiles.find((t) => placementProblem(grid, { defId, tile: t, rotation: 0, minFreeTiles: balance.build.minFreeTiles }) === null);
+    return tile ? { id: deps.uuid(), defId, tileX: tile.x, tileZ: tile.z, rotation: 0, placedAt: deps.now() } : null;
   }
 
   async function expire(): Promise<void> {
@@ -291,6 +359,9 @@ export function createAppStore(initialDeps: AppDeps) {
     revealPending: null,
     inbox: [],
     gold: 0,
+    cosmetics: [],
+    equipped: DEFAULT_EQUIPPED,
+    placedBuildings: [],
 
     async init() {
       set(await hydrate(true));
@@ -430,7 +501,28 @@ export function createAppStore(initialDeps: AppDeps) {
       const debit = debitEntry(get().gold, amount, reason, refId, deps.uuid(), deps.now());
       // No memory fallback here: a failed purchase must fail visibly and change nothing.
       await deps.storage.commit({ ledgerAdd: [debit], cosmeticsAdd: [grant] });
-      set({ gold: get().gold + debit.amount });
+      set({ gold: get().gold + debit.amount, cosmetics: [...get().cosmetics, grant] });
+    },
+
+    async buyItem(defId) {
+      const problem = buyProblem(defId, get().cosmetics, { now: deps.now(), clientVersion: deps.clientVersion ?? '0.0.0', discovered: selectDiscoveredSpecies(get()) });
+      if (problem) throw new BuyError(problem);
+      const item = content.get(defId) as Parameters<typeof grantFor>[0];
+      await get().spendGold(item.price!, LEDGER_REASON.purchase, defId, grantFor(item, deps.uuid(), deps.now()));
+    },
+
+    async equipSkin(speciesId, skinId) {
+      const next = equipSkin(get().equipped, get().cosmetics, speciesId, skinId);
+      if (typeof next === 'string') throw new EquipError(next);
+      await commit({ equipped: next });
+      set({ equipped: next });
+    },
+
+    async equipTheme(themeId) {
+      const next = equipTheme(get().equipped, get().cosmetics, themeId);
+      if (typeof next === 'string') throw new EquipError(next);
+      await commit({ equipped: next });
+      set({ equipped: next });
     },
 
     applyExpirations() {

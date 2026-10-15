@@ -2,6 +2,7 @@ import { useStore } from 'zustand';
 import { CATALOG } from '../domain/animals/catalog';
 import { createDummyData } from '../app/devDummy';
 import { runtimeConfig } from '../app/runtimeConfig';
+import { APP_VERSION } from '../app/version';
 import { platform } from '../platform';
 import { createAppStore, type AppState } from './appStore';
 
@@ -24,6 +25,7 @@ export const appStore = createAppStore({
   // The DEV check lets the bundler drop the sample data from production builds.
   dummy: import.meta.env.DEV && testMode.dummyData ? createDummyData(Date.now()) : undefined,
   economy: features.economy,
+  clientVersion: APP_VERSION,
 });
 
 export function useApp<T>(selector: (state: AppState) => T): T {

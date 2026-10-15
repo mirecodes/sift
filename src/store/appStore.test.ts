@@ -6,7 +6,7 @@ import { resolvePhase } from '../domain/timer/phase';
 import type { PlacedAnimal } from '../domain/types';
 import { createMemoryStorage } from '../platform/storage/memory';
 import type { StorageAdapter } from '../platform/storage';
-import { createAppStore, selectActiveUnicorns, selectCurrentNotice, selectIslandLevel, selectShownGold, selectVisibleAnimals } from './appStore';
+import { createAppStore, EquipError, selectActiveUnicorns, selectCurrentNotice, selectIslandLevel, selectShownGold, selectVisibleAnimals } from './appStore';
 import { InsufficientGoldError } from '../domain/economy/ledger';
 import { CATALOG } from '../domain/animals/catalog';
 import { newPlacedAnimal } from '../domain/animals/placed';
@@ -464,6 +464,82 @@ describe('wallet (Step 2.1)', () => {
     await expect(t.getState().spendGold(10, 'purchase', 'fence', fence)).rejects.toThrow('disk full');
     expect(t.getState().gold).toBe(30);
     expect((await storage.exportAll()).ledger).toHaveLength(1);
+  });
+});
+
+describe('inventory and equip (Step 3.7)', () => {
+  const shop = (storage: StorageAdapter = createMemoryStorage(), dummy?: Parameters<typeof createAppStore>[0]['dummy']) => {
+    let n = 0;
+    const s = createAppStore({ storage, now: () => Date.parse('2026-10-10'), rng: seededRng(1), uuid: () => `i-${++n}`, economy: true, clientVersion: '0.1.0', ...(dummy && { dummy }) });
+    return s;
+  };
+  /** A save with 200 gold and a fox and a tiger earned yesterday (so they do not depart). */
+  async function seeded() {
+    const storage = createMemoryStorage();
+    const earned = Date.parse('2026-10-09');
+    await storage.commit({
+      ledgerAdd: [{ id: 'g', at: 0, currency: 'gold', amount: 200, reason: 'starter', refId: null }],
+      animals: [newPlacedAnimal('fox1', CATALOG.find((c) => c.id === 'fox')!, { x: 1, z: 1 }, earned, 's'), newPlacedAnimal('t1', CATALOG.find((c) => c.id === 'tiger')!, { x: 2, z: 1 }, earned, 's')],
+    });
+    return storage;
+  }
+
+  it('buying writes the debit and one item; skins once, buildings many times', async () => {
+    const storage = await seeded();
+    const s = shop(storage);
+    await s.getState().init();
+    await s.getState().buyItem('golden:fox');
+    expect(s.getState().gold).toBe(200 - 45);
+    expect(s.getState().cosmetics.map((c) => c.defId)).toEqual(['golden:fox']);
+    await expect(s.getState().buyItem('golden:fox')).rejects.toMatchObject({ problem: 'owned' });
+    await s.getState().buyItem('lantern');
+    await s.getState().buyItem('lantern');
+    expect(s.getState().cosmetics.filter((c) => c.defId === 'lantern')).toHaveLength(2);
+    expect(s.getState().gold).toBe(200 - 45 - 50);
+    const rows = await storage.exportAll();
+    expect(rows.cosmetics).toHaveLength(3);
+    expect((rows.ledger as { amount: number }[]).reduce((a, e) => a + e.amount, 0)).toBe(105);
+  });
+
+  it('refuses skins of species not found yet, unsold items and short balances, changing nothing', async () => {
+    const s = shop(await seeded());
+    await s.getState().init();
+    await expect(s.getState().buyItem('golden:panda')).rejects.toMatchObject({ problem: 'species_not_found' });
+    await expect(s.getState().buyItem('champion-flag')).rejects.toMatchObject({ problem: 'not_for_sale' });
+    await s.getState().buyItem('cherry');
+    await expect(s.getState().buyItem('windmill')).rejects.toBeInstanceOf(InsufficientGoldError);
+    expect(s.getState().gold).toBe(0);
+    expect(s.getState().cosmetics.map((c) => c.defId)).toEqual(['cherry']);
+  });
+
+  it('equips owned skins and themes, keeps them after a reload and refuses the rest', async () => {
+    const storage = await seeded();
+    const s = shop(storage);
+    await s.getState().init();
+    await s.getState().buyItem('white-tiger');
+    await s.getState().buyItem('desert');
+    await s.getState().equipSkin('tiger', 'white-tiger');
+    await s.getState().equipTheme('desert');
+    await expect(s.getState().equipSkin('fox', 'golden:fox')).rejects.toMatchObject({ problem: 'not_owned' });
+    await expect(s.getState().equipTheme('snow')).rejects.toBeInstanceOf(EquipError);
+    expect(s.getState().equipped).toEqual({ skinBySpecies: { tiger: 'white-tiger' }, blockThemeId: 'desert' });
+    const again = shop(storage);
+    await again.getState().init();
+    expect(again.getState().equipped).toEqual({ skinBySpecies: { tiger: 'white-tiger' }, blockThemeId: 'desert' });
+    await again.getState().equipSkin('tiger', 'default');
+    expect(again.getState().equipped.skinBySpecies).toEqual({});
+  });
+
+  it('dummy items live in memory only: owned, equipped and placed, never stored', async () => {
+    const storage = await seeded();
+    const own = (defId: string, kind: 'building' | 'blockTheme', i = 0) => ({ id: `d-${defId}-${i}`, kind, defId, acquiredAt: 0, source: 'dummy' });
+    const s = shop(storage, { sessions: [], inbox: [], cosmetics: [own('lantern', 'building'), own('fence', 'building'), own('snow', 'blockTheme')], equipped: { skinBySpecies: {}, blockThemeId: 'snow' }, buildings: ['lantern'] });
+    await s.getState().init();
+    expect(s.getState().equipped.blockThemeId).toBe('snow');
+    expect(s.getState().placedBuildings.map((b) => b.defId)).toEqual(['lantern']);
+    const rows = await storage.exportAll();
+    expect(rows.cosmetics).toEqual([]);
+    expect(rows.placedBuildings).toEqual([]);
   });
 });
 

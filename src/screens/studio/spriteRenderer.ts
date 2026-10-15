@@ -44,6 +44,7 @@ function subject(item: PackItem): Object3D | null {
       const m = buildingMeshes(item.id);
       if (!m) return null;
       g.add(new Mesh(m.main, material));
+      if (m.glow) g.add(new Mesh(m.glow, material));
       for (const p of m.parts) {
         const part = new Mesh(p.geometry, material);
         part.position.set(...p.pivot);

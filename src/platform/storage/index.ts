@@ -1,4 +1,4 @@
-import type { FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, Settings, WorldState } from '../../domain/types';
+import type { Equipped, FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../../domain/types';
 import type { StoredPhase } from '../../domain/timer/phase';
 import type { BackupData } from '../../domain/backup';
 
@@ -13,6 +13,10 @@ export interface PersistedState {
   inbox: InboxRow[];
   /** Gold ledger, oldest first. */
   ledger: LedgerEntry[];
+  /** Owned items, one row per instance, oldest first. */
+  cosmetics: OwnedCosmetic[];
+  equipped?: Equipped;
+  placedBuildings: PlacedBuilding[];
 }
 
 /** Everything that must change together. An implementation applies it in one transaction. */
@@ -30,6 +34,11 @@ export interface Commit {
   ledgerAdd?: LedgerEntry[];
   /** Items granted together with a purchase. */
   cosmeticsAdd?: OwnedCosmetic[];
+  /** Equipped skins and block theme (kv singleton). */
+  equipped?: Equipped;
+  /** Placed or moved buildings, and buildings returned to the inventory. */
+  buildingsPut?: PlacedBuilding[];
+  buildingsRemove?: string[];
 }
 
 export interface StorageAdapter {

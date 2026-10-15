@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber';
 import { memo, useMemo, useRef, type MutableRefObject } from 'react';
-import { Group, MeshLambertMaterial } from 'three';
+import { Group, MeshBasicMaterial, MeshLambertMaterial } from 'three';
 import type { Tile } from '../../domain/island/island';
 import type { IslandBuilding } from '../../domain/island/model';
 import { buildingShape, footprintTiles, tileKey } from '../../domain/island/occupancy';
@@ -9,6 +9,7 @@ import { PART_PRESETS } from '../presets/parts';
 import { buildingMeshes } from '../voxel/geometry';
 
 const material = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
+const unlit = new MeshBasicMaterial({ vertexColors: true });
 
 const hash = (id: string) => {
   let h = 0;
@@ -54,6 +55,7 @@ const Building = memo(function Building({ b, heights, night, timeScale, reducedM
   return (
     <group position={position} rotation={[0, (-b.rotation * Math.PI) / 180, 0]} name={`building:${b.id}`}>
       <mesh geometry={meshes.main} material={material} />
+      {meshes.glow && <mesh geometry={meshes.glow} material={unlit} />}
       {meshes.parts.map((p, i) => (
         <group key={p.name} position={p.pivot} userData={{ baseY: p.pivot[1] }} ref={(g) => void (parts.current[i] = g)}>
           <mesh geometry={p.geometry} material={material} />

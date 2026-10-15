@@ -74,7 +74,8 @@
   - `shared/content/{validate,sprites}.ts`, `tools/content-build/validate.ts`, `tools/sprite-gen/main.mjs` + `screens/studio/spriteRenderer.ts`, `ItemSprite`, CI workflow, CONTENT.md release guide. Tests: shipped content valid incl. sprites; footprint mismatch, oversize, too tall, price range, missing price, dates, missing/stale sprite, unknown skin key. Sprite generation is deterministic (same PNG md5 twice). Collection at 1280/390 checked: sprites crisp, silhouettes grey. ADR-042 (Proposed, Q33).
 - [x] 3.6 Initial content set
   - `content/{blockThemes,buildings,skinFamilies,skins,releases}/v2-launch.json` + 9 DSL models in `content/models/buildings/`; 316 sprites regenerated; `content:validate` clean. Test: themes, buildings (presets, water, light, flag not sold), 5×50 family skins, handcrafted skins, release and featured ids. Checked in the Studio: windmill sails spin and its placement is refused over the stream, Snow/Cherry particles and roofs, Ghost lavender (first try matched Snowy), no console errors.
-- [ ] 3.7 Inventory and equip (domain + store)
+- [x] 3.7 Inventory and equip (domain + store)
+  - `domain/cosmetics/inventory.ts` + store (`cosmetics`, `equipped`, `placedBuildings`, `buyItem`, `equipSkin`, `equipTheme`), storage load/commit for items, equipped and buildings, `APP_VERSION`. Tests: defaults always owned, instance counts and tray, buy once vs many, refusals (unknown, not for sale, species not found, short gold) change nothing, equip rules, reload keeps equipped, sanitize drops lost items, retired items still equip, dummy items memory-only. Dev server with dummy data + economy + cosmetics: Autumn theme, golden dog, night unicorn, windmill, lantern, tree and flower bed on the island, day and night, no console errors.
 - [ ] 3.8 Rendering skins and themes
 - [ ] 3.9 Shop screen (built for continuous releases)
 - [ ] 3.10 Collection: choose skins and island theme
@@ -174,6 +175,10 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 3.7 · Skins of species never earned are not sold (`species_not_found`), matching "Animal skins (only species you have found)". Earned once is enough, even if the animal left. · Departures must not take skins out of the shop.
+- 3.7 · Placed buildings beyond the owned count are ignored on load, not deleted. · Only possible with dev dummy items; no data loss.
+- 3.7 · Equipped skins, theme and buildings render only with `features.cosmetics`. · Production stays unchanged while the phase is off.
+- 3.7 · A building with a light preset draws its `flame`/`glass` voxels unlit. · The lantern looked dark at night with only the halo.
 - 3.6 · Windmill footprint is 2×1 (16 voxels wide) so its sails fit; Desert has no ambient particles; Cherry Blossom uses a new `petals` preset; the Champion Flag waves (`sway`) and is tagged `group-reward`. · Guidance lists the items but not their shapes.
 - 3.6 · Family prices by tier: Golden/Shadow 30–60, Snowy 25–55, Pastel 25–50, Ghost 30–60. · Inside 25–60; rarer animals cost more.
 - 3.5 · Sprites: 48 px, isometric (same camera as the island), fit to frame (each item fills its sprite, sizes are not to scale), binary alpha; shown at 2× in Collection. · Matches the in-world look; integer scaling stays crisp.

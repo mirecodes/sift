@@ -565,7 +565,7 @@ export const chick: VoxelModel = {
   - Idle sets: `default`, `flop`, `flutter`, `sparkle`, `rainbow` (above).
   - Part animations, on a named model part turning around its pivot: `spin` (one turn per 4s around the part's forward axis), `sway` (±0.08 rad, 2.5s), `bob` (±0.05 block, 2s), `flap` (±0.5 rad, 3 Hz). Several copies of one building are out of step.
   - Particle fields, small unlit cubes drifting through a box, each fading in and out over its life: `smoke` (6 grey, rising and growing), `leaves` (22 orange/red/yellow, falling with a sway), `petals` (24 pink/white), `snow` (40 white, slow fall), `fireflies` (12 yellow-green, wandering and blinking, night only). None with reduced motion.
-  - Lights: `lantern_glow`, a warm `#FFC266` halo (0.9 block) that fades in with night. A glow sprite, not a real light, so any number is cheap.
+  - Lights: `lantern_glow`, a warm `#FFC266` halo (0.9 block) that fades in with night. A glow sprite, not a real light, so any number is cheap. A building with a light draws its `flame` and `glass` voxels unlit, so the lamp itself reads as lit by day and night.
 - `prefers-reduced-motion`: disable bobbing, idle hops, and camera moves.
 
 ## 19. Performance

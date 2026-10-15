@@ -1,4 +1,4 @@
-import type { Settings, WorldState } from '../domain/types';
+import type { Equipped, Settings, WorldState } from '../domain/types';
 import type { StoredPhase } from '../domain/timer/phase';
 import type { Commit, PersistedState, StorageAdapter } from '../platform/storage';
 import { SiftDB } from './schema';
@@ -9,21 +9,25 @@ export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
     schemaVersion: db.verno,
 
     async load(): Promise<PersistedState> {
-      const [kv, animals, sessions, inbox, ledger] = await Promise.all([
+      const [kv, animals, sessions, inbox, ledger, cosmetics, placedBuildings] = await Promise.all([
         db.kv.toArray(),
         db.animals.orderBy('acquiredAt').toArray(),
         db.sessions.orderBy('startedAt').toArray(),
         db.inbox.orderBy('createdAt').toArray(),
         db.ledger.orderBy('at').toArray(),
+        db.cosmetics.toArray().then((rows) => rows.sort((a, b) => a.acquiredAt - b.acquiredAt)),
+        db.placedBuildings.toArray().then((rows) => rows.sort((a, b) => a.placedAt - b.placedAt)),
       ]);
       const get = <T>(key: string): T | undefined => kv.find((r) => r.key === key)?.value as T | undefined;
-      const state: PersistedState = { animals, sessions, inbox, ledger };
+      const state: PersistedState = { animals, sessions, inbox, ledger, cosmetics, placedBuildings };
       const settings = get<Settings>('settings');
       const world = get<WorldState>('world');
       const phase = get<StoredPhase>('phase');
+      const equipped = get<Equipped>('equipped');
       if (settings) state.settings = settings;
       if (world) state.world = world;
       if (phase) state.phase = phase;
+      if (equipped) state.equipped = equipped;
       return state;
     },
 
@@ -59,11 +63,14 @@ export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
       });
     },
 
-    /** Session, animals, active phase, inbox, ledger and granted items are written in ONE transaction (ARCHITECTURE.md 7.3). */
+    /** Session, animals, active phase, inbox, ledger, items, equipped and buildings are written in ONE transaction (ARCHITECTURE.md 7.3). */
     async commit(change: Commit) {
-      await db.transaction('rw', [db.kv, db.sessions, db.animals, db.inbox, db.ledger, db.cosmetics], async () => {
+      await db.transaction('rw', [db.kv, db.sessions, db.animals, db.inbox, db.ledger, db.cosmetics, db.placedBuildings], async () => {
         if (change.ledgerAdd?.length) await db.ledger.bulkAdd(change.ledgerAdd); // add, not put: append-only
         if (change.cosmeticsAdd?.length) await db.cosmetics.bulkPut(change.cosmeticsAdd);
+        if (change.equipped) await db.kv.put({ key: 'equipped', value: change.equipped });
+        if (change.buildingsPut?.length) await db.placedBuildings.bulkPut(change.buildingsPut);
+        if (change.buildingsRemove?.length) await db.placedBuildings.bulkDelete(change.buildingsRemove);
         if (change.inboxAdd?.length) await db.inbox.bulkPut(change.inboxAdd);
         if (change.inboxRemove?.length) await db.inbox.bulkDelete(change.inboxRemove);
         if (change.session) await db.sessions.put(change.session);
