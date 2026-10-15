@@ -61,6 +61,11 @@ export function Studio() {
   useEffect(() => {
     history.replaceState(null, '', `#${encodeURIComponent(selected)}`);
   }, [selected]);
+  useEffect(() => {
+    const onHash = () => setSelected(decodeURIComponent(location.hash.slice(1)));
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
 
   // Drafts are merged into the live registry, so the world renders unsaved edits.
   const { pack, problems, entries } = useMemo(() => {

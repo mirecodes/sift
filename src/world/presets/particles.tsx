@@ -113,10 +113,10 @@ export interface ParticleSpec {
 
 export const FIELD_PRESETS = {
   smoke: { count: 6, colors: ['#D9DCE6', '#C4C8D2'], size: 0.08, life: 2.4, velocity: [0.05, 0.35, 0], sway: 0.06, grow: 2.2 },
-  leaves: { count: 22, colors: ['#E8702A', '#C94F2A', '#F2B33D'], size: 0.06, life: 6, velocity: [0.15, -0.45, 0.1], sway: 0.35 },
-  petals: { count: 24, colors: ['#FFC2D6', '#FFD9E6', '#FFFFFF'], size: 0.05, life: 6, velocity: [0.2, -0.35, 0.05], sway: 0.4 },
-  snow: { count: 40, colors: ['#FFFFFF', '#EEF4FF'], size: 0.05, life: 7, velocity: [0.03, -0.5, 0], sway: 0.15 },
-  fireflies: { count: 12, colors: ['#E8FF7A', '#FFF59A'], size: 0.05, life: 5, velocity: [0, 0.05, 0], sway: 0.45, twinkle: true, nightOnly: true },
+  leaves: { count: 22, colors: ['#E8702A', '#C94F2A', '#F2B33D'], size: 0.09, life: 6, velocity: [0.15, -0.45, 0.1], sway: 0.35 },
+  petals: { count: 24, colors: ['#FFC2D6', '#FFD9E6', '#FFFFFF'], size: 0.08, life: 6, velocity: [0.2, -0.35, 0.05], sway: 0.4 },
+  snow: { count: 40, colors: ['#FFFFFF', '#EEF4FF'], size: 0.08, life: 7, velocity: [0.03, -0.5, 0], sway: 0.15 },
+  fireflies: { count: 12, colors: ['#E8FF7A', '#FFF59A'], size: 0.07, life: 5, velocity: [0, 0.05, 0], sway: 0.45, twinkle: true, nightOnly: true },
 } as const satisfies Record<string, ParticleSpec>;
 
 const dummy = new Object3D();

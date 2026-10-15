@@ -72,7 +72,8 @@
   - `screens/studio/{Studio,studioData}`, `/__studio/save` dev plugin, `assemblePack` (lenient in dev), `placementProblem` + footprints in occupancy, renderer support for skins/themes/buildings (needed by the preview; 3.8 wires the player's equipped items). Tests: placement (9 cases incl. rotation, bridge, too_full), save format/path guard, lenient pack. Checked on the dev server with a temporary family: list, preview, live hue slider, save writes the file, `../package.json` refused, no console errors; production bundle has no Studio code. E2E 44/44 (×3) after fixing its midnight flake (clock now starts at 10:00).
 - [x] 3.5 Sprite generation, validation, release process
   - `shared/content/{validate,sprites}.ts`, `tools/content-build/validate.ts`, `tools/sprite-gen/main.mjs` + `screens/studio/spriteRenderer.ts`, `ItemSprite`, CI workflow, CONTENT.md release guide. Tests: shipped content valid incl. sprites; footprint mismatch, oversize, too tall, price range, missing price, dates, missing/stale sprite, unknown skin key. Sprite generation is deterministic (same PNG md5 twice). Collection at 1280/390 checked: sprites crisp, silhouettes grey. ADR-042 (Proposed, Q33).
-- [ ] 3.6 Initial content set
+- [x] 3.6 Initial content set
+  - `content/{blockThemes,buildings,skinFamilies,skins,releases}/v2-launch.json` + 9 DSL models in `content/models/buildings/`; 316 sprites regenerated; `content:validate` clean. Test: themes, buildings (presets, water, light, flag not sold), 5×50 family skins, handcrafted skins, release and featured ids. Checked in the Studio: windmill sails spin and its placement is refused over the stream, Snow/Cherry particles and roofs, Ghost lavender (first try matched Snowy), no console errors.
 - [ ] 3.7 Inventory and equip (domain + store)
 - [ ] 3.8 Rendering skins and themes
 - [ ] 3.9 Shop screen (built for continuous releases)
@@ -150,6 +151,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 3.6 · Look of the launch content in `/studio`: theme colors (Autumn orange grass, Snow roof, Desert sand, Cherry pink roof), the 9 building models, the 5 family transforms (Golden, Snowy, Shadow, Pastel, Ghost) and the two handcrafted skins. Prices: themes 120–200, buildings 10–80, family skins 25–60 by tier, handcrafted 80.
 - 3.5 · Collection and Day detail now show isometric pixel-art sprites (48 px at 2×) instead of the flat front view (Q33 default "yes"). Each sprite fills its frame, so a chick looks as big as a tiger.
 - 3.4 · Content Studio (`npm run dev`, open `/studio`): layout and whether the tools cover your release workflow.
 - 2.6 · Poke label size (same height as the `!` bubble, small at 0.25× scale) and wording `6d left`. Collection `On island: n` line.
@@ -172,6 +174,8 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 3.6 · Windmill footprint is 2×1 (16 voxels wide) so its sails fit; Desert has no ambient particles; Cherry Blossom uses a new `petals` preset; the Champion Flag waves (`sway`) and is tagged `group-reward`. · Guidance lists the items but not their shapes.
+- 3.6 · Family prices by tier: Golden/Shadow 30–60, Snowy 25–55, Pastel 25–50, Ghost 30–60. · Inside 25–60; rarer animals cost more.
 - 3.5 · Sprites: 48 px, isometric (same camera as the island), fit to frame (each item fills its sprite, sizes are not to scale), binary alpha; shown at 2× in Collection. · Matches the in-world look; integer scaling stays crisp.
 - 3.5 · Staleness is detected by an input hash per sprite, not by pixel comparison. · Rendering differs across GPUs; inputs do not.
 - 3.5 · Price ranges: family skins 25–60, handcrafted 60–80 (guidance: "25–60 by family; handcrafted 80"). · Lets a handcrafted skin cost a little less than 80 if needed.

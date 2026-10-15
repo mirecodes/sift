@@ -1,0 +1,7 @@
+[
+  { "kind": "skinFamily", "id": "golden", "name": { "en": "Golden", "ko": "황금" }, "release": "v2-launch", "purchasable": true, "priceByTierRank": [30, 35, 45, 60], "transform": { "lightness": { "offset": 0.08, "scale": 0.9 }, "tint": { "color": "#F2C230", "amount": 0.65 } } },
+  { "kind": "skinFamily", "id": "snowy", "name": { "en": "Snowy", "ko": "눈꽃" }, "release": "v2-launch", "purchasable": true, "priceByTierRank": [25, 30, 40, 55], "transform": { "saturation": 0.2, "lightness": { "offset": 0.5, "scale": 0.5 }, "tint": { "color": "#DDEBFF", "amount": 0.25 } } },
+  { "kind": "skinFamily", "id": "shadow", "name": { "en": "Shadow", "ko": "그림자" }, "release": "v2-launch", "purchasable": true, "priceByTierRank": [30, 35, 45, 60], "transform": { "saturation": 0.35, "lightness": { "offset": 0.08, "scale": 0.45 }, "tint": { "color": "#3A2F5C", "amount": 0.3 } } },
+  { "kind": "skinFamily", "id": "pastel", "name": { "en": "Pastel", "ko": "파스텔" }, "release": "v2-launch", "purchasable": true, "priceByTierRank": [25, 30, 35, 50], "transform": { "saturation": 0.6, "lightness": { "offset": 0.35, "scale": 0.6 } } },
+  { "kind": "skinFamily", "id": "ghost", "name": { "en": "Ghost", "ko": "유령" }, "release": "v2-launch", "purchasable": true, "priceByTierRank": [30, 40, 50, 60], "transform": { "saturation": 0.2, "lightness": { "offset": 0.5, "scale": 0.35 }, "tint": { "color": "#B9A8FF", "amount": 0.45 } } }
+]

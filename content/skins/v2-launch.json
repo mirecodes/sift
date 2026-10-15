@@ -1,0 +1,4 @@
+[
+  { "kind": "animalSkin", "id": "white-tiger", "name": { "en": "White Tiger", "ko": "백호" }, "price": 80, "purchasable": true, "release": "v2-launch", "speciesId": "tiger", "palette": { "body": "#ECECE6", "belly": "#FFFFFF", "nose": "#F4A6B7" } },
+  { "kind": "animalSkin", "id": "night-unicorn", "name": { "en": "Night Unicorn", "ko": "밤의 유니콘" }, "price": 80, "purchasable": true, "release": "v2-launch", "speciesId": "unicorn", "palette": { "body": "#2B2D52", "horn": "#C9D1FF", "eye": "#F2F2FF", "rainbow1": "#8E6BFF", "rainbow2": "#6B8BFF", "rainbow3": "#4DD6FF", "rainbow4": "#B48CFF", "rainbow5": "#FF8AD8" } }
+]
