@@ -1,8 +1,8 @@
 # Sift — Project Status
 
 > Snapshot for planning discussions. Written for a product/planning reader, not for engineers.
-> As of 2026-10-07, after guidance_v2 Phase 2 (version 0.1.0, not released).
-> Sources of truth: `ARCHITECTURE.md` (structure and settled decisions), `DESIGN.md` (look and feel), `CHANGELOG.md` (history by guidance file), `DECISIONS.md` (human-only ADR log). guidance_v1 built the app; **guidance_v2** is in progress, step by step (`PROGRESS.md`): Phases 0 (foundations), 1 (tabs and Stats) and 2 (gold economy) are done. Each new phase ships behind a feature flag that stays off until the owner turns it on.
+> As of 2026-10-08, after guidance_v2 Phase 3 (version 0.1.0, not released).
+> Sources of truth: `ARCHITECTURE.md` (structure and settled decisions), `DESIGN.md` (look and feel), `CONTENT.md` (how to make and release content), `CHANGELOG.md` (history by guidance file), `DECISIONS.md` (human-only ADR log). guidance_v1 built the app; **guidance_v2** is in progress, step by step (`PROGRESS.md`): Phases 0 (foundations), 1 (tabs and Stats), 2 (gold economy) and 3 (content pipeline, cosmetics, buildings, shop) are done. Each new phase ships behind a feature flag that stays off until the owner turns it on.
 
 ---
 
@@ -14,7 +14,7 @@ A Pomodoro-style focus timer with a collectible reward. You focus; if the sessio
 
 **Guiding rule:** nothing interrupts a focus session. No popups, badges, or animations while focusing; all the fun happens during the break.
 
-**Where it stands:** milestones M1–M6 (everything for the desktop web version) are done, and a lot of world detail was added on top. From guidance_v2: backup export/import, a Stats tab (M8) and the gold economy (M9) are built, the last two behind feature flags (`features.stats`, `features.economy`, both off). M7 (mobile apps) has not started. All data lives in the browser on one device.
+**Where it stands:** milestones M1–M6 (everything for the desktop web version) are done, and a lot of world detail was added on top. From guidance_v2: backup export/import, a Stats tab (M8), the gold economy (M9) and the content pipeline with cosmetics (M10: shop, skins, island themes, buildings) are built, the last three behind feature flags (`features.stats`, `features.economy`, `features.cosmetics`, all off). M7 (mobile apps) has not started. All data lives in the browser on one device.
 
 ---
 
@@ -27,7 +27,7 @@ A Pomodoro-style focus timer with a collectible reward. You focus; if the sessio
 | App type | Web app running locally in a desktop browser | No server, no accounts, no install |
 | UI | React + TypeScript | Standard, well-supported web stack |
 | 3D world | three.js (via React Three Fiber) | The island and animals are real-time 3D, drawn in the browser |
-| Art | Voxel (Minecraft-like blocks), defined in code | No external 3D model files; every animal is a small block model written as data |
+| Art | Voxel (Minecraft-like blocks), defined in code or imported from MagicaVoxel | Animals, skins, themes and buildings are data files under `content/`; new ones need no code |
 | Sound | Generated in the browser | No audio files; chimes are synthesized |
 | Storage | IndexedDB (browser database) | Data stays on this device and this browser only |
 | Future mobile | Capacitor (planned) | Wrap the same web app as iOS/Android apps instead of rewriting |
@@ -56,7 +56,9 @@ Home ──Start focus──▶ Focus ──time reached──▶ Overtime ─�
 | Focus | Near-black screen, big timer, dimmed island behind it. A hidden "Hold to stop" appears on mouse move |
 | Break | Reward card (tier badge, spinning 3D animal, name), break timer, "Start focus now" and "Home" |
 | Settings | Focus length, break length, chimes on/off. Saves instantly |
-| Collection | Stats strip (total focus time, sessions, species found) and a grid of all 50 animals, unfound ones as silhouettes |
+| Collection | Stats strip (total focus time, sessions, species found) and a grid of all 50 animals, unfound ones as silhouettes. With cosmetics: island theme picker and a skin sheet per animal |
+| Shop | (cosmetics) Featured items, animal skins, island themes, decorations and buildings, bought with gold |
+| Build mode | (cosmetics) Place, move, rotate and store owned buildings on the island |
 
 ---
 
@@ -125,6 +127,20 @@ Legend: **[+]** = not in the initial plan, added later at the owner's request.
 - Poking an animal shows its time left ("3d left").
 - The island never shrinks when animals leave; the Collection keeps counting every animal ever earned.
 
+### 3.7 Content pipeline (guidance_v2 Phase 3)
+- Every species, skin, skin family, island theme, building and release is a **data file** in `content/`, checked automatically (`npm run content:validate`, also in CI): names in English and Korean, prices inside the allowed ranges, size budgets, footprints, dates, and an up-to-date picture.
+- New shapes are made in **MagicaVoxel** (imported with `npm run content:vox`) or with a small code builder for simple decorations. Visual behavior (spinning sails, falling snow, lantern glow) comes from a fixed set of **presets** an item names.
+- **Content Studio** (`/studio` in the development server): browse and filter everything, preview any item on a sample island by day and night and in every theme, tune a skin family across all 50 animals at once, test where a building fits, and save edits back to the files.
+- `npm run content:sprites` renders the pixel-art pictures for the Collection and Shop from the 3D models (the old flat pictures were replaced so everything matches).
+- The app ships with one **content pack**; from Phase 5 newer packs can arrive from the server without an app update. `docs/CONTENT.md` is the step-by-step release guide.
+
+### 3.8 Cosmetics, shop and buildings (guidance_v2 Phase 3, flag `cosmetics`)
+- First release `v2-launch`: island themes Autumn, Snow, Desert and Cherry Blossom (next to the free Meadow); Fence, Lantern, Flower Bed, Well, Small Tree, Stone Statue, Windmill (turning sails), Footbridge (goes over the stream) and the Champion Flag (not for sale, for group winners later); skin families Golden, Snowy, Shadow, Pastel and Ghost for every animal, plus White Tiger and Night Unicorn.
+- **Shop**: opened by tapping the gold counter. Featured row, New and "Leaves in 3d" badges, skins only for animals you have met, a turning preview before buying. Prices: skins 25–60 (handcrafted 80), themes 120–200, buildings 10–80.
+- **Skins** apply to every animal of that species; **themes** recolor the whole island (and add falling leaves, snow or petals). Both are chosen in the Collection.
+- **Build mode** (hammer icon on Home): place owned buildings on tiles that fit (green/red preview), rotate, move or store them. Animals standing there walk to a free tile.
+- Animals now **walk around** buildings, water and cliffs on their way to the cabin and back. When the island is full they share tiles (up to four per tile).
+
 ---
 
 ## 4. Data model
@@ -139,6 +155,9 @@ All data is stored in the browser's IndexedDB on the user's device. Nothing leav
 | **Focus session** | focus attempt | start time, planned length, end time, effective length, status (running / completed / abandoned), the reward it produced |
 | **Placed animal** | earned animal | species, tier, tile position on the island, when earned, which session earned it, status (on the island / departed / later: lost in a war / spent) |
 | **Gold ledger** | gold movement | amount (+ earned, − spent), why, when; the balance is the sum |
+| **Owned item** | skin, theme or building bought | which item, when, from where; buildings can be owned several times |
+| **Equipped** | app | the skin chosen per species and the island theme |
+| **Placed building** | building on the island | which building, tile, rotation |
 | **Inbox notice** | thing to tell the user | e.g. "animals left N gold"; shown later on Home or Break, never during Focus |
 
 Notes for planning:
@@ -147,7 +166,7 @@ Notes for planning:
 - IDs are UUIDs and times are UTC timestamps, so cloud sync can be added later without reshaping data.
 - The database schema is at **version 4** (guidance_v2: animal status, ledger, inbox and stores for later phases). Versions 2 and 3 only rename stored tier names (see 5.2).
 - **Backup**: Settings → Data exports everything to a JSON file and imports it back (replacing all local data after a confirmation).
-- The 50-species catalog is fixed data shipped with the app, not stored in the database.
+- The 50-species catalog and all shop items are content data shipped with the app (a content pack), not stored in the database. Owned items keep working even if a later pack takes them out of the shop.
 
 ---
 
@@ -191,17 +210,18 @@ Why: owner preference for "Legendary" as the top word. **Watch out:** older ADRs
 ### 6.1 Must fix before any release
 - Fixed in guidance_v2 Phase 0: developer switches are off and can no longer reach production builds; backup export/import exists.
 - Before turning on `features.economy` for real users: confirm the starter gold (Q12) and that the Tiger expires (Q14), and review the departure look (`PROGRESS.md`, owner review queue).
+- Before turning on `features.cosmetics` (it needs `economy` for gold): review the launch content, Shop, Collection and build mode (`PROGRESS.md`, owner review queue) and confirm skins per species (Q13) and the new sprite style (Q33).
 
 ### 6.2 Unfinished / not started
 - **Mobile (M7)**: no iOS/Android build, no native adapters, no scheduled notification for focus end. On the web the end chime only plays if the page is still open.
 - No accounts or cloud sync (data model is prepared).
 - No onboarding / first-run screen.
 - No localization (all text is in one file, English only).
-- Gold can be earned but not spent yet: the Shop, skins and buildings come in Phase 3.
+- Remote content packs (new items without an app update) need the backend (Phase 5); today content ships with the app.
 
 ### 6.3 Gameplay and world limitations
 - **Short focus never pays**: focus can be set to 5–20 min, but rewards need 25 min, so short-session users never earn anything without overtime (ADR-012, owner should confirm).
-- **No pathfinding**: during Focus routines animals walk in straight lines and may pass through the cabin or across the stream.
+- Animals find a way around buildings and water, but paths follow the tile grid (no diagonals); an animal cut off by the stream (no footbridge) still walks straight across it.
 - The butterfly can fly over water and the camp.
 - On the smallest island the stream can end up almost straight.
 - Adding species lowers each species' chance within its tier (pick is uniform), so the 25 Common species are slow to complete.
@@ -232,6 +252,7 @@ Open questions from the plan, with the current default (ADR-004):
 - The `footprint` field (animals larger than one tile) exists in the catalog but is unused.
 
 ### 6.6 Quality
-- 446 unit tests pass and type checking is clean (checked 2026-10-07, after Phase 2).
-- Browser smoke test `npm run e2e` (44 checks, including Stats and a week-long fast-forward to a departure) builds its own bundle with the finished phases' flags and passes.
+- 585 unit tests pass and type checking is clean (checked 2026-10-08, after Phase 3); `npm test` also runs the full content validation.
+- Browser smoke test `npm run e2e` (55 checks, including Stats, a week-long fast-forward to a departure, buying a fence in the Shop and placing it in build mode) builds its own bundle with the finished phases' flags and passes.
+- A CI workflow (`.github/workflows/ci.yml`) runs type checking, unit tests and content validation on every push.
 - guidance_v2 work is on branch `sift-v2`, one commit per step.

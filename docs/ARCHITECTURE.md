@@ -136,7 +136,7 @@ type Phase =
 - Modules: `domain/island/stream.ts` (path), `world/stream/streamMesh.ts` (ribbon, falls, bank mesh), `world/stream/Stream.tsx` (render, flow, stateless splash particles).
 
 **Animals**
-- One 1×1 tile per animal; placed on a random free grass tile near the center; idle stays in the tile: turn, hop, shuffle (ADR-005).
+- One 1×1 tile per animal; placed on a random free grass tile near the center; idle stays in the tile: turn, hop, shuffle (ADR-005). Placement and save repair count buildings; with no free tile left, an animal shares the least crowded tile, at most `balance.placement.maxPerTile` (4) per tile, and sharers stand in its corners (Step 3.13).
 - Exception: the butterfly flaps (separate wing meshes) and flies up to 1.2 tiles from its tile (ADR-024).
 - World scale 0.25× (animal voxel = 1/6 block in the model, 1/24 on the island) (ADR-014).
 - Model limits: width ≤ 6 voxels; depth ≤ 6, or 8 for Epic and Legendary (ADR-025).
@@ -241,6 +241,7 @@ src/
 | M7 | Mobile: Capacitor, native adapters, local notifications | Not started |
 | M8 | Stats & tabs (guidance_v2 Phase 1): tab shell, per-day stats, overview, week, month calendar, day detail | Done, behind `features.stats` |
 | M9 | Economy (guidance_v2 Phase 2): ledger and wallet, expiry, departure presentation, coin pile, HUD counters, collection/poke updates | Done, behind `features.economy` |
+| M10 | Content pipeline & cosmetics (guidance_v2 Phase 3): palette keys, content packs and registry, presets, MagicaVoxel + DSL authoring, Content Studio, sprites and validation, launch content, inventory, skins and themes, Shop, Collection choices, build mode, pathfinding, tile sharing | Done, behind `features.cosmetics` |
 
 **Rules for the agent**
 - Every `domain/` module has Vitest tests (time math, 25 min threshold, 60 min cap, probabilities sum to 1, island size and monotonicity).

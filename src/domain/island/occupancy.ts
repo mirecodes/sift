@@ -1,3 +1,4 @@
+import { balance } from '../../../shared/balance/balance';
 import { content } from '../content';
 import type { PlacedAnimal } from '../types';
 import { CAMP_RESERVED, islandSide, islandTiles, type Tile } from './island';
@@ -91,7 +92,8 @@ export const animalTile = (a: Pick<PlacedAnimal, 'tileX' | 'tileZ'>): Tile => ({
 
 /**
  * Save repair (Step 0.7): every active animal standing where animals may not (water, camp,
- * reserved, a building, off the island) moves to the nearest free tile. Returns only the moved
+ * reserved, a building, off the island) moves to the nearest free tile, or, when none is free, to the
+ * nearest tile with room to share (Step 3.13, `balance.placement.maxPerTile`). Returns only the moved
  * animals, with their new tiles. Idempotent: a repaired save returns `[]`.
  */
 export function repairPlacements(input: Omit<OccupancyInput, 'animals'>, active: readonly PlacedAnimal[]): PlacedAnimal[] {
@@ -103,8 +105,10 @@ export function repairPlacements(input: Omit<OccupancyInput, 'animals'>, active:
   const moved: PlacedAnimal[] = [];
   for (const a of misplaced) {
     const dist = (t: Tile) => Math.hypot(t.x - a.tileX, t.z - a.tileZ);
-    const target = [...grid.values()].filter(isFreeForAnimal).sort((p, q) => dist(p) - dist(q) || p.x - q.x || p.z - q.z)[0];
-    if (!target) continue; // ponytail: a completely full island keeps the overlap; tile sharing arrives in Step 3.13
+    const nearest = (list: TileInfo[]) => list.sort((p, q) => dist(p) - dist(q) || p.x - q.x || p.z - q.z)[0];
+    const tiles = [...grid.values()];
+    const target = nearest(tiles.filter(isFreeForAnimal)) ?? nearest(tiles.filter((t) => isStandable(t) && t.animalIds.length < balance.placement.maxPerTile));
+    if (!target) continue; // every tile holds the maximum: the overlap stays
     target.animalIds.push(a.id);
     moved.push({ ...a, tileX: target.x, tileZ: target.z });
   }

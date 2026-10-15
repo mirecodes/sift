@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-10-08 · **Added** — Step 3.13: new animals and save repair count buildings when choosing a tile; with no free tile left an animal shares the least crowded tile (at most 4, `balance.placement.maxPerTile`, `BALANCE_VERSION` 2026-10-08.3) and sharers stand in the tile's corners. Phase 3 complete, behind `features.cosmetics` (off); `PROJECT_STATUS.md` refreshed.
+
 - 2026-10-08 · **Added** — Step 3.12: animals find their way: a grid A* (`domain/island/path.ts`) routes Focus walks to the cabin and sleep spots, the walk home and moves forced by a new building around buildings, water (footbridges are crossed), the camp and steps of more than one level; with no route they walk straight as before.
 
 - 2026-10-08 · **Added** — Step 3.11: build mode (with `features.cosmetics`), from a hammer icon on Home: a tray of owned, unplaced buildings; the chosen one appears as a see-through ghost over a green/red footprint on the nearest spot that fits, follows the mouse or a tap (arrow keys too), turns with R or Rotate and is placed with Place or Enter; tapping a placed building offers Move, Rotate and Store. Animals on the new tiles walk to the nearest free tile. Placed buildings persist. E2E places the bought fence and checks it after a reload (55 checks) (DESIGN.md 7.8).

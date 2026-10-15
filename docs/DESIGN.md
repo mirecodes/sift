@@ -528,6 +528,7 @@ Terrain, water and camp colors are one keyed record, `defaultBlocks` (`grassTop`
 - **Flow**: the water carries lighter streaks (`water-streak`) that scroll downstream (about 0.6 block/s). Focus slows this by `focusAnimalTimeScale`.
 - **Reduced motion**: streaks and splash are static.
 - Animals are never placed on water tiles (they are excluded from placement and from night sleeping spots).
+- When no free tile is left (buildings fill the island), animals share a tile, up to 4, each standing in its own corner (0.22 block from the center) instead of in the middle.
 
 ## 16. Voxel Models
 

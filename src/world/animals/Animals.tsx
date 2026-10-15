@@ -502,7 +502,31 @@ function sleepSpots(tiles: readonly (Spot & { water?: boolean })[]): Spot[] {
     .flatMap((t) => SLOT_OFFSETS.map(([dx, dz]) => ({ x: t.x + dx, z: t.z + dz })));
 }
 
-export function Animals({ animals, tiles, walkGrid, mode, dark, timeScale, reducedMotion }: AnimalsProps) {
+/** Where animals sharing one tile stand (Step 3.13: up to 4 per tile), in blocks from its center. */
+const SHARE_OFFSETS = [
+  [-0.22, -0.22],
+  [0.22, 0.22],
+  [0.22, -0.22],
+  [-0.22, 0.22],
+] as const;
+
+/** Animals on a shared tile get their own corner of it; alone, they keep the tile center. */
+export function spreadShared(animals: readonly IslandAnimal[]): IslandAnimal[] {
+  const groups = new Map<string, IslandAnimal[]>();
+  for (const a of animals) {
+    const key = `${a.tile.x},${a.tile.z}`;
+    groups.set(key, [...(groups.get(key) ?? []), a]);
+  }
+  return animals.map((a) => {
+    const group = groups.get(`${a.tile.x},${a.tile.z}`)!;
+    if (group.length < 2) return a;
+    const [dx, dz] = SHARE_OFFSETS[group.indexOf(a) % SHARE_OFFSETS.length]!;
+    return { ...a, tile: { x: a.tile.x + dx, z: a.tile.z + dz } };
+  });
+}
+
+export function Animals({ animals: all, tiles, walkGrid, mode, dark, timeScale, reducedMotion }: AnimalsProps) {
+  const animals = useMemo(() => spreadShared(all), [all]);
   const route = useMemo<RouteFn>(() => (from, to) => findPath(walkGrid, from, to), [walkGrid]);
   const routine: Routine = mode === 'focus' ? (dark ? 'sleep' : 'hut') : 'none';
   const slots = useMemo(() => {

@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-08.2';
+export const BALANCE_VERSION = '2026-10-08.3';
 
 const MINUTE = 60_000;
 
@@ -32,6 +32,8 @@ export const balance = deepFreeze({
   placement: {
     /** Weight of a free tile is 1 / (1 + centerBias × distance²): new animals prefer the center. */
     centerBias: 0.35,
+    /** With no free tile left, animals share a tile, at most this many on one (Step 3.13). */
+    maxPerTile: 4,
   },
   stats: {
     /** Abandoned (stopped) sessions count toward focus time. */

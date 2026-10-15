@@ -256,8 +256,14 @@ export function createAppStore(initialDeps: AppDeps) {
       await deps.storage.resetWorld(world).catch(() => undefined);
     }
 
-    // Save repair (Step 0.7): active animals on water, camp or reserved tiles move to the nearest free tile.
-    const repaired = repairPlacements({ seed: world.seed, islandLevel: islandLevel(stored), buildings: [] }, stored.filter(isActive));
+    const dummy = devSwitches ? deps.dummy : undefined;
+    const cosmetics = [...loaded.cosmetics, ...(dummy?.cosmetics ?? [])];
+    // ponytail: placed buildings beyond the owned count (e.g. placed with dummy items) are ignored, not deleted.
+    const placedBuildings = loaded.placedBuildings.filter((b, i, all) => all.slice(0, i + 1).filter((x) => x.defId === b.defId).length <= ownedCount(cosmetics, b.defId));
+    const occupied = () => placedBuildings.map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation }));
+
+    // Save repair (Step 0.7): active animals on water, camp, reserved or building tiles move to the nearest free tile.
+    const repaired = repairPlacements({ seed: world.seed, islandLevel: islandLevel(stored), buildings: occupied() }, stored.filter(isActive));
     if (repaired.length) {
       const byId = new Map(repaired.map((a) => [a.id, a]));
       stored = stored.map((a) => byId.get(a.id) ?? a);
@@ -274,7 +280,7 @@ export function createAppStore(initialDeps: AppDeps) {
       ? [...(deps.testSpecies ?? []).map((species) => ({ species, acquiredAt: deps.now() })), ...(deps.dummy?.animals ?? [])]
       : [];
     for (const { species, acquiredAt } of extra) {
-      const tile = pickNewAnimalTile(world.seed, animals, deps.rng);
+      const tile = pickNewAnimalTile(world.seed, animals, deps.rng, occupied());
       if (!tile) continue;
       const animal = newPlacedAnimal(deps.uuid(), species, tile, acquiredAt, 'test-mode');
       memoryOnly.add(animal.id);
@@ -288,10 +294,6 @@ export function createAppStore(initialDeps: AppDeps) {
       ledger = [...ledger, starter];
     }
 
-    const dummy = devSwitches ? deps.dummy : undefined;
-    const cosmetics = [...loaded.cosmetics, ...(dummy?.cosmetics ?? [])];
-    // ponytail: placed buildings beyond the owned count (e.g. placed with dummy items) are ignored, not deleted.
-    const placedBuildings = loaded.placedBuildings.filter((b, i, all) => all.slice(0, i + 1).filter((x) => x.defId === b.defId).length <= ownedCount(cosmetics, b.defId));
     for (const defId of dummy?.buildings ?? []) {
       const building = placeDummyBuilding(defId, world.seed, animals, placedBuildings);
       if (!building) continue;
@@ -430,7 +432,8 @@ export function createAppStore(initialDeps: AppDeps) {
       let animal: PlacedAnimal | undefined;
       const species = rollReward(effective, deps.rng);
       if (species) {
-        const tile = pickNewAnimalTile(world.seed, animals, deps.rng);
+        const buildings = get().placedBuildings.map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation }));
+        const tile = pickNewAnimalTile(world.seed, animals, deps.rng, buildings);
         if (tile) {
           animal = newPlacedAnimal(deps.uuid(), species, tile, now, session.id);
           session.rewardAnimalId = animal.id;

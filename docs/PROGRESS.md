@@ -86,7 +86,8 @@
   - Store `placeBuilding` / `storeBuilding` + `selectOccupancy`, `suggestTile`, `buildState`, `BuildScreen`, `BuildLayer`, `BuildIslandLayer`, hammer icon, animals walk to a changed home tile. Tests: place + persist, none left, camp refused, move, rotate, store, displaced animal moved and saved in the same write, Home only. Dev server with dummy data at 1280/390: tray, ghost with green tint, arrows, rotate, Enter places, tray updates, no console errors. E2E 55/55: place the bought fence, empty tray, survives reload, Esc leaves.
 - [x] 3.12 Pathfinding for walking animals
   - `findPath` (tests: straight, around buildings/camp/water, bridge crossing, one level per step, blocked start/goal, walled in, off the island) + `walkTo` in `Animals` for every routine leg; walk grid in `IslandScene`. E2E 55/55 (Focus routines run without errors).
-- [ ] 3.13 Animal placement with buildings
+- [x] 3.13 Animal placement with buildings
+  - `pickNewAnimalTile(…, buildings)` + `leastCrowded`, `repairPlacements` shares when full, store passes placed buildings (load, test/dummy animals, rewards), `spreadShared` corners in `Animals`. Tests: never on building/camp/water (30 picks), shares the emptiest tile, gives up only at 4 per tile, repair onto a shared tile, corner offsets. E2E 55/55 (×2). **Phase 3 complete; awaiting owner gate.**
 
 ## Phase 4 — Island move with a Unicorn (F5)
 
@@ -157,6 +158,8 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 3 · Feature flag: Phase 3 ships only when you set `features.cosmetics: true` (with `features.economy` for gold). To review with sample data also set `testMode.dummyData: true` (dev only): three equipped skins, the Autumn theme, four placed buildings, more in the build tray, 140 extra gold. Content Studio: `npm run dev`, open `/studio`.
+- 3.13 · Shared tiles (4 animals in corners) only happen when buildings fill the island; check it reads fine if you try it.
 - 3.12 · Watch animals walk to the cabin at the start of a day Focus with buildings in the way: routes follow tile centers (4 directions), so paths look grid-like. Animals cut off by the stream (no footbridge) still walk straight across it.
 - 3.11 · Build mode feel on a phone: tap a tile to move the ghost, then Place (no dragging the ghost itself, because a drag turns the camera). Arrow keys step along the island axes (Up = up-right on screen). The ghost is 60% opaque; check that red/green reads well on every theme.
 - 3.10 · Collection theme picker and species sheet (rows with Equip / price + Open shop). `Open shop` lands at the top of the Shop, not at that skin.
@@ -184,6 +187,7 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+- 3.13 · Max animals per tile is a balance value (`placement.maxPerTile` = 4), since the server will place animals too (Step 5.5); with every tile at 4 no reward animal is added (as before when no tile was free; the island grows with every animal, so this needs buildings on almost every tile). · Same rule on client and server.
 - 3.12 · 4-neighbor A* (no diagonals); the day routine's goal is the tile in front of the cabin door, then the last short step into the door is straight. · Diagonals would cut building corners; the door itself is on a camp tile.
 - 3.11 · Touch: a tap moves the ghost and Place confirms; the ghost is not dragged. · Drag already turns the camera (DESIGN.md 7.1); two gestures on one finger would conflict.
 - 3.11 · Build mode keeps the Home camera (drag to turn ±30°, zoom) and hides the Home panel, HUD and notices. · "Camera stays isometric; rotation allowed."
