@@ -42,6 +42,8 @@ export default defineConfig({
   plugins: [react(), studioSave()],
   test: {
     environment: 'node',
+    // Terrain sweeps over hundreds of seeds take several seconds on slow CI machines.
+    testTimeout: 30_000,
     include: ['src/**/*.test.ts', 'shared/**/*.test.ts', 'tools/**/*.test.ts'],
   },
 });

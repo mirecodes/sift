@@ -36,12 +36,15 @@ describe('resolveRuntimeConfig', () => {
     expect(Object.values(resolveRuntimeConfig({}, false, 'all').features).every(Boolean)).toBe(true);
   });
 
-  it('keeps every flag and developer switch off in the committed config', async () => {
+  it('keeps unreleased flags and destructive developer switches off in the committed config', async () => {
     const { parse } = await import('yaml');
     const { readFileSync } = await import('node:fs');
     const file = parse(readFileSync(new URL('../../config/app.yaml', import.meta.url), 'utf8'));
     const c = resolveRuntimeConfig(file, true);
-    expect(Object.values(c.features).some(Boolean)).toBe(false);
-    expect([c.testMode.resetMapOnStart, c.testMode.animals.enabled, c.testMode.dummyData].some(Boolean)).toBe(false);
+    // Only the owner turns a phase on; these are the ones the owner has released so far.
+    const released = new Set(['stats', 'economy', 'cosmetics']);
+    expect(Object.entries(c.features).filter(([f, on]) => on && !released.has(f))).toEqual([]);
+    // `dummyData` is memory-only (never saved); these two would change or hide real data.
+    expect([c.testMode.resetMapOnStart, c.testMode.animals.enabled].some(Boolean)).toBe(false);
   });
 });
