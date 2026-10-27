@@ -1,0 +1,212 @@
+/* Friends tab, visit banner and focus together (DESIGN.md 7.11–7.13). */
+.section {
+  margin-top: var(--space-2xl);
+}
+.section h2 {
+  margin: 0 0 var(--space-sm);
+}
+.card {
+  display: grid;
+  gap: var(--space-md);
+}
+.card h2,
+.card p {
+  margin: 0;
+}
+.me {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.me .who {
+  flex: 1;
+}
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 64px;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-hairline);
+  flex-wrap: wrap;
+}
+.who {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 120px;
+}
+.actions {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+@media (max-width: 479px) {
+  .actions {
+    width: 100%;
+    padding-left: calc(48px + var(--space-md));
+    justify-content: flex-start;
+  }
+}
+.handle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+}
+.tag {
+  color: var(--color-body-mid);
+}
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: var(--radius-full);
+  background: var(--color-hairline);
+  overflow: hidden;
+}
+.presence {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-body-mid);
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-green);
+}
+.muted {
+  color: var(--color-body-mid);
+}
+.error {
+  color: var(--color-accent-red);
+}
+.small {
+  min-height: 36px;
+  padding: var(--space-xs) var(--space-md);
+}
+@media (pointer: coarse) {
+  .small {
+    min-height: 44px;
+  }
+}
+.picks {
+  list-style: none;
+  margin: var(--space-md) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-xs);
+  max-height: 50vh;
+  overflow: auto;
+}
+.pick {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 52px;
+}
+.pick input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+}
+
+/* Visit banner (7.12) */
+.banner {
+  position: fixed;
+  top: calc(var(--space-lg) + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(440px, calc(100% - 2 * var(--gutter)));
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  z-index: 20;
+}
+.banner .title {
+  flex: 1;
+  margin: 0;
+}
+
+/* Home presence (7.13) */
+.stack {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-body-mid);
+  cursor: pointer;
+}
+.faces {
+  display: inline-flex;
+}
+.faces > span {
+  margin-left: -8px;
+  box-shadow: 0 0 0 2px var(--color-canvas);
+}
+.faces > span:first-child {
+  margin-left: 0;
+}
+
+/* Focus line (7.13) */
+.withLine {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+  color: var(--color-mute-soft);
+}
+.dots {
+  display: inline-flex;
+  gap: var(--space-xs);
+}
+.dots > span {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-mute-soft);
+}
+.dots > span[data-on='true'] {
+  background: var(--color-mute-soft);
+}
+
+/* Break strip (7.13) */
+.strip {
+  display: grid;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+}
+.stripRow {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+}
+.stripItem {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 64px;
+}
+.hollow {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-hairline);
+}

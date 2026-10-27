@@ -27,7 +27,7 @@ export const appStore = createAppStore({
   dummy: import.meta.env.DEV && testMode.dummyData ? createDummyData(Date.now()) : undefined,
   economy: features.economy,
   clientVersion: APP_VERSION,
-  remote: createRemote(backend, { platform: platform.name, appVersion: APP_VERSION, secure: platform.secure }),
+  remote: createRemote(backend, { platform: platform.name, appVersion: APP_VERSION, secure: platform.secure, sampleFriends: import.meta.env.DEV && testMode.dummyData }),
   remoteContent: features.remoteContent,
   push: platform.push,
   platformName: platform.name,

@@ -13,6 +13,7 @@ import { Button } from '../../ui/components/Button';
 import { FeatureCard, Panel, TierCard } from '../../ui/components/Surfaces';
 import { RewardModel } from '../../world/preview/RewardModel';
 import { NoticeCard } from '../NoticeCard';
+import { TogetherStrip } from '../friends/Together';
 import layer from '../Screen.module.css';
 import styles from './BreakScreen.module.css';
 
@@ -98,6 +99,7 @@ export function BreakScreen() {
             </p>
           </FeatureCard>
         )}
+        {features.together && <TogetherStrip />}
 
         {over ? (
           <p className={`${styles.ready} type-display-sm`}>{strings.break.ready}</p>

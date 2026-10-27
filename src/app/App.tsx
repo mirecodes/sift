@@ -9,6 +9,9 @@ import { platform } from '../platform';
 import { clearContentGeometry } from '../world/voxel/geometry';
 import { AccountChoiceSheet, OutdatedScreen } from '../screens/account/AccountChoiceSheet';
 import { PushPromptSheet } from '../screens/account/PushPromptSheet';
+import { FriendsScreen } from '../screens/friends/FriendsScreen';
+import { LobbySheet } from '../screens/friends/TogetherSheets';
+import { VisitBanner } from '../screens/friends/VisitBanner';
 import { bindPhaseEffects } from './phaseEffects';
 import { usePrefersReducedMotion } from '../ui/hooks';
 import { strings } from '../ui/strings';
@@ -84,6 +87,10 @@ export function App() {
   const accountChoice = useApp((s) => s.account.choice !== null);
   const outdated = useApp((s) => s.account.outdated);
   const pushPrompt = useApp((s) => s.pushPrompt);
+  const visit = useApp((s) => s.visit);
+  const room = useApp((s) => s.room);
+  const pendingLink = useApp((s) => s.pendingLink);
+  const visitCount = useApp((s) => s.social?.visitCount);
   const finishIslandMove = useApp((s) => s.finishIslandMove);
   const moveRefs = useIslandMoveRefs(islandMove);
   const moving = islandMove !== null && !reducedMotion;
@@ -117,11 +124,25 @@ export function App() {
         { model: next, mode: 'own' as const, motion: { lift: moveRefs.newLift, bobY: moveRefs.newBob, calm: true } },
       ];
     }
-    const own = buildIslandModel({ ...base, world, animals });
+    // Visit mode (Step 7.4): the friend's island instead of the user's own.
+    if (visit) {
+      const model = buildIslandModel({
+        ownerId: visit.userId,
+        world: visit.world,
+        islandLevel: visit.level,
+        animals: visit.animals,
+        equipped: visit.equipped,
+        buildings: visit.buildings,
+        goldPileLevel: visit.goldPileLevel,
+        ...(visit.championWeek && { championWeek: visit.championWeek }),
+      });
+      return [{ model, mode: 'visit' as const }];
+    }
+    const own = buildIslandModel({ ...base, world, animals, ...(features.visitTraceProp && visitCount !== undefined && { visitCount }) });
     const list: SceneIsland[] = [{ model: own, mode: 'own' }];
     if (DEV_TWO_ISLANDS !== null) list.push({ model: devSecondIsland(own, DEV_TWO_ISLANDS), mode: 'visit' });
     return list;
-  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings, movingId, moving, islandMove, moveRefs]);
+  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings, movingId, moving, islandMove, moveRefs, visit, visitCount]);
 
   // Who crosses the bridge, from which old tile to which new one, in the skin they wear.
   const crossing = useMemo(() => {
@@ -140,7 +161,20 @@ export function App() {
   const focusing = phase.kind === 'focus';
   const tab = focusing || !TABS.some((t) => t.id === activeTab) ? 'island' : activeTab;
   // The tab bar is hidden on Focus (focus rule) and on the Island tab's Settings and Collection pages.
-  const showTabs = ready && TABS.length > 1 && !focusing && !moving && !(tab === 'island' && phase.kind === 'idle' && view !== 'home');
+  const visiting = visit !== null && !focusing;
+  const showTabs = ready && TABS.length > 1 && !focusing && !moving && !visiting && !(tab === 'island' && phase.kind === 'idle' && view !== 'home');
+
+  // A crossfade when entering or leaving a friend's island (DESIGN.md 7.12).
+  const wasVisiting = useRef(visiting);
+  useEffect(() => {
+    if (wasVisiting.current !== visiting && !reducedMotion) setCrossfade((n) => n + 1);
+    wasVisiting.current = visiting;
+  }, [visiting, reducedMotion]);
+
+  // A friend link opens the Friends tab with the request ready to send (Step 6.5).
+  useEffect(() => {
+    if (pendingLink?.kind === 'add' && features.friends && ready) setTab('friends');
+  }, [pendingLink, ready, setTab]);
   useEffect(() => {
     document.documentElement.toggleAttribute('data-tabs', showTabs);
   }, [showTabs]);
@@ -196,10 +230,16 @@ export function App() {
   } else if (moving) {
     mode = 'sequence';
     screen = <MoveScreen />;
+  } else if (visiting) {
+    mode = 'home';
+    screen = <VisitBanner />;
   } else if (tab === 'stats') {
     mode = 'paused';
     screen = <StatsScreen />;
-  } else if (tab === 'friends' || tab === 'group') {
+  } else if (tab === 'friends') {
+    mode = 'paused';
+    screen = <FriendsScreen />;
+  } else if (tab === 'group') {
     mode = 'paused';
     screen = <TabPage title={strings.tabs[tab]} />;
   } else if (phase.kind === 'break') {
@@ -251,6 +291,7 @@ export function App() {
       {accountChoice && !focusing && <AccountChoiceSheet />}
       {outdated && <OutdatedScreen />}
       {pushPrompt && !focusing && <PushPromptSheet />}
+      {room && room.status !== 'started' && !focusing && <LobbySheet />}
       {showTabs && phase.kind === 'break' && tab !== 'island' && <BreakPill />}
       {showTabs && <TabBar tabs={TABS} active={tab} onSelect={setTab} label={strings.aria.tabs} />}
     </>

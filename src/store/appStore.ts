@@ -882,7 +882,8 @@ export function createAppStore(initialDeps: AppDeps) {
       const { phase } = get();
       if (phase.kind !== 'break') return;
       await commit({ phase: IDLE });
-      set({ phase: IDLE, revealPending: null, view: 'home' });
+      // A focus-together room ends with the break (its strip is shown there).
+      set({ phase: IDLE, revealPending: null, view: 'home', room: null });
       activatePendingPack();
       // Signed in: returning Home always pulls (Step 5.6).
       if (account.linked) await account.sync(true);

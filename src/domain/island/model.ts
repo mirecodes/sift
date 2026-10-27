@@ -40,6 +40,8 @@ export interface IslandModel {
   goldPileLevel: number;
   /** Shows the champion flag (F11). */
   championWeek?: string;
+  /** Visits in the retention window: drives the visit-trace placeholder prop (Step 7.5). */
+  visitCount?: number;
 }
 
 /** How an island is being viewed; the render mode (home/focus/break) is separate. */
@@ -54,6 +56,8 @@ export interface IslandModelInput {
   buildings?: readonly PlacedBuilding[];
   goldPileLevel?: number;
   championWeek?: string;
+  /** The own island's visits (only with `features.visitTraceProp`). */
+  visitCount?: number;
   /** Departed animals still drawn (`pendingDepartures().leaving`). */
   leaving?: ReadonlySet<string>;
   /** Animals whose departure plays now, in order. */
@@ -88,5 +92,6 @@ export function buildIslandModel(input: IslandModelInput): IslandModel {
     goldPileLevel: input.goldPileLevel ?? 0,
   };
   if (input.championWeek) model.championWeek = input.championWeek;
+  if (input.visitCount !== undefined) model.visitCount = input.visitCount;
   return model;
 }

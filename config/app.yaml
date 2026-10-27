@@ -35,6 +35,11 @@ backend:
   supabaseUrl: ''
   supabaseAnonKey: ''
 
+# Shared links (friend add, group invite, war replay) point here (docs/guides/MOBILE_SETUP.md
+# §Deep links). Empty: the web page's own address. Set it to your domain before shipping the apps.
+links:
+  origin: ''
+
 # Feature flags (one per guidance_v2 phase). A phase stays off until it is
 # finished and the owner turns it on. `VITE_FEATURES=stats,...` (or `all`) at
 # build time turns flags on for test builds only (`npm run e2e` uses it).

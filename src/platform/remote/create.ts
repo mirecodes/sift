@@ -8,7 +8,7 @@ export type BackendChoice = { provider: 'none' } | { provider: 'fake' } | { prov
  * The configured backend (`config/app.yaml` → `backend`), loaded on first use so a local-only app never
  * downloads it. `none` → null: no accounts, everything local as before.
  */
-export function createRemote(backend: BackendChoice, opts: { platform: Platform; appVersion: string; secure: SecureStorageAdapter }): RemotePort | null {
+export function createRemote(backend: BackendChoice, opts: { platform: Platform; appVersion: string; secure: SecureStorageAdapter; sampleFriends?: boolean }): RemotePort | null {
   if (backend.provider === 'none') return null;
   let loading: Promise<RemotePort> | null = null;
   const load = () =>
@@ -20,6 +20,8 @@ export function createRemote(backend: BackendChoice, opts: { platform: Platform;
               appVersion: opts.appVersion,
               latencyMs: 150,
               store: ls && { get: (k) => ls.getItem(k), set: (k, v) => ls.setItem(k, v), remove: (k) => ls.removeItem(k) },
+              // Development sample friends (`testMode.dummyData`), loaded only when asked for.
+              ...(opts.sampleFriends && { onSignIn: async (f, userId) => (await import('./fakeBots')).seedFakeSocial(f, userId) }),
             });
             // Development and tests: `__siftFake.setOnline(false)` simulates a lost connection.
             (globalThis as { __siftFake?: unknown }).__siftFake = fake;

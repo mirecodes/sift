@@ -138,13 +138,20 @@
 
 ## Phase 7 — Identity, friends, visits, presence, focus together (F7)
 
-- [ ] 7.1 Handle `name#tag` (shared rule `shared/rules/handle.ts`, ADR)
-- [ ] 7.2 Moderation, block and report (required for app stores)
-- [ ] 7.3 Friends
-- [ ] 7.4 Island snapshot and visit mode
-- [ ] 7.5 Visit traces (mechanism only; design decided later)
-- [ ] 7.6 Presence
-- [ ] 7.7 Focus together
+- [x] 7.1 Handle `name#tag` (shared rule `shared/rules/handle.ts`, ADR)
+  - ADR-051. Rule tested (Hangul, Latin, mixed, jamo, emoji, spaces, digits only, NFD = NFC key, case, bounds, reserved, parse/format); `set_handle` tested on memory and PGlite (tag kept, cooldown, 30 people one name). "Choose your name" in the Friends tab with live feedback (e2e).
+- [x] 7.2 Moderation, block and report (required for app stores)
+  - `server/core/moderation.ts` (Korean/English lists, look-alike digits, no URLs); block/unblock/report ops and sheets; blocks hide requests, presence, visits and invites both ways (tested).
+- [x] 7.3 Friends
+  - Ops + Friends tab (header copy/share/link, requests, list, visitors, blocked, ⋯ menu); crossing requests auto-accept; limit 100; push `friends` (tested). Friend links open Add friend prefilled.
+- [x] 7.4 Island snapshot and visit mode
+  - `get_island_snapshot` (friends; group in Phase 8), visit mode with banner, Back/Esc, crossfade, 60 s cache and prefetch on hover/press. Screenshot checked.
+- [x] 7.5 Visit traces (mechanism only; design decided later)
+  - `visits` rows (one per visitor/host/day, `trace_kind: basic`, 30-day retention), Recent visitors, `VisitMarker` placeholder behind `features.visitTraceProp`; no notices or push for visits.
+- [x] 7.6 Presence
+  - Polled every 30 s (`social_state`; ADR-047), `focusingNow` (running, non-stale), `showPresence` toggle (Settings › Friends, outbox `presence_setting`), Home avatar stack. Group list and ranking presence come with Phase 8.
+- [x] 7.7 Focus together
+  - Rooms, lobby (3 s polls), shared server start (late join: own start, room's end), silent `with …` line and dots in Focus, Together strip on Break, invite notice with Join; rewards individual (tested on the server and with two devices in the store). **Phase 7 complete behind `friends`, `presence`, `together`, `visitTraceProp` (off).**
 
 ## Phase 8 — Groups: membership, ranking, missions, weekly reward (F11)
 
@@ -246,6 +253,15 @@
 - 6.6 · A category toggle may ask for permission; "Not now" is remembered. · Touching a toggle is a deliberate request.
 - 6.6 · Push texts are short and name-free (`server/core/push.ts`). · The Inbox holds the details; no handle lookups in the push path.
 - 6.8 · iOS: a new Live Activity per phase change; the break one is ended at once with dismissal at the break end. · Removes itself without the app (ADR-049).
+- 7.1 · The first rename after choosing a name is free; the 30-day cooldown starts with it. · A typo at onboarding should not lock a name for a month.
+- 7.1 · Reserved words include `sift`, `admin`, `운영자`, `관리자`, `공식`, … (`RESERVED_NAMES`). · Impersonation of the app.
+- 7.2 · The word filter skips short words that hide in normal names (`dick`/Dickens, `rape`/grape, `새끼`/새끼고양이, `시바`/시바견). · Fewer false rejections; reports cover the rest.
+- 7.3 · A request to someone who blocked you answers "not found". · Blocking must not be detectable.
+- 7.4 · Visiting is allowed for friends now; same-group members are added in Phase 8 through `addRelation`. · One gate for snapshot, presence and invites.
+- 7.6 · Presence is polled every 30 s while Home or the Friends tab shows. · No realtime client (ADR-047).
+- 7.7 · A participant starting ≤ 30 s after the host gets the room's exact start; later (≤ 2 min) their own start and the room's end. · "Same start" despite polling delay, without crediting minutes not focused.
+- 7.7 · The Home avatar stack invites the focusing friends to a new room. · "Invites the user to start too".
+- 7.x · Dev sample friends live in the fake server (bots), not in local memory. · Social data is server data; every screen then shows real flows.
 - 6.8 · Android: overtime shows as the chronometer going below zero. · The system cannot change the text without the app; verified behavior noted in ADR-049.
 
 - 3.13 · Max animals per tile is a balance value (`placement.maxPerTile` = 4), since the server will place animals too (Step 5.5); with every tile at 4 no reward animal is added (as before when no tile was free; the island grows with every animal, so this needs buildings on almost every tile). · Same rule on client and server.

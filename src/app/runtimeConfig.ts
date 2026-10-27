@@ -30,6 +30,8 @@ export interface RuntimeConfig {
   features: Record<Feature, boolean>;
   /** Phase 5 backend (docs/guides/BACKEND_SETUP.md). */
   backend: BackendConfig;
+  /** Where shared links point (Step 6.5); empty = this page's origin (web). */
+  links: { origin: string };
 }
 
 export type BackendConfig =
@@ -45,6 +47,7 @@ type ConfigFile = Partial<{
   }>;
   features: Partial<Record<string, boolean>>;
   backend: Partial<{ provider: string; supabaseUrl: string; supabaseAnonKey: string }>;
+  links: Partial<{ origin: string }>;
 }>;
 
 /** `backend` from the file; `forcedBackend` (`VITE_BACKEND`) overrides the provider. Incomplete Supabase settings mean none. */
@@ -78,6 +81,7 @@ export function resolveRuntimeConfig(file: ConfigFile, isDev: boolean, forced = 
     },
     features,
     backend: resolveBackend(file.backend, forcedBackend),
+    links: { origin: typeof file.links?.origin === 'string' ? file.links.origin.replace(/\/+$/, '') : '' },
   };
 }
 

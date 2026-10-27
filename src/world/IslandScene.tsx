@@ -10,6 +10,7 @@ import { Island } from './island/Island';
 import { Camp } from './props/Camp';
 import { Buildings } from './props/Buildings';
 import { CoinPile } from './props/CoinPile';
+import { VisitMarker } from './props/VisitMarker';
 import { FIELD_PRESETS, ParticleField } from './presets/particles';
 import { themeDef, themePalette } from './voxel/geometry';
 import { Stream } from './stream/Stream';
@@ -86,6 +87,7 @@ export function IslandScene({ model, mode, worldMode, night, dark, reducedMotion
       <Stream streams={streams} tiles={tiles} timeScale={timeScale} reducedMotion={reducedMotion} blocks={blocks} />
       <Camp night={night} reducedMotion={reducedMotion} blocks={blocks} />
       <CoinPile level={model.goldPileLevel} night={night} sparkle={!reducedMotion && worldMode !== 'focus'} />
+      {model.visitCount !== undefined && <VisitMarker visits={model.visitCount} />}
       <Buildings buildings={model.buildings} heights={heights} night={night} timeScale={timeScale} reducedMotion={reducedMotion} />
       <Animals animals={model.animals} tiles={tiles} walkGrid={walkGrid} mode={worldMode} dark={dark} timeScale={timeScale} reducedMotion={reducedMotion} />
       {/* Theme weather drifts over the island on Home and Break only, like the clouds. */}

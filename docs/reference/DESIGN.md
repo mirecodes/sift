@@ -308,6 +308,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - `SOUND`: `Chimes` as a `toggle`.
 - `STATS` (only with the Stats tab): `Week starts on` as a `segmented` control `Monday` / `Sunday` (default Monday).
 - `DATA`: `Export data` and `Import data` rows, each with a `button-secondary` (`Export`, `Import…`). Picking a file shows a `card-feature` below the rows: `body-md` summary (`Backup from 7 Oct 2026: 12 sessions, 8 animals.`), `body-sm` `--color-body-mid` warning `This replaces all data on this device.`, then `button-primary` `Replace data` and `button-secondary` `Cancel`. An unreadable file shows a `body-sm` `--color-accent-red` line in the same place instead.
+- `FRIENDS` (with `features.presence`, signed in): `Show when I'm focusing` as a `toggle`.
 - `ACCOUNT` (only with a backend, before `DATA`): signed out, a row with the `body-md` pitch `Sign in to keep your island safe across devices and to play with friends.` and `button-primary` `Sign in`. Signed in: `Signed in as mina@example.com` with `button-secondary` `Sign out`; when offline a `body-sm` `--color-body-mid` line `Offline. Your changes sync when you are back online.`; when the session expired a row with `Sign in again` (primary); a `Delete account` row (secondary). Below, a `body-sm` underlined text button `What leaves this device` opens a sheet with four short bullet lines.
 - Sign out and Delete account confirm in a sheet: `body-md` explanation, Delete needs the word `DELETE` typed, buttons `Export a copy`, `Cancel`, then the action (primary).
 - Content is a single column, max width 560px, centered; changes save immediately (no save button).
@@ -362,6 +363,32 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - **First sign-in choice** (wide sheet, 560px): `This account already has an island` / `This device has its own island too. Which one do you want to keep?`; a full-width primary `Use the data from your account (recommended)` with the note `A copy of this device is saved to your downloads first.`; then a `text-input` `Type REPLACE to confirm`, the note `The island on your account is replaced for good.` and a secondary `Replace account data with this device`. Closing it cancels the sign-in.
 - **Please update** (server refuses the app version): a full-screen canvas, centered `display-sm` `Please update Sift`, `body-md` text, `Reload`.
 - **Break, waiting for the server** (signed in, offline at End focus): the reward card area shows the `card-feature` with `Revealing when you’re back online…` (`role="status"`); when the answer comes the reward card replaces it and the reveal plays as usual.
+
+### 7.11 Friends (tab, Phase 7)
+- Canvas tab page (6.7), `display-md` title `Friends`, content max width 560px.
+- **Signed out**: a `card-feature` with `body-md` `Sign in to add friends and visit their islands.` and `Sign in` (primary). **Offline**: `body-sm` `--color-body-mid` `Can't reach Sift right now.` with `Try again` (secondary).
+- **Handle** everywhere: name in `body-md-strong`, `#4821` right after it in `caption` `--color-body-mid` (`민지#4821`). Avatar: the 48px sprite of the person's avatar species (their newest animal by default) on a `--color-hairline` circle, a chick when there is none.
+- **Choose your name** (required before anything else here, Step 7.1): a `card-feature` with `display-xs` `Choose your name`, `body-sm` `--color-body-mid` `2–12 letters or numbers. Hangul works. Others add you by name#tag.`, a `text-input` `Name` with live feedback from the shared rule (`body-sm` `--color-accent-red`: `Use 2–12 characters.`, `Letters and numbers only.`, `Add a letter.`, `That name is reserved.`) and `Save` (primary). After saving: `You are 민지#4821` with `Copy` (secondary).
+- **Header** (`card-feature`, row): your handle and avatar, `Copy` and `Share` (secondary, small; Share uses the share sheet or copies the `/add/name-tag` link), then `Add friend` (primary) under it.
+- **Add friend** (`Sheet`): `text-input` `name#tag`, `Send request` (primary). Results in `body-sm`: `Request sent.`, `You are now friends.`, `No one with that name#tag.`, `Type a name#tag like Mina#0042.`
+- **Requests** (`eyebrow` `REQUESTS · 2`): incoming rows with `Accept` (primary, small) and `Decline` (secondary, small); outgoing rows with `body-sm` `--color-body-mid` `Sent` and `Cancel` (secondary, small).
+- **Friends list** (`eyebrow` `FRIENDS · 5`): rows (avatar, handle, and under it `caption` `Focusing now` with a 6px `--color-accent-green` dot when they focus), then `Visit` (secondary, small), `Focus together` (secondary, small) and a `⋯` icon button opening a small menu `Remove`, `Block`, `Report`. Press (touch) or hover (mouse) on `Visit` prefetches the island. Empty: `body-sm` `No friends yet. Share your name#tag to get started.`
+- **Recent visitors** (`eyebrow` `RECENT VISITORS`): avatar, handle, `caption` `--color-body-mid` relative time (`2 h ago`). Hidden when empty.
+- **Blocked** (`eyebrow` `BLOCKED`, only when any): handle and `Unblock` (secondary, small).
+- Remove and Block confirm in a `Sheet` (`body-md` one line; the action as primary). **Report** `Sheet`: `segmented` reason `Name · Harassment · Cheating · Other`, optional `text-input` `Note`, `Send report` (primary); then `Thanks. We'll take a look.`
+- Rows: `settings-row` style (hairline dividers, min height 64px), actions right-aligned and wrapping under the handle below 480px.
+
+### 7.12 Visit mode (Phase 7)
+- The scene swaps to the friend's island (Part II, their theme, buildings, animals in their skins, gold pile, champion flag) with the `scene-crossfade` cloud-white fade (none with reduced motion). Time of day follows the viewer.
+- A `panel` banner at the top center (like the notice card, 7.2a): `body-md-strong` `민지#4821's island`, a `⋯` icon button (`Report`, `Block`) and `Back` (secondary). Top bar, HUD, tab bar, shop and build are hidden. Rotate and zoom like Home; pokes are local only. Esc or Back returns to your island.
+
+### 7.13 Focus together (Phase 7)
+- **Invite**: `Focus together` on a friend's row (or the Home avatar stack) opens a `Sheet`: `display-sm` `Focus together`, `body-sm` `25 min focus · invite friends`, a list of friends with checkboxes (the tapped one pre-checked), `Invite` (primary).
+- **Lobby** (`Sheet`, stays open): `display-sm` `Focus together`, `body-sm` `--color-body-mid` `25 min · starts when Mina taps Start`, one row per participant (avatar, handle, `caption` state `Joined` / `Invited` / `Left`), and for the host `Start` (primary, enabled once someone joined) and `Cancel` (secondary); for others `Leave` (secondary). The lobby closes after 5 minutes without a start (`This room has closed.`).
+- **Invite notice** (7.2a, on Home and Break): `Mina invited you to focus together.` with `Join` (primary) beside `OK`.
+- **During Focus** (the only social element allowed there, §2.14): one static `body-sm` `--color-mute-soft` line under the timer `with 민지 · 재현` and a row of 6px dots, one per other participant: filled `--color-mute-soft` while they focus, hollow (1px ring) once they stopped or finished. Updates silently: no animation, no sound. Hidden when `Show when I'm focusing` is off.
+- **Break**: a `Together` strip under the reward card inside the break panel: one 48px sprite per participant with their handle in `caption` (their revealed animal, or a hollow circle when they stopped or are still focusing).
+- **Home presence**: under the Home panel's start button, a row of up to 3 overlapping 24px avatar circles (canvas ring) and `caption` `3 friends focusing`; tapping it opens Focus together with those friends. Hidden when none.
 
 ---
 

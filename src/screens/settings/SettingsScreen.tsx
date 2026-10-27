@@ -160,6 +160,15 @@ export function SettingsScreen() {
           </>
         )}
 
+        {runtimeConfig.features.presence && account === 'signedIn' && (
+          <>
+            <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.friends.section}</h2>
+            <SettingsRow label={strings.friends.showPresence}>
+              <Toggle label={strings.friends.showPresence} checked={settings.showFocusPresence} onChange={(v) => void updateSettings({ showFocusPresence: v })} />
+            </SettingsRow>
+          </>
+        )}
+
         {account !== 'off' && (
           <>
             <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.account.section}</h2>

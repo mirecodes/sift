@@ -423,6 +423,24 @@ await acct.evaluate(() => {
 });
 await acct.waitForTimeout(2000);
 check('back online, the server reveals the reward', (await acct.getByText('Revealing when you’re back online…').count()) === 0 && (await acct.getByText('Nice work.').count()) === 0);
+
+// Friends (Phase 7): a name is required first; the server assigns the tag; requests need an exact handle.
+await acct.getByRole('button', { name: 'Home' }).click();
+await acct.waitForTimeout(500);
+await acct.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Friends' }).click();
+await acct.waitForTimeout(1500);
+check('the Friends tab asks for a name first', await acct.getByRole('heading', { name: 'Choose your name' }).isVisible());
+await acct.getByLabel('Name').fill('ㄱㄴ');
+check('the shared name rule answers at once', await acct.getByText('Letters and numbers only.').isVisible());
+await acct.getByLabel('Name').fill('Mina');
+await acct.getByRole('button', { name: 'Save' }).click();
+await acct.waitForTimeout(1500);
+check('the chosen name gets a 4-digit tag', (await acct.getByText('Mina', { exact: true }).isVisible()) && (await acct.getByText(/^#\d{4}$/).first().isVisible()));
+await acct.getByRole('button', { name: 'Add friend' }).click();
+await acct.getByLabel('name#tag').fill('Nobody#0001');
+await acct.getByRole('button', { name: 'Send request' }).click();
+await acct.waitForTimeout(1000);
+check('a request to an unknown handle says so', await acct.getByText('No one with that name#tag.').isVisible());
 await acct.close();
 
 check('no page errors', errors.length === 0);

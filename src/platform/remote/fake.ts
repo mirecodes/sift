@@ -19,6 +19,8 @@ export interface FakeRemoteOptions {
   latencyMs?: number;
   /** A server database shared with another fake remote (two devices of two people in tests). */
   db?: MemoryServerDb;
+  /** Runs after every sign-in (development sample data, `fakeBots.ts`). */
+  onSignIn?: (fake: FakeRemote, userId: string) => Promise<void>;
 }
 
 export interface FakeRemote extends RemotePort {
@@ -61,6 +63,12 @@ export function createFakeRemote(opts: FakeRemoteOptions): FakeRemote {
     else opts.store?.remove(SESSION_KEY);
     return s;
   };
+  /** A sign-in: the session, then the sign-in hook (sample data). */
+  const begin = async (s: RemoteSession): Promise<RemoteSession> => {
+    setSession(s);
+    await opts.onSignIn?.(self, s.userId).catch((e) => console.warn('Sift: fake sample data failed.', e));
+    return s;
+  };
   const pending = new Set<string>();
   const userFor = (email: string) => `fake-${email.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
   const delay = () => (opts.latencyMs ? new Promise((r) => setTimeout(r, opts.latencyMs)) : Promise.resolve());
@@ -80,13 +88,13 @@ export function createFakeRemote(opts: FakeRemoteOptions): FakeRemote {
       const key = email.trim().toLowerCase();
       if (!pending.has(key) || code.trim() !== FAKE_CODE) throw new RemoteError('unauthorized');
       pending.delete(key);
-      return setSession({ userId: userFor(key), email: key })!;
+      return begin({ userId: userFor(key), email: key });
     },
     async signInWithIdToken(provider: Provider) {
-      return setSession({ userId: `fake-${provider}-user`, email: null })!;
+      return begin({ userId: `fake-${provider}-user`, email: null });
     },
     async startOAuth(provider: Provider) {
-      setSession({ userId: `fake-${provider}-user`, email: null });
+      await begin({ userId: `fake-${provider}-user`, email: null });
     },
     async completeRedirect() {
       return null;
@@ -96,7 +104,7 @@ export function createFakeRemote(opts: FakeRemoteOptions): FakeRemote {
     },
   };
 
-  return {
+  const self: FakeRemote = {
     kind: 'fake',
     env,
     db,
@@ -105,7 +113,7 @@ export function createFakeRemote(opts: FakeRemoteOptions): FakeRemote {
       online = value;
     },
     async signInAs(userId, email) {
-      return setSession({ userId, email: email ?? null })!;
+      return begin({ userId, email: email ?? null });
     },
     async send<O extends Op>(request: ApiRequest<O>): Promise<ApiResponse<O>> {
       await delay();
@@ -116,4 +124,5 @@ export function createFakeRemote(opts: FakeRemoteOptions): FakeRemote {
       return JSON.parse(JSON.stringify(res)) as ApiResponse<O>;
     },
   };
+  return self;
 }

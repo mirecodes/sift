@@ -41,8 +41,27 @@ The server contract (guidance_v2 Step 5.2). Types: `shared/api/types.ts`; handle
 | `delete_account` | `{}` → `{}` | Every row, then the auth user (in-app deletion) |
 | `register_device` | `{ deviceId, platform, pushToken, appVersion, locale, categories? }` → `{}` | Push (Phase 6) |
 
-Social operations (Phases 7–9) are listed in §4 as they are added.
+### Phase 7: identity, friends, moderation, visits, presence, focus together
+
+| Op | Args → data | Notes |
+|---|---|---|
+| `social_state` | `{}` → `SocialState` | `me`, `friends` (with `focusing`), `incoming`, `outgoing`, `blocked`, `visitors` (newest 20, 30 days), `visitCount` |
+| `set_handle` | `{ name }` → `{ profile }` | Shared rule + word filter (`handle_invalid`); tag kept if free under the new name, else random (`handle_taken` when all 9,999 are used); the first change is free, then once per 30 days (`name_change_cooldown`) |
+| `friend_request` | `{ name, tag }` → `{ status, person }` | Exact handle only; unknown or blocked either way → `not_found`; a request waiting the other way is accepted; `friend_limit` (100); notice + push `friends` |
+| `friend_respond` | `{ userId, accept }` → `{}` | Accept notifies the requester (`friend_accepted`) |
+| `friend_cancel`, `friend_remove` | `{ userId }` → `{}` | Own pending request / an accepted friendship |
+| `block_user`, `unblock_user` | `{ userId }` → `{}` | Block deletes the friendship; requests, presence, visits and invites stop both ways; groups unchanged |
+| `report_user` | `{ userId, reason, note?, context }` → `{}` | `reports` table for moderation |
+| `get_island_snapshot` | `{ userId }` → `{ snapshot }` | Friends (or same group, Phase 8), not blocked (`blocked`, `not_friends`); records one visit per visitor per host per day |
+| `together_create` | `{ plannedMs, invitees }` → `{ room }` | Invitees must be related; lobby 5 min; notice + push `together` |
+| `together_room` | `{ roomId }` → `{ room }` | Participants only; states derived from their sessions; a stale lobby closes |
+| `together_join`, `together_leave` | `{ roomId }` → `{ room }` | Join in the lobby or ≤ 2 min after the start (`room_closed`); the host leaving a lobby closes it |
+| `together_start` | `{ roomId }` → `{ room }` | Host only (`not_owner`); then `start_session({ roomId })` gives everyone joined the room's start (≤ 30 s late) or, later within 2 min, their own start with the room's end |
+
+Phase 8–9 operations are added below as they come.
 
 ## 4. Tables
 
 Generated from `server/core/schema.ts` into `server/supabase/migrations/` (`npm run server:sql`; a test keeps them equal). Every table: key and filter columns plus the whole row as `data jsonb`. Owned tables add `user_id`, `updated_seq`.
+
+Migration 2 (Phase 7): `friendships` (key `low|high`, `status`, `requested_by`), `blocks` (key `blocker|blocked`), `reports`, `visits` (key `host|visitor|day`, `trace_kind`, `trace_payload`; 30-day retention in the hourly job), `together_rooms`, `together_participants` (key `room|user`).
