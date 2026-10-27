@@ -7,21 +7,48 @@ import type { IslandMode, IslandModel } from '../domain/island/model';
 import { CameraRig, ELEVATION, type CameraControls } from './camera/CameraRig';
 import { Clouds } from './Clouds';
 import { islandExtent } from './island/Island';
-import { IslandScene } from './IslandScene';
+import { IslandScene, type IslandMotion } from './IslandScene';
 import { lighting, night as nightPalette, palette } from './palette';
 import { RenderDriver } from './RenderDriver';
 import { themeDef } from './voxel/geometry';
 import type { WorldMode } from './types';
 import styles from './Scene.module.css';
 
+export interface SceneIsland {
+  model: IslandModel;
+  mode: IslandMode;
+  /** Sequence-driven motion (rise, sink, calm bob). */
+  motion?: IslandMotion;
+}
+
+/** Where the islands sit, for objects drawn between them (`overlay`). */
+export interface SceneLayout {
+  positions: readonly [number, number, number][];
+}
+
 interface SceneProps {
   mode: WorldMode;
   /** One island normally; several (side by side, left to right on screen) for moves, visits and battles. */
-  islands: readonly { model: IslandModel; mode: IslandMode }[];
+  islands: readonly SceneIsland[];
   reducedMotion: boolean;
   theme: 'light' | 'dark';
   /** Extra objects in the first island's space, bobbing with it (build mode ghost, Studio overlays). */
   children?: ReactNode;
+  /** Objects in world space between the islands (rainbow bridge, airship), drawn with them. */
+  overlay?: (layout: SceneLayout) => ReactNode;
+  /** 0 = the islands centered as laid out, 1 = the last island at the center (the view pans to it). */
+  pan?: MutableRefObject<number>;
+}
+
+/** Shifts everything so the last island moves to the center as `pan` goes from 0 to 1. */
+function Pan({ pan, last, children }: { pan?: MutableRefObject<number>; last: readonly [number, number, number] | undefined; children: ReactNode }) {
+  const group = useRef<Group>(null);
+  useFrame(() => {
+    if (!group.current || !last) return;
+    const k = pan?.current ?? 0;
+    group.current.position.set(-last[0] * k, 0, -last[2] * k);
+  });
+  return <group ref={group}>{children}</group>;
 }
 
 /** Empty space between neighbouring islands, in blocks along the screen. */
@@ -106,7 +133,7 @@ function TurnWithCamera({ controls, children }: { controls: MutableRefObject<Cam
 }
 
 /** The one persistent canvas shared by Home, Focus, and Break. It is never remounted. */
-export function Scene({ mode, islands, reducedMotion, theme, children }: SceneProps) {
+export function Scene({ mode, islands, reducedMotion, theme, children, overlay, pan }: SceneProps) {
   const dark = theme === 'dark';
   const night = useRef(dark ? 1 : 0);
   const controls = useRef<CameraControls>({ azimuth: 0, zoom: 1 });
@@ -136,23 +163,28 @@ export function Scene({ mode, islands, reducedMotion, theme, children }: ScenePr
         </TurnWithCamera>
         <RenderDriver mode={mode} />
         <CameraRig mode={mode} side={side} depth={depth} rise={rise} reducedMotion={reducedMotion} controls={controls} />
-        {islands.map(({ model, mode: islandMode }, i) => (
-          <IslandScene
-            key={`${model.ownerId}:${i}`}
-            model={model}
-            mode={islandMode}
-            worldMode={mode}
-            night={night}
-            dark={dark}
-            reducedMotion={reducedMotion}
-            position={positions[i]}
-          >
-            {i === 0 && children}
-          </IslandScene>
-        ))}
+        <Pan pan={pan} last={positions[positions.length - 1]}>
+          {islands.map(({ model, mode: islandMode, motion }, i) => (
+            // Keyed by owner and seed: an island keeps its place in the scene graph when others come and go.
+            <IslandScene
+              key={`${model.ownerId}:${model.seed}:${islands.slice(0, i).filter((o) => o.model.ownerId === model.ownerId && o.model.seed === model.seed).length}`}
+              model={model}
+              mode={islandMode}
+              worldMode={mode}
+              night={night}
+              dark={dark}
+              reducedMotion={reducedMotion}
+              position={positions[i]}
+              {...motion}
+            >
+              {i === 0 && children}
+            </IslandScene>
+          ))}
+          {overlay?.({ positions })}
+        </Pan>
         {primary && (
           <TurnWithCamera controls={controls}>
-            <Clouds seed={primary.seed} side={side} depth={depth} visible={mode === 'home' || mode === 'break'} reducedMotion={reducedMotion} night={night} tint={themeDef(primary.blockThemeId)?.cloudTint} />
+            <Clouds seed={primary.seed} side={side} depth={depth} visible={mode === 'home' || mode === 'break' || mode === 'sequence'} reducedMotion={reducedMotion} night={night} tint={themeDef(primary.blockThemeId)?.cloudTint} />
           </TurnWithCamera>
         )}
       </Canvas>

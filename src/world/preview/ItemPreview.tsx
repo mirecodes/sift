@@ -18,7 +18,7 @@ const AZIMUTH = Math.PI / 4;
 const PREVIEW_SEED = 5;
 
 /** Turns its content slowly and fits the camera to its bounding sphere (so nothing clips while it turns). */
-function Turntable({ children, reducedMotion }: { children: ReactNode; reducedMotion: boolean }) {
+function Turntable({ children, reducedMotion, fitKey }: { children: ReactNode; reducedMotion: boolean; fitKey?: unknown }) {
   const group = useRef<Group>(null);
   const { camera, size } = useThree();
   useLayoutEffect(() => {
@@ -30,7 +30,7 @@ function Turntable({ children, reducedMotion }: { children: ReactNode; reducedMo
     camera.lookAt(sphere.center);
     camera.zoom = (Math.min(size.width, size.height) / (2 * sphere.radius)) * 0.98;
     camera.updateProjectionMatrix();
-  }, [camera, size]);
+  }, [camera, size, fitKey]);
   useFrame((_, delta) => {
     if (group.current && !reducedMotion) group.current.rotation.y += (Math.PI * 2 * Math.min(delta, 0.1)) / 10;
   });
@@ -58,16 +58,41 @@ function BuildingModel({ id }: { id: string }) {
 }
 
 /** A small island in a block theme's colors. */
-function ThemeIsland({ id, reducedMotion }: { id: string; reducedMotion: boolean }) {
+function ThemeIsland({ id, reducedMotion, seed = PREVIEW_SEED, level = 2 }: { id: string; reducedMotion: boolean; seed?: number; level?: number }) {
   const blocks = themePalette(id);
-  const { tiles, streams } = useMemo(() => generateIsland(PREVIEW_SEED, 2), []);
+  const { tiles, streams } = useMemo(() => generateIsland(seed, level), [seed, level]);
   const night = useRef(0);
   return (
     <group>
-      <Island seed={PREVIEW_SEED} level={2} animate={false} blocks={blocks} />
+      <Island seed={seed} level={level} animate={false} blocks={blocks} />
       <Stream streams={streams} tiles={tiles} timeScale={1} reducedMotion={reducedMotion} blocks={blocks} />
       <Camp night={night} reducedMotion={reducedMotion} blocks={blocks} />
     </group>
+  );
+}
+
+function PreviewCanvas({ height, reducedMotion, fitKey, children }: { height: number; reducedMotion: boolean; fitKey?: unknown; children: ReactNode }) {
+  const k = lighting.intensityScale;
+  const [dx, dy, dz] = lighting.direction;
+  return (
+    <div style={{ height, width: '100%' }} aria-hidden="true">
+      <Canvas orthographic flat dpr={[1, 2]} gl={{ antialias: true, alpha: true }} camera={{ near: 0.1, far: 200, zoom: 40 }}>
+        <ambientLight intensity={lighting.ambient * k} />
+        <directionalLight position={[dx * 10, dy * 10, dz * 10]} intensity={lighting.directional * k} />
+        <Turntable reducedMotion={reducedMotion} fitKey={fitKey}>
+          {children}
+        </Turntable>
+      </Canvas>
+    </div>
+  );
+}
+
+/** The bare island of a seed (terrain, stream, camp), turning slowly: the island-move preview (Step 4.2). */
+export function SeedIslandPreview({ seed, level, themeId, height = 200, reducedMotion }: { seed: number; level: number; themeId: string; height?: number; reducedMotion: boolean }) {
+  return (
+    <PreviewCanvas height={height} reducedMotion={reducedMotion} fitKey={seed}>
+      <ThemeIsland id={themeId} seed={seed} level={level} reducedMotion={reducedMotion} />
+    </PreviewCanvas>
   );
 }
 
@@ -79,15 +104,9 @@ export function ItemPreview({ id, height = 180, reducedMotion }: { id: string; h
   const item = content.get(id);
   if (item?.kind === 'animalSkin') return <RewardModel modelId={getSpecies(item.speciesId).modelId} skinId={id} height={height} reducedMotion={reducedMotion} />;
   if (item?.kind !== 'building' && item?.kind !== 'blockTheme') return null;
-  const k = lighting.intensityScale;
-  const [dx, dy, dz] = lighting.direction;
   return (
-    <div style={{ height, width: '100%' }} aria-hidden="true">
-      <Canvas orthographic flat dpr={[1, 2]} gl={{ antialias: true, alpha: true }} camera={{ near: 0.1, far: 200, zoom: 40 }}>
-        <ambientLight intensity={lighting.ambient * k} />
-        <directionalLight position={[dx * 10, dy * 10, dz * 10]} intensity={lighting.directional * k} />
-        <Turntable reducedMotion={reducedMotion}>{item.kind === 'building' ? <BuildingModel id={id} /> : <ThemeIsland id={id} reducedMotion={reducedMotion} />}</Turntable>
-      </Canvas>
-    </div>
+    <PreviewCanvas height={height} reducedMotion={reducedMotion}>
+      {item.kind === 'building' ? <BuildingModel id={id} /> : <ThemeIsland id={id} reducedMotion={reducedMotion} />}
+    </PreviewCanvas>
   );
 }

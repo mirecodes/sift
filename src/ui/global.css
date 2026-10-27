@@ -140,3 +140,33 @@ button {
     scroll-behavior: auto !important;
   }
 }
+
+/* Text for screen readers only. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Reduced-motion island move (Step 4.3): the new island fades in. */
+.scene-crossfade {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: var(--color-canvas);
+  animation: crossfade-out var(--motion-slow) var(--ease) both;
+}
+@keyframes crossfade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

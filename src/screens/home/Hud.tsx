@@ -4,6 +4,7 @@ import { useCountUp, usePrefersReducedMotion } from '../../ui/hooks';
 import { strings } from '../../ui/strings';
 import { GoldIcon, UnicornIcon } from '../../ui/components/Icons';
 import { runtimeConfig } from '../../app/runtimeConfig';
+import { MoveIslandSheet } from './MoveIslandSheet';
 import styles from './Hud.module.css';
 
 const { features } = runtimeConfig;
@@ -25,6 +26,7 @@ export function Hud() {
   const unicorns = useApp(selectActiveUnicorns);
   const setView = useApp((s) => s.setView);
   const [open, setOpen] = useState(false);
+  const [moving, setMoving] = useState(false);
   const root = useRef<HTMLDivElement>(null);
 
   // Until the Shop exists, gold opens a short explanation; any tap elsewhere or Esc closes it.
@@ -57,11 +59,19 @@ export function Hud() {
           <span aria-hidden="true">{gold}</span>
         </button>
       )}
-      <span className={`${styles.counter} type-body-sm-strong`} role="img" aria-label={strings.hud.unicorns(unicorns)}>
-        <UnicornIcon />
-        <span aria-hidden="true">{unicorns}</span>
-      </span>
+      {features.islandMove ? (
+        <button type="button" className={`${styles.counter} type-body-sm-strong`} aria-label={strings.move.open(unicorns)} onClick={() => setMoving(true)}>
+          <UnicornIcon />
+          <span aria-hidden="true">{unicorns}</span>
+        </button>
+      ) : (
+        <span className={`${styles.counter} type-body-sm-strong`} role="img" aria-label={strings.hud.unicorns(unicorns)}>
+          <UnicornIcon />
+          <span aria-hidden="true">{unicorns}</span>
+        </span>
+      )}
       {open && <p className={`${styles.info} type-body-sm`}>{strings.hud.goldInfo}</p>}
+      {moving && <MoveIslandSheet onClose={() => setMoving(false)} />}
     </div>
   );
 }

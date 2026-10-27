@@ -150,6 +150,22 @@ export const strings = {
     /** The counter shown on the Shop page (display only). */
     balance: (n: number) => `${n} gold`,
   },
+  move: {
+    /** HUD Unicorn counter with the island move on. */
+    open: (n: number) => `${n} ${n === 1 ? 'Unicorn' : 'Unicorns'}. Move to a new island`,
+    title: 'Move to a new island?',
+    body: 'This uses 1 Unicorn. Buildings will return to your inventory.',
+    have: (n: number) => `You have ${n} ${n === 1 ? 'Unicorn' : 'Unicorns'}.`,
+    needUnicorn: 'You need a Unicorn to move. Unicorns are Legendary rewards.',
+    another: 'Show another',
+    previewsLeft: (n: number) => (n === 1 ? '1 more preview' : `${n} more previews`),
+    noPreviews: 'This is the last preview.',
+    cancel: 'Cancel',
+    confirm: 'Move',
+    failed: 'Could not move. Try again.',
+    skip: 'Skip',
+    moving: 'Moving to a new island',
+  },
   build: {
     title: 'Build',
     done: 'Done',

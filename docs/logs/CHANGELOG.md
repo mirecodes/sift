@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-10-27 · **Added** — Phase 4, island move (F5, flag `islandMove`, ADR-046). Step 4.1: `moveIsland` spends the oldest Unicorn, keeps the island level, re-places every animal on the new terrain (pins cleared, expiry unchanged), returns all buildings, records the old seed in `islandHistory`, in one write (`Commit.world`, `islandHistoryAdd`). Step 4.2: the HUD Unicorn counter opens a sheet with a turning preview of the new island, 3 previews, the Unicorn count and Move (shared `Sheet` component). Step 4.3: the rainbow-bridge sequence (rise, Unicorn leap, bridge, single-file crossing, arrival, farewell with pan), Skip and Esc, crossfade with reduced motion; `Scene` gained island motion refs, an overlay, a pan and the `sequence` render mode. E2E: move with an imported Unicorn, survives reload.
+
 - 2026-10-27 · **Changed** — Content split for easy additions (owner request, ADR-045): one folder per animal (`content/animals/<id>/animal.json` + `model.ts`, its handcrafted skins in `skins/`) and per building (`content/buildings/<id>/building.json` + `model.ts`), one file per theme (`themes/`), skin family (`skin-families/`) and release. Animal models moved out of `src/assets/voxels` into their folders (refs `animals/<id>`); the butterfly's flap meshes are now derived from its rest pose (`flutterSplit`). The folder or file name must equal the id (`layoutProblem`). Order: animals by tier then id, shop items by release date then id. Sprites unchanged.
 
 - 2026-10-27 · **Added** — `npm run content:new -- <animal|skin|theme|building|family|release> <id>` creates a new item's files from a template (`tools/content-build/new.ts`); `npm run content:vox` converts `.vox` files anywhere under `content/`. CONTENT.md has quick recipes.

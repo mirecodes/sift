@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-08.3';
+export const BALANCE_VERSION = '2026-10-27.1';
 
 const MINUTE = 60_000;
 
@@ -58,6 +58,12 @@ export const balance = deepFreeze({
   shop: {
     /** Items show a New badge this long after their release date (Step 3.9). */
     newBadgeDays: 14,
+  },
+  islandMove: {
+    /** Unicorns spent per island move (F5). */
+    cost: 1,
+    /** New-island previews offered before confirming (Step 4.1). */
+    freePreviews: 3,
   },
   /** Allowed shop price ranges [min, max] in gold (§8); `content:validate` enforces them. */
   prices: {

@@ -21,6 +21,13 @@
   gap: var(--space-lg);
   text-align: center;
 }
+/* Island move: Skip at the bottom center (DESIGN.md 7.9). */
+.skip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--space-3xl) + var(--safe-bottom));
+  transform: translateX(-50%);
+}
 .cycle {
   margin: 0;
   color: var(--color-body-mid);

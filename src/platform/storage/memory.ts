@@ -1,4 +1,4 @@
-import type { FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding } from '../../domain/types';
+import type { FocusSession, InboxRow, IslandHistoryEntry, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding } from '../../domain/types';
 import type { BackupData } from '../../domain/backup';
 import { migrateRows, SCHEMA_VERSION } from '../../db/migrations';
 import type { Commit, PersistedState, StorageAdapter } from './index';
@@ -36,6 +36,7 @@ export function createMemoryStorage(): StorageAdapter {
         ledger: rows<LedgerEntry>('ledger').sort((a, b) => a.at - b.at),
         cosmetics: rows<OwnedCosmetic>('cosmetics').sort((a, b) => a.acquiredAt - b.acquiredAt),
         placedBuildings: rows<PlacedBuilding>('placedBuildings').sort((a, b) => a.placedAt - b.placedAt),
+        islandHistory: rows<IslandHistoryEntry>('islandHistory').sort((a, b) => a.to - b.to),
       };
       for (const { key, value } of rows<{ key: 'settings' | 'world' | 'phase' | 'equipped'; value: never }>('kv')) state[key] = value;
       return state;
@@ -68,6 +69,8 @@ export function createMemoryStorage(): StorageAdapter {
       if (change.equipped) kv('equipped', change.equipped);
       for (const b of change.buildingsPut ?? []) put('placedBuildings', b);
       for (const id of change.buildingsRemove ?? []) tables.placedBuildings.delete(id);
+      if (change.world) kv('world', change.world);
+      for (const h of change.islandHistoryAdd ?? []) put('islandHistory', h);
       if (change.session) put('sessions', change.session);
       if (change.animal) put('animals', change.animal);
       for (const a of change.animals ?? []) put('animals', a);

@@ -640,6 +640,61 @@ describe('build mode (Step 3.11)', () => {
   });
 });
 
+describe('island move (Step 4.1)', () => {
+  async function islandWith(species: string[]) {
+    const storage = createMemoryStorage();
+    await storage.resetWorld({ seed: 42, blockThemeId: 'default' });
+    const tiles = islandTiles(42, islandSide(species.length)).filter((t) => !t.water && Math.hypot(t.x, t.z) > 2);
+    await storage.commit({
+      animals: species.map((id, i) => newPlacedAnimal(`a${i}`, CATALOG.find((c) => c.id === id)!, tiles[i]!, 1000 + i, 's')),
+      cosmeticsAdd: [{ id: 'c1', kind: 'building', defId: 'lantern', acquiredAt: 0, source: 'shop' }],
+    });
+    let n = 0;
+    const s = createAppStore({ storage, now: () => 5000, rng: seededRng(9), uuid: () => `m-${++n}`, clientVersion: '0.1.0' });
+    await s.getState().init();
+    return { s, storage };
+  }
+
+  it('moves everything in one write, survives a reload and starts the sequence', async () => {
+    const { s, storage } = await islandWith(['unicorn', 'fox', 'chick']);
+    const tile = suggestTile(selectOccupancy(s.getState()), { defId: 'lantern', rotation: 0, minFreeTiles: 6 })!;
+    await s.getState().placeBuilding({ defId: 'lantern', tile, rotation: 0 });
+    const seed = s.getState().rollIslandSeed();
+    expect(seed).not.toBe(42);
+    expect(await s.getState().moveIsland(seed)).toBeNull();
+
+    const st = s.getState();
+    expect(st.world.seed).toBe(seed);
+    expect(st.placedBuildings).toEqual([]);
+    expect(selectActiveUnicorns(st)).toBe(0);
+    expect(st.islandMove).toMatchObject({ oldWorld: { seed: 42 }, spentId: 'a0' });
+    expect(st.islandMove!.oldAnimals.map((a) => a.id)).toEqual(['a0', 'a1', 'a2']);
+    const loaded = await storage.load();
+    expect(loaded.world?.seed).toBe(seed);
+    expect(loaded.placedBuildings).toEqual([]);
+    expect(loaded.islandHistory).toMatchObject([{ seed: 42, to: 5000 }]);
+    expect(loaded.animals.find((a) => a.id === 'a0')).toMatchObject({ status: 'spent', endReason: 'island_move' });
+
+    // A reload during the sequence simply shows the new island.
+    let n = 0;
+    const again = createAppStore({ storage, now: () => 5000, rng: seededRng(9), uuid: () => `r-${++n}`, clientVersion: '0.1.0' });
+    await again.getState().init();
+    expect(again.getState().world.seed).toBe(seed);
+    expect(again.getState().islandMove).toBeNull();
+    s.getState().finishIslandMove();
+    expect(s.getState().islandMove).toBeNull();
+  });
+
+  it('refuses without a Unicorn or away from Home, changing nothing', async () => {
+    const { s, storage } = await islandWith(['fox']);
+    expect(await s.getState().moveIsland(7)).toBe('no_unicorn');
+    expect((await storage.load()).world?.seed).toBe(42);
+    const { s: s2 } = await islandWith(['unicorn']);
+    await s2.getState().startFocus();
+    expect(await s2.getState().moveIsland(7)).toBe('not_idle');
+  });
+});
+
 describe('expiry (Step 2.2)', () => {
   const DAY = 24 * 60 * MIN;
   const species = (id: string) => CATALOG.find((s) => s.id === id)!;

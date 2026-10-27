@@ -91,9 +91,12 @@
 
 ## Phase 4 — Island move with a Unicorn (F5)
 
-- [ ] 4.1 Domain
-- [ ] 4.2 Confirm UI
-- [ ] 4.3 Move sequence (world)
+- [x] 4.1 Domain
+  - `domain/island/move.ts` `moveIsland` + `placeAnimals`; store `rollIslandSeed`, `moveIsland`, `islandMove`, `finishIslandMove`; one commit (`world`, `islandHistoryAdd`). Tests: oldest Unicorn spent, level kept, all re-placed on standable tiles, pins cleared, clocks kept, buildings returned, history, deterministic, Home + Unicorn only; store: persisted, reload shows the new island. ADR-046.
+- [x] 4.2 Confirm UI
+  - `MoveIslandSheet` (shared `ui/components/Sheet`), `SeedIslandPreview`, HUD Unicorn button. Dev server: sheet with preview, Show another, counts, no console errors.
+- [x] 4.3 Move sequence (world)
+  - `world/sequences/islandMove.ts` (tested: 9–15 s, crossing ≤ 6 s even for 100 animals, nearest first, continuous legs, bridge forms/dissolves) + `IslandMove.tsx`; `Scene` motion/overlay/pan, `sequence` mode. Frames checked at 0.8–18 s (rise, bridge, crossing, sink + pan, new island). E2E: move with a Unicorn, Skip, reload. **Phase 4 complete.**
 
 ## Phase 5 — Backend, API, accounts, sync (F6)
 
@@ -158,6 +161,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 4 · Feature flag: Phase 4 ships with `features.islandMove: true`. With `testMode.dummyData` there is one Unicorn: tap the Unicorn counter on Home. Check the bridge colors, timing (~11–14 s), the old island sinking and the preview size in the sheet (the tall underside makes the island look small).
 - 3 · Feature flag: Phase 3 ships only when you set `features.cosmetics: true` (with `features.economy` for gold). To review with sample data also set `testMode.dummyData: true` (dev only): three equipped skins, the Autumn theme, four placed buildings, more in the build tray, 140 extra gold. Content Studio: `npm run dev`, open `/studio`.
 - 3.13 · Shared tiles (4 animals in corners) only happen when buildings fill the island; check it reads fine if you try it.
 - 3.12 · Watch animals walk to the cabin at the start of a day Focus with buildings in the way: routes follow tile centers (4 directions), so paths look grid-like. Animals cut off by the stream (no footbridge) still walk straight across it.
@@ -196,6 +200,12 @@
 - Content · Catalog order = tier then id; shop order = release date then id. · No order list to keep in sync; changes which species a roll picks, not the odds.
 - Content · Butterfly flap meshes derived from the rest pose (`flutterSplit`, byte-equal to the old hand-made ones). · A model file exports one model, so any future `flutter` animal works without code.
 - E2E · The first page closes before the fresh-context backup check. · It kept the software GPU busy and the fresh page never painted (failed before this session too).
+- 4.1 · Previews are random seeds rolled on the device (never the current seed); the move takes whichever preview is shown. · Seeds carry no economic value.
+- 4.1 · History `from` = the previous move's `to`, else the first animal's arrival. · The world has no creation time.
+- 4.2 · Entry is the HUD Unicorn counter (now a button with the flag on); no separate screen. · Phase 2 note; the Unicorn is the currency.
+- 4.3 · The new island rises from below instead of fading in; the old one sinks. · Island meshes have no shared opacity; motion reads the same.
+- 4.3 · Flying and swimming animals cross the bridge like the rest (with the same small hop). · Simplest; the crossing lasts seconds.
+- 4.3 · New render mode `sequence` (fixed camera, full rate, clouds, no panel insets) for scripted scenes. · War voyages reuse it.
 
 - 3.13 · Max animals per tile is a balance value (`placement.maxPerTile` = 4), since the server will place animals too (Step 5.5); with every tile at 4 no reward animal is added (as before when no tile was free; the island grows with every animal, so this needs buildings on almost every tile). · Same rule on client and server.
 - 3.12 · 4-neighbor A* (no diagonals); the day routine's goal is the tile in front of the cabin door, then the last short step into the door is straight. · Diagonals would cut building corners; the door itself is on a camp tile.

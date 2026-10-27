@@ -1,4 +1,4 @@
-import type { Equipped, FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../../domain/types';
+import type { Equipped, FocusSession, InboxRow, IslandHistoryEntry, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../../domain/types';
 import type { StoredPhase } from '../../domain/timer/phase';
 import type { BackupData } from '../../domain/backup';
 
@@ -17,6 +17,8 @@ export interface PersistedState {
   cosmetics: OwnedCosmetic[];
   equipped?: Equipped;
   placedBuildings: PlacedBuilding[];
+  /** Islands left by island moves, oldest first. */
+  islandHistory: IslandHistoryEntry[];
 }
 
 /** Everything that must change together. An implementation applies it in one transaction. */
@@ -39,6 +41,9 @@ export interface Commit {
   /** Placed or moved buildings, and buildings returned to the inventory. */
   buildingsPut?: PlacedBuilding[];
   buildingsRemove?: string[];
+  /** A new island seed (island move). */
+  world?: WorldState;
+  islandHistoryAdd?: IslandHistoryEntry[];
 }
 
 export interface StorageAdapter {

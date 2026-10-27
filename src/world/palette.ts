@@ -19,6 +19,8 @@ export const palette = {
   /** Build mode footprint tint (DESIGN.md 15.7). */
   buildOk: '#5ED67A',
   buildBad: '#FF5A5F',
+  /** Island move rainbow bridge, outer to inner stripe (DESIGN.md 18). */
+  rainbowBridge: ['#FF5A5F', '#FFA24D', '#FFE14D', '#5ED67A', '#4DA6FF', '#8E6BFF'],
 } as const;
 
 /**

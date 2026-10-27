@@ -84,7 +84,9 @@ check('back on Island the same canvas renders again', (await draws()) > before &
 // Economy HUD (Phase 2): the label carries the number. With cosmetics (Phase 3) gold opens the Shop.
 const goldButton = page.getByRole('button', { name: /gold\. Open shop$/ });
 const goldShown = async () => Number((await goldButton.getAttribute('aria-label')).split(' ')[0]);
-check('Home shows the 30 starter gold and no Unicorns', (await goldShown()) === 30 && (await page.getByRole('img', { name: '0 Unicorns on the island' }).isVisible()));
+// The Unicorn counter is a picture, or a button with the island move on (Phase 4).
+const unicornCounter = (p, n) => p.getByLabel(new RegExp(`^${n} Unicorns?( on the island|\\. Move to a new island)$`));
+check('Home shows the 30 starter gold and no Unicorns', (await goldShown()) === 30 && (await unicornCounter(page, 0).isVisible()));
 await goldButton.click();
 await settle(500);
 check('tapping gold opens the shop', await page.getByRole('heading', { name: 'Shop' }).isVisible());
@@ -218,7 +220,7 @@ await settle(1500);
 check('settings persist across a reload', (await page.locator('p', { hasText: /30 min focus/i }).count()) > 0);
 
 // Expiry (Phase 2): a week later the animal leaves gold; it shows on Home and stays after a reload.
-const earnedUnicorn = (await page.getByRole('img', { name: '1 Unicorn on the island' }).count()) === 1;
+const earnedUnicorn = (await unicornCounter(page, 1).count()) === 1;
 await page.clock.fastForward(7 * 24 * 3600_000 + 61_000); // one 60 s check fires after the jump
 await settle(2500); // the count-up runs after the notice shows
 const departure = page.getByRole('status').getByText(/^.+ left \d+ gold\.$/);
@@ -345,6 +347,48 @@ await fresh.waitForTimeout(400);
 await fresh.reload();
 await fresh.waitForTimeout(1500);
 check('dismissed notices stay gone after a reload', (await fresh.getByRole('status').count()) === 0);
+
+// Island move (Phase 4): a Unicorn pays for a new island; the move survives a reload.
+const withUnicorn = structuredClone(original);
+const [first] = withUnicorn.data.animals;
+withUnicorn.data.inbox = [];
+withUnicorn.data.animals.push({
+  ...first,
+  id: 'e2e-unicorn',
+  speciesId: 'unicorn',
+  tier: 'legendary',
+  tierRank: 3,
+  acquiredAt: Date.now() - 60_000,
+  status: 'active',
+  endedAt: null,
+  endReason: null,
+  tileX: first.tileX === 1 ? 2 : 1,
+  tileZ: 2,
+});
+const unicornFile = `${backupFile}.unicorn.json`;
+await writeFile(unicornFile, JSON.stringify(withUnicorn));
+await fresh.getByRole('button', { name: 'Open settings' }).click();
+const [chooser3] = await Promise.all([fresh.waitForEvent('filechooser'), fresh.getByRole('button', { name: 'Import…' }).click()]);
+await chooser3.setFiles(unicornFile);
+await fresh.waitForTimeout(300);
+await fresh.getByRole('button', { name: 'Replace data' }).click();
+await fresh.waitForTimeout(300);
+await fresh.getByRole('button', { name: 'Close' }).click();
+await fresh.waitForTimeout(700);
+const seedOf = async () => JSON.parse(await readFile(await exportFrom(fresh), 'utf8')).data.kv.find((r) => r.key === 'world').value.seed;
+const seedBefore = await seedOf();
+await fresh.getByRole('button', { name: '1 Unicorn. Move to a new island' }).click();
+await fresh.waitForTimeout(800);
+check('the move sheet shows the cost and the Unicorn count', await fresh.getByText('You have 1 Unicorn.').isVisible());
+await fresh.getByRole('button', { name: 'Move', exact: true }).click();
+await fresh.waitForTimeout(1500);
+check('the move sequence plays with a Skip button', await fresh.getByRole('button', { name: 'Skip' }).isVisible());
+await fresh.getByRole('button', { name: 'Skip' }).click();
+await fresh.waitForTimeout(500);
+check('after the move the Unicorn is spent', await fresh.getByRole('button', { name: '0 Unicorns. Move to a new island' }).isVisible());
+await fresh.reload();
+await fresh.waitForTimeout(1500);
+check('the new island survives a reload', (await seedOf()) !== seedBefore);
 
 check('no page errors', errors.length === 0);
 if (errors.length) console.log(errors.join('\n'));

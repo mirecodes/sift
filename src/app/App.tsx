@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { buildIslandModel, type IslandMode, type IslandModel } from '../domain/island/model';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { buildIslandModel } from '../domain/island/model';
 import { config } from '../domain/config';
 import { pendingDepartures } from '../domain/inbox/inbox';
 import { goldPileLevel as goldPileLevelOf } from '../domain/economy/ledger';
@@ -21,8 +21,12 @@ import { useBuildUi } from '../screens/build/buildState';
 import { BuildIslandLayer } from './BuildIslandLayer';
 import { StatsScreen } from '../screens/stats/StatsScreen';
 import { TabPage } from '../screens/TabPage';
-import { Scene } from '../world/Scene';
+import { Scene, type SceneIsland, type SceneLayout } from '../world/Scene';
 import type { WorldMode } from '../world/types';
+import { IslandMoveSequence, type IslandMoveRefs } from '../world/sequences/IslandMove';
+import { REVEAL_RISE } from '../world/sequences/islandMove';
+import { MoveScreen } from '../screens/home/MoveScreen';
+import type { IslandMoveSequence as MoveState } from '../store';
 import { devSecondIsland, DEV_TWO_ISLANDS } from './devTwoIslands';
 import { runtimeConfig } from './runtimeConfig';
 import styles from './App.module.css';
@@ -35,6 +39,23 @@ const TABS: TabItem<Tab>[] = [
   ...(features.friends ? [{ id: 'friends' as const, label: strings.tabs.friends, icon: <FriendsIcon /> }] : []),
   ...(features.groups ? [{ id: 'group' as const, label: strings.tabs.group, icon: <GroupIcon /> }] : []),
 ];
+
+/**
+ * Refs shared by the islands and the move sequence. Reset when a move starts, before the first frame,
+ * so the new island starts below its place instead of flashing in.
+ */
+function useIslandMoveRefs(move: MoveState | null): IslandMoveRefs {
+  const refs = useRef<IslandMoveRefs>({ oldLift: { current: 0 }, newLift: { current: 0 }, oldBob: { current: 0 }, newBob: { current: 0 }, pan: { current: 0 } });
+  const seen = useRef<MoveState | null>(null);
+  if (move !== seen.current) {
+    seen.current = move;
+    const r = refs.current;
+    r.oldLift.current = 0;
+    r.newLift.current = move ? REVEAL_RISE : 0;
+    r.pan.current = 0;
+  }
+  return refs.current;
+}
 
 export function App() {
   const ready = useApp((s) => s.ready);
@@ -54,6 +75,19 @@ export function App() {
   const reducedMotion = usePrefersReducedMotion();
   const building = features.cosmetics && phase.kind === 'idle' && view === 'build';
   const movingId = useBuildUi((s) => (building ? s.placing?.movingId : undefined));
+  const islandMove = useApp((s) => s.islandMove);
+  const finishIslandMove = useApp((s) => s.finishIslandMove);
+  const moveRefs = useIslandMoveRefs(islandMove);
+  const moving = islandMove !== null && !reducedMotion;
+  const [crossfade, setCrossfade] = useState(0);
+
+  // Reduced motion: no sequence, the new island fades in (Step 4.3).
+  useEffect(() => {
+    if (islandMove && reducedMotion) {
+      finishIslandMove();
+      setCrossfade((n) => n + 1);
+    }
+  }, [islandMove, reducedMotion, finishIslandMove]);
 
   // Overtime and break-over share the render mode of their base phase, so no clock is needed here.
   const islands = useMemo(() => {
@@ -65,16 +99,40 @@ export function App() {
     // in build mode is drawn as its ghost only.
     const buildings = placedBuildings.filter((b) => b.id !== movingId);
     const cosmetics = features.cosmetics ? { equipped, buildings } : {};
-    const own = buildIslandModel({ world, islandLevel, animals, leaving, departing, goldPileLevel, showExpiry: features.economy, ...cosmetics });
-    const list: { model: IslandModel; mode: IslandMode }[] = [{ model: own, mode: 'own' }];
+    const base = { islandLevel, leaving, departing, goldPileLevel, showExpiry: features.economy, ...cosmetics };
+    if (moving && islandMove) {
+      // Island move: both islands without their animals; the sequence draws the animals crossing.
+      const old = buildIslandModel({ ...base, world: islandMove.oldWorld, animals: [], ...(features.cosmetics && { buildings: islandMove.oldBuildings }) });
+      const next = buildIslandModel({ ...base, world, animals: [] });
+      return [
+        { model: old, mode: 'move' as const, motion: { lift: moveRefs.oldLift, bobY: moveRefs.oldBob, calm: true } },
+        { model: next, mode: 'own' as const, motion: { lift: moveRefs.newLift, bobY: moveRefs.newBob, calm: true } },
+      ];
+    }
+    const own = buildIslandModel({ ...base, world, animals });
+    const list: SceneIsland[] = [{ model: own, mode: 'own' }];
     if (DEV_TWO_ISLANDS !== null) list.push({ model: devSecondIsland(own, DEV_TWO_ISLANDS), mode: 'visit' });
     return list;
-  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings, movingId]);
+  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings, movingId, moving, islandMove, moveRefs]);
+
+  // Who crosses the bridge, from which old tile to which new one, in the skin they wear.
+  const crossing = useMemo(() => {
+    if (!moving || !islandMove) return null;
+    const look = buildIslandModel({ world: islandMove.oldWorld, islandLevel, animals: islandMove.oldAnimals, ...(features.cosmetics && { equipped }) }).animals;
+    const now = new Map(allAnimals.map((a) => [a.id, a]));
+    const movers = look.filter((a) => a.id !== islandMove.spentId && now.get(a.id)?.status === 'active').map((a) => {
+      const after = now.get(a.id)!;
+      return { id: a.id, speciesId: a.speciesId, skinId: a.skinId, from: a.tile, to: { x: after.tileX, z: after.tileZ } };
+    });
+    const u = look.find((a) => a.id === islandMove.spentId);
+    return { movers, unicorn: u ? { id: u.id, speciesId: u.speciesId, skinId: u.skinId, from: u.tile } : null };
+    // Fixed for the sequence: later changes (a departure) do not re-plan it.
+  }, [moving, islandMove]);
 
   const focusing = phase.kind === 'focus';
   const tab = focusing || !TABS.some((t) => t.id === activeTab) ? 'island' : activeTab;
   // The tab bar is hidden on Focus (focus rule) and on the Island tab's Settings and Collection pages.
-  const showTabs = ready && TABS.length > 1 && !focusing && !(tab === 'island' && phase.kind === 'idle' && view !== 'home');
+  const showTabs = ready && TABS.length > 1 && !focusing && !moving && !(tab === 'island' && phase.kind === 'idle' && view !== 'home');
   useEffect(() => {
     document.documentElement.toggleAttribute('data-tabs', showTabs);
   }, [showTabs]);
@@ -94,6 +152,9 @@ export function App() {
   if (focusing) {
     mode = 'focus';
     screen = <FocusScreen />;
+  } else if (moving) {
+    mode = 'sequence';
+    screen = <MoveScreen />;
   } else if (tab === 'stats') {
     mode = 'paused';
     screen = <StatsScreen />;
@@ -122,10 +183,30 @@ export function App() {
 
   return (
     <>
-      <Scene mode={mode} islands={islands} reducedMotion={reducedMotion} theme={theme}>
+      <Scene
+        mode={mode}
+        islands={islands}
+        reducedMotion={reducedMotion}
+        theme={theme}
+        {...(crossing && {
+          pan: moveRefs.pan,
+          overlay: ({ positions }: SceneLayout) => (
+            <IslandMoveSequence
+              oldIsland={{ seed: islandMove!.oldWorld.seed, level: islandLevel }}
+              newIsland={{ seed: world.seed, level: islandLevel }}
+              movers={crossing.movers}
+              unicorn={crossing.unicorn}
+              positions={positions}
+              refs={moveRefs}
+              onDone={finishIslandMove}
+            />
+          ),
+        })}
+      >
         {building && <BuildIslandLayer />}
       </Scene>
       {screen}
+      {crossfade > 0 && <div key={crossfade} className="scene-crossfade" aria-hidden="true" />}
       {showTabs && phase.kind === 'break' && tab !== 'island' && <BreakPill />}
       {showTabs && <TabBar tabs={TABS} active={tab} onSelect={setTab} label={strings.aria.tabs} />}
     </>

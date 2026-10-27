@@ -263,6 +263,7 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - `hud-counter`: 40px tall pill (`--radius-full`), canvas fill, 1px `--color-hairline` border (like `button-icon-circular`), padding 0 `--space-md`, `--space-xs` gap, 20px icon then `body-sm-strong` tabular number. Two of them, `--space-sm` apart: **gold** (a button) and **unicorns** (count of Unicorns on the island; display only).
 - The gold number shows the gold the user has been told about. When it rises (a departure notice was shown), it counts up over 1s, starting 0.6s later so the first coins have landed; spending makes it jump. Reduced motion: it jumps.
 - With `features.cosmetics` tapping gold opens the Shop (7.7); its accessible name is `N gold. Open shop`.
+- With `features.islandMove` the Unicorn counter is a button too (same look): it opens the island-move sheet (7.9); accessible name `2 Unicorns. Move to a new island`.
 - Without it, tapping gold toggles a `gold-info` bubble below it: canvas, `--radius-md`, Level 2, padding `--space-md`, max width 260px, `body-sm` text `Animals leave gold when they move on after 7 days. You will spend it in the shop.` Any tap elsewhere or Esc closes it. The button has `aria-expanded`.
 
 ---
@@ -345,6 +346,10 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - **Placing** (after picking one from the tray, or Move): a see-through copy of the building (60% opacity) stands on the chosen tiles over the footprint tint (15.7): green when it fits, red when not. It starts on the free tile nearest the camp that fits. Desktop: it follows the pointer; a click on a tile moves it there. Touch: a tap moves it. Arrow keys move it one tile. The panel shows the reason when it does not fit (`body-sm`, `Leave room for your animals`, `The ground is not flat`, …) and `Rotate` (or R), `Cancel` and `Place` (primary, disabled when red; Enter). Animals standing on the tiles walk to the nearest free tile when it is placed.
 - **A placed building**: tapping it (when not placing) outlines its tiles in white and the panel offers `Move`, `Rotate` (in place, only if it still fits), `Store` (back to the tray) and `Cancel`.
 - **On the island** (below the tray, owner request): `eyebrow` `ON THE ISLAND` with `Store all` (`button-secondary`, small) on the right, then a sideways row of the placed buildings like the tray (sprite, name). Tapping one selects it (same as tapping it on the island); each has a small `Store` button under it that puts it back in the tray at once.
+
+### 7.9 Island move (F5)
+- **Sheet** (shared `Sheet` component = the Day-detail `<dialog>` look): `display-sm` `Move to a new island?`, a 200px turning preview of the new island (terrain, stream and camp in the current theme, no animals), `body-md` `This uses 1 Unicorn. Buildings will return to your inventory.`, then two `body-sm` `--color-body-mid` lines: `You have 2 Unicorns.` (or, with none, `You need a Unicorn to move. Unicorns are Legendary rewards.`) and `2 more previews` / `This is the last preview.`. Buttons: `Show another` (secondary, a new preview; 3 previews in all, `balance.islandMove.freePreviews`), `Cancel` (secondary), `Move` (primary; disabled without a Unicorn).
+- **During the move** (≈ 10–15 s, Part II 18): no top bar, panels or tab bar; one `button-secondary` `Skip` at the bottom center (Esc skips too). Skipping shows the new island at once (the move is already saved). Reduced motion: no sequence; the screen fades from canvas white to the new island over `--motion-slow`.
 
 ---
 
@@ -491,6 +496,7 @@ Terrain, water and camp colors are one keyed record, `defaultBlocks` (`grassTop`
 | Focus | Dimmed: fixed camera, animals slowed or paused `[ASSUMPTION]`, no clouds, frame rate capped (20–30fps) or on-demand |
 | Break | Full, camera fixed, reward reveal plays |
 | Settings, Collection, Stats, Friends, Group pages | Paused: the canvas stays mounted but renders no frames |
+| Sequences (island move, war voyage) | `sequence`: full rate, fixed camera, clouds, no panel insets |
 
 - Home → Focus: camera pulls back slightly over `--motion-scene` (1000ms) while the UI overlay fades in and the sky gradient fades out, so the dimmed island sits on the near-black `--color-primary` background.
 - The island keeps clear of floating panels: the camera fits it into the screen area not covered by the Home panel (bottom) or the Break panel (right from 992px, bottom below).
@@ -596,7 +602,13 @@ const chick: VoxelModel = {
   - Part animations, on a named model part turning around its pivot: `spin` (one turn per 4s around the part's forward axis), `sway` (±0.08 rad, 2.5s), `bob` (±0.05 block, 2s), `flap` (±0.5 rad, 3 Hz). Several copies of one building are out of step.
   - Particle fields, small unlit cubes drifting through a box, each fading in and out over its life: `smoke` (6 grey, rising and growing), `leaves` (22 orange/red/yellow, falling with a sway), `petals` (24 pink/white), `snow` (40 white, slow fall), `glints` (18 cyan/white sparks blinking in place, day and night), `fireflies` (12 yellow-green, wandering and blinking, night only). None with reduced motion.
   - Lights: `lantern_glow`, a warm `#FFC266` halo (0.9 block) that fades in with night. A glow sprite, not a real light, so any number is cheap. A building with a light draws its `flame` and `glass` voxels unlit, so the lamp itself reads as lit by day and night.
-- `prefers-reduced-motion`: disable bobbing, idle hops, and camera moves.
+- **Island move** (F5, guidance_v2 Step 4.3; render mode `sequence`: fixed camera, clouds on, no panels). Both islands stand side by side (old left, new right) and stop bobbing; the camera fits both.
+  1. Reveal (1.5 s): the new island rises 5 blocks into place.
+  2. Rainbow bridge: the spent Unicorn walks to the old island's edge facing the new one (0.8 s) and leaps along an arch to the new island's edge (2 s); the bridge solidifies behind it: six stripes (`#FF5A5F`, `#FFA24D`, `#FFE14D`, `#5ED67A`, `#4DA6FF`, `#8E6BFF`), each 0.12 block wide and 0.08 high, 48 voxel segments along a quadratic arch rising 1.5 blocks + a quarter of the span above the higher edge.
+  3. Crossing: the others walk to the bridge start, nearest first, and cross single file (1.6 s on the bridge each, 0.45 s apart, closer together for big islands so the crossing takes at most 6 s), hopping slightly while they move.
+  4. Arrival: each walks from the bridge end to its new tile; the Unicorn shrinks away at the far end while 14 rainbow cubes pop out (0.9 s).
+  5. Farewell (2.2 s): the bridge dissolves from the old end, the old island sinks 14 blocks, and the view pans until the new island is centered; the camera then fits the new island alone.
+  Reduced motion: no sequence; the UI crossfade (7.9).
 
 ## 19. Performance
 

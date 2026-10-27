@@ -1,6 +1,7 @@
 import { createStore } from 'zustand/vanilla';
 import { config, DEFAULT_BLOCK_THEME } from '../domain/config';
-import type { Equipped, FocusSession, InboxRow, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../domain/types';
+import type { Equipped, FocusSession, InboxRow, IslandHistoryEntry, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../domain/types';
+import { moveIsland, type MoveProblem } from '../domain/island/move';
 import {
   addSkin,
   buyProblem,
@@ -98,6 +99,10 @@ export interface AppState {
   /** Equipped skins (per species) and block theme. */
   equipped: Equipped;
   placedBuildings: PlacedBuilding[];
+  /** Islands left by island moves (F5). */
+  islandHistory: IslandHistoryEntry[];
+  /** The island-move sequence playing now (memory only; the move itself is already saved). */
+  islandMove: IslandMoveSequence | null;
 
   init(): Promise<void>;
   exportBackup(): Promise<Backup>;
@@ -149,6 +154,24 @@ export interface AppState {
   placeBuilding(p: { defId: string; tile: Tile; rotation: Rotation; movingId?: string }): Promise<PlaceProblem | 'none_left' | 'not_idle' | null>;
   /** Puts a placed building back into the inventory. */
   storeBuilding(id: string): Promise<void>;
+  /** A candidate seed for a new island (previews before moving). */
+  rollIslandSeed(): number;
+  /**
+   * Moves to the island of `seed` (Step 4.1): spends the oldest Unicorn, re-places the animals, returns
+   * the buildings, in one write; then starts the move sequence. Returns why not, or null.
+   */
+  moveIsland(seed: number): Promise<MoveProblem | null>;
+  /** Ends (or skips) the move sequence. */
+  finishIslandMove(): void;
+}
+
+/** What the move sequence needs about the island left behind (Step 4.3). */
+export interface IslandMoveSequence {
+  oldWorld: WorldState;
+  /** Animals that were on the old island, on their old tiles (the spent Unicorn included). */
+  oldAnimals: PlacedAnimal[];
+  oldBuildings: PlacedBuilding[];
+  spentId: string;
 }
 
 /** Occupancy of the own island now: active animals and placed buildings. */
@@ -326,6 +349,8 @@ export function createAppStore(initialDeps: AppDeps) {
       cosmetics,
       equipped: sanitizeEquipped(dummy?.equipped ?? loaded.equipped, cosmetics),
       placedBuildings,
+      islandHistory: loaded.islandHistory,
+      islandMove: null,
       gold: goldBalance([...ledger, ...(dummy?.ledger ?? [])]),
       ready: true,
       settings,
@@ -411,6 +436,8 @@ export function createAppStore(initialDeps: AppDeps) {
     cosmetics: [],
     equipped: DEFAULT_EQUIPPED,
     placedBuildings: [],
+    islandHistory: [],
+    islandMove: null,
 
     async init() {
       set(await hydrate(true));
@@ -599,6 +626,48 @@ export function createAppStore(initialDeps: AppDeps) {
       if (!get().placedBuildings.some((b) => b.id === id)) return;
       if (!memoryOnly.has(id)) await commit({ buildingsRemove: [id] });
       set({ placedBuildings: get().placedBuildings.filter((b) => b.id !== id) });
+    },
+
+    rollIslandSeed() {
+      let seed: number;
+      do seed = Math.floor(deps.rng() * 2 ** 31);
+      while (seed === get().world.seed);
+      return seed;
+    },
+
+    async moveIsland(seed) {
+      const s = get();
+      const out = moveIsland({
+        phase: s.phase,
+        world: s.world,
+        animals: s.animals,
+        buildings: s.placedBuildings,
+        history: s.islandHistory,
+        newSeed: seed,
+        now: deps.now(),
+        rng: deps.rng,
+        historyId: deps.uuid(),
+      });
+      if (typeof out === 'string') return out;
+      await commit({
+        world: out.world,
+        islandHistoryAdd: [out.history],
+        animals: out.animals.filter((a) => !memoryOnly.has(a.id)),
+        buildingsRemove: out.buildingsRemoved.filter((id) => !memoryOnly.has(id)),
+      });
+      const changed = new Map(out.animals.map((a) => [a.id, a]));
+      set({
+        world: out.world,
+        islandHistory: [...s.islandHistory, out.history],
+        animals: s.animals.map((a) => changed.get(a.id) ?? a),
+        placedBuildings: [],
+        islandMove: { oldWorld: s.world, oldAnimals: s.animals.filter(isActive), oldBuildings: s.placedBuildings, spentId: out.spent.id },
+      });
+      return null;
+    },
+
+    finishIslandMove() {
+      if (get().islandMove) set({ islandMove: null });
     },
 
     applyExpirations() {
