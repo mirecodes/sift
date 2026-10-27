@@ -1,7 +1,7 @@
 # ARCHITECTURE.md
 
-> The coding agent's reference for structure, rules and settled decisions. `docs/DESIGN.md` covers look and feel.
-> `(ADR-0xx)` tags point to the human-facing log `docs/DECISIONS.md`; the rule stated here is what counts.
+> The coding agent's reference for structure, rules and settled decisions. `docs/reference/DESIGN.md` covers look and feel.
+> `(ADR-0xx)` tags point to the human-facing log `docs/logs/DECISIONS.md`; the rule stated here is what counts. Bare doc names in code comments (`DESIGN.md 7.5`) mean the file in its `docs/` folder (map: `docs/README.md`).
 > `[ASSUMPTION]` = default applied, not yet confirmed by the owner (see §12).
 
 ## 1. Product
@@ -9,7 +9,7 @@
 - **Sift**: Pomodoro-style focus timer with collectible rewards (inspiration: Focus Pomo).
 - **Loop**: focus → earn a random animal → it is placed on a floating voxel island → the island grows → focus again.
 - **Platforms**: Phase 1 local desktop web app (done). Phase 2 iOS/Android by wrapping the same code with Capacitor (deferred, ADR-002).
-- **Work model**: features come from `docs/guidance_vN.md`, implemented step by step. Everything so far is guidance_v1.
+- **Work model**: features come from `docs/plans/guidance_vN.md`, implemented step by step (guidance_v2 is the current one).
 
 **Philosophy**: focus is the product, rewards are the garnish. Honest time: rewards only for real, completed focus. Gentle motivation: longer focus helps only slightly, and nothing worse than "no reward" ever happens. The island records accumulated effort.
 
@@ -202,7 +202,7 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 ## 10. Directory structure
 
 ```
-docs/            ARCHITECTURE, DESIGN, DECISIONS (human log), CHANGELOG, PROJECT_STATUS, guidance_vN
+docs/            by kind (map: docs/README.md): plans/ (guidance_vN), reference/ (ARCHITECTURE, DESIGN, API), guides/ (CONTENT, setup guides), status/ (PROJECT_STATUS, PROGRESS), logs/ (CHANGELOG, DECISIONS: human log), process/ (LOOP)
 config/app.yaml  runtime config
 e2e/             Playwright smoke test
 content/         data only (ADR-041): pack.json (contentVersion), presets.json, species/, skins/, skinFamilies/, blockThemes/, buildings/, releases/, models/ (DSL .ts, .vox + converted .json, palette-template.vox); guide: docs/CONTENT.md

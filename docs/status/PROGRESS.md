@@ -1,6 +1,6 @@
 # Sift v2 — Build progress
 
-> Maintained by the coding agent during the build loop (`docs/LOOP.md`). The Stop hook reads this file.
+> Maintained by the coding agent (build loop: `docs/process/LOOP.md`). The loop's Stop hook reads this file.
 > Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked, needs owner
 > Step lines must keep the exact format `- [ ] X.Y Title`. Put notes on indented lines below a step.
 

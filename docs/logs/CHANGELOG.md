@@ -1,12 +1,16 @@
 # CHANGELOG.md
 
-> Grouped by the guidance file that drove the work (`docs/guidance_vN.md`), newest guidance first.
+> Grouped by the guidance file that drove the work (`docs/plans/guidance_vN.md`), newest guidance first.
 > Inside a section, newest first: `YYYY-MM-DD · **Category** — what changed`. Categories: Added, Changed, Removed, Fixed, Docs.
 > Tier names below use the current ranks (Common < Mythic < Epic < Legendary).
 
 ---
 
 ## guidance_v2
+
+- 2026-10-27 · **Docs** — Docs sorted into folders by kind (ADR-044): `plans/` (guidance), `reference/` (ARCHITECTURE, DESIGN), `guides/` (CONTENT), `status/` (PROJECT_STATUS, PROGRESS), `logs/` (CHANGELOG, DECISIONS), `process/` (LOOP); map in `docs/README.md`. `CLAUDE.md`, `README.md` and links updated.
+
+- 2026-10-27 · **Fixed** — Heavy terrain tests timed out on slow machines (Vitest `testTimeout` 30 s). The committed-config test now allows the flags the owner released (`stats`, `economy`, `cosmetics`) and `testMode.dummyData` (memory-only), and still requires every other flag and the destructive developer switches off.
 
 - 2026-10-08 · **Changed** — Owner feedback on Phase 3 (ADR-043, replaces Q13 "one skin per species"): choose one or several skins per species; a new animal arrives in one of them at random and keeps it (`PlacedAnimal.skinId`); others follow the choice with a fixed pick. The Collection's species sheet is now a grid of floating picture cards (3:4, small price under unowned ones) with multi-select, `Select all owned`, and buying in place; a bought skin joins the choice. Old one-skin `equipped` rows still load (DESIGN.md 7.5).
 

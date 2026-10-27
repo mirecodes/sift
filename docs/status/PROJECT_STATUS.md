@@ -2,7 +2,7 @@
 
 > Snapshot for planning discussions. Written for a product/planning reader, not for engineers.
 > As of 2026-10-08, after guidance_v2 Phase 3 (version 0.1.0, not released).
-> Sources of truth: `ARCHITECTURE.md` (structure and settled decisions), `DESIGN.md` (look and feel), `CONTENT.md` (how to make and release content), `CHANGELOG.md` (history by guidance file), `DECISIONS.md` (human-only ADR log). guidance_v1 built the app; **guidance_v2** is in progress, step by step (`PROGRESS.md`): Phases 0 (foundations), 1 (tabs and Stats), 2 (gold economy) and 3 (content pipeline, cosmetics, buildings, shop) are done. Each new phase ships behind a feature flag that stays off until the owner turns it on.
+> Sources of truth (map: `docs/README.md`): `reference/ARCHITECTURE.md` (structure and settled decisions), `reference/DESIGN.md` (look and feel), `guides/CONTENT.md` (how to make and release content), `logs/CHANGELOG.md` (history by guidance file), `logs/DECISIONS.md` (human-only ADR log). guidance_v1 built the app; **guidance_v2** is in progress, step by step (`PROGRESS.md`): Phases 0 (foundations), 1 (tabs and Stats), 2 (gold economy) and 3 (content pipeline, cosmetics, buildings, shop) are done. Each new phase ships behind a feature flag that stays off until the owner turns it on.
 
 ---
 
@@ -132,7 +132,7 @@ Legend: **[+]** = not in the initial plan, added later at the owner's request.
 - New shapes are made in **MagicaVoxel** (imported with `npm run content:vox`) or with a small code builder for simple decorations. Visual behavior (spinning sails, falling snow, lantern glow) comes from a fixed set of **presets** an item names.
 - **Content Studio** (`/studio` in the development server): browse and filter everything, preview any item on a sample island by day and night and in every theme, tune a skin family across all 50 animals at once, test where a building fits, and save edits back to the files.
 - `npm run content:sprites` renders the pixel-art pictures for the Collection and Shop from the 3D models (the old flat pictures were replaced so everything matches).
-- The app ships with one **content pack**; from Phase 5 newer packs can arrive from the server without an app update. `docs/CONTENT.md` is the step-by-step release guide.
+- The app ships with one **content pack**; from Phase 5 newer packs can arrive from the server without an app update. `docs/guides/CONTENT.md` is the step-by-step release guide.
 
 ### 3.8 Cosmetics, shop and buildings (guidance_v2 Phase 3, flag `cosmetics`)
 - First release `v2-launch`: island themes Autumn, Snow, Desert and Cherry Blossom (next to the free Meadow); Fence, Lantern, Flower Bed, Well, Small Tree, Stone Statue, Windmill (turning sails), Footbridge (goes over the stream) and the Champion Flag (not for sale, for group winners later); skin families Golden, Snowy, Shadow, Pastel and Ghost for every animal, plus White Tiger and Night Unicorn.
