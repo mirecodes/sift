@@ -1,6 +1,6 @@
 ---
 name: coder-opus
-description: Implements one specified Sift change that still needs judgment inside the spec (tricky logic, timing/state, rendering performance, a bug with a known area but unclear cause). Use instead of `coder` only for those; see "Delegation" in CLAUDE.md.
+description: Implements one specified Sift change that still needs judgment inside the spec (tricky logic, timing/state, rendering performance, a bug with a known area but unclear cause). Use instead of `coder-sonnet` only for those; see "Delegation" in CLAUDE.md.
 model: opus
 effort: medium
 ---

@@ -1,5 +1,5 @@
 ---
-name: coder
+name: coder-sonnet
 description: Implements one fully specified Sift change (code + tests) from a brief written by the main session. Use for settled, mechanical or well-bounded implementation work; see "Delegation" in CLAUDE.md.
 model: sonnet
 ---

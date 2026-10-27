@@ -8,7 +8,7 @@
 
 ## guidance_v2
 
-- 2026-10-27 · **Added** — Owner request: token-cost delegation (ADR-044). `CLAUDE.md` gains a "Delegation" section (when to hand implementation to a subagent, which one, how to brief and review); new subagents `.claude/agents/coder.md` (Sonnet) and `.claude/agents/coder-opus.md` (Opus, medium effort) write code and tests only, never docs or commits.
+- 2026-10-27 · **Added** — Owner request: token-cost delegation (ADR-044). `CLAUDE.md` gains a "Delegation" section (when to hand implementation to a subagent, which one, how to brief and review); new subagents `.claude/agents/coder-sonnet.md` (Sonnet) and `.claude/agents/coder-opus.md` (Opus, medium effort) write code and tests only, never docs or commits.
 
 - 2026-10-08 · **Changed** — Owner feedback on Phase 3 (ADR-043, replaces Q13 "one skin per species"): choose one or several skins per species; a new animal arrives in one of them at random and keeps it (`PlacedAnimal.skinId`); others follow the choice with a fixed pick. The Collection's species sheet is now a grid of floating picture cards (3:4, small price under unowned ones) with multi-select, `Select all owned`, and buying in place; a bought skin joins the choice. Old one-skin `equipped` rows still load (DESIGN.md 7.5).
 

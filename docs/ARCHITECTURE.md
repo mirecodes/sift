@@ -203,7 +203,7 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 
 ```
 docs/            ARCHITECTURE, DESIGN, DECISIONS (human log), CHANGELOG, PROJECT_STATUS, guidance_vN
-.claude/agents/  implementation subagents `coder` (Sonnet), `coder-opus` (Opus, medium); when to use them: CLAUDE.md "Delegation" (ADR-044)
+.claude/agents/  implementation subagents `coder-sonnet` (Sonnet), `coder-opus` (Opus, medium); when to use them: CLAUDE.md "Delegation" (ADR-044)
 config/app.yaml  runtime config
 e2e/             Playwright smoke test
 content/         data only (ADR-041): pack.json (contentVersion), presets.json, species/, skins/, skinFamilies/, blockThemes/, buildings/, releases/, models/ (DSL .ts, .vox + converted .json, palette-template.vox); guide: docs/CONTENT.md

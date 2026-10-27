@@ -21,7 +21,7 @@ The main session plans, decides, writes docs, reviews and commits. Implementatio
 3. **Cheap to brief**: the brief points to paths and doc sections; it does not need pasted file contents or this session's reasoning.
 
 **Pick the agent:**
-- `coder` (Sonnet): default for delegated units: boilerplate, screens/components to a settled spec, content data, tests, mechanical refactors.
+- `coder-sonnet` (Sonnet): default for delegated units: boilerplate, screens/components to a settled spec, content data, tests, mechanical refactors.
 - `coder-opus` (Opus, medium effort): delegated units that need judgment inside the spec: tricky algorithms, timer/state logic, rendering performance, a bug whose area is known but cause is not.
 
 **Stay in the main session when any holds:** about 5 or fewer tool calls; only files already read in this session; an open design, architecture or visual decision; docs-only work; a cause still unknown with no area to point to; a small follow-up fix to a subagent's result (larger follow-ups: continue the same agent with SendMessage, not a new one).
