@@ -29,6 +29,9 @@ export const appStore = createAppStore({
   clientVersion: APP_VERSION,
   remote: createRemote(backend, { platform: platform.name, appVersion: APP_VERSION, secure: platform.secure }),
   remoteContent: features.remoteContent,
+  push: platform.push,
+  platformName: platform.name,
+  locale: typeof navigator === 'undefined' ? 'en' : navigator.language,
 });
 
 export function useApp<T>(selector: (state: AppState) => T): T {

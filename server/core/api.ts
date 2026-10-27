@@ -3,6 +3,7 @@ import { ARGS } from './args';
 import { ApiError, UserWriter, type Caller, type HandlerCtx, type ServerEnv } from './context';
 import { DuplicateKeyError, type Tx } from './db';
 import { coreHandlers, type Handlers } from './handlers/core';
+import { planPushes, sendPushes } from './push';
 import { ensureProfile, pull, settleExpirations } from './user';
 
 /** Server-only settings (`app_config` table, §8): version gate and rate limits. */
@@ -85,7 +86,7 @@ export async function handle(env: ServerEnv, caller: Caller, request: unknown): 
     const userId = caller.userId;
     if (!userId) {
       if (!PUBLIC_OPS.has(op)) throw new ApiError('unauthorized');
-      const data = await env.db.transaction((tx) => run(env, caller, tx, '', op, parsed.data, false));
+      const { data } = await env.db.transaction((tx) => run(env, caller, tx, '', op, parsed.data, false));
       return { ok: true, data, serverNow: env.now() } as ApiResponse;
     }
 
@@ -96,15 +97,16 @@ export async function handle(env: ServerEnv, caller: Caller, request: unknown): 
       const key = `${userId}:${requestId}`;
       if (mutation) {
         const done = await tx.table('api_requests').get(key);
-        if (done) return { data: done.result, delta: sinceSeq !== undefined ? await pull(tx, userId, sinceSeq) : undefined };
+        if (done) return { data: done.result, delta: sinceSeq !== undefined ? await pull(tx, userId, sinceSeq) : undefined, pushes: [] };
       }
-      const data = await run(env, caller, tx, userId, op, parsed.data, SETTLES.has(op));
+      const { data, pushes } = await run(env, caller, tx, userId, op, parsed.data, SETTLES.has(op));
       if (mutation) await tx.table('api_requests').put({ key, userId, op, result: data, createdAt: env.now() });
       let delta: SyncDelta | undefined;
       if (sinceSeq !== undefined && op !== 'delete_account') delta = await pull(tx, userId, sinceSeq);
-      return { data, delta };
+      return { data, delta, pushes };
     });
     if (op === 'delete_account') await env.hooks?.deleteAuthUser?.(userId);
+    await sendPushes(env, out.pushes);
     return { ok: true, data: out.data, ...(out.delta && { delta: out.delta }), serverNow: env.now() } as ApiResponse;
   } catch (e) {
     return fail(env, e);
@@ -127,8 +129,9 @@ async function run(env: ServerEnv, caller: Caller, tx: Tx, userId: string, op: O
   const ctx: HandlerCtx = { env, tx, caller, userId, w, now: env.now(), writerFor };
   if (settle) await settleExpirations(ctx, w);
   const data = await (handlers[op] as (c: HandlerCtx, a: unknown) => Promise<unknown>)(ctx, args);
-  if (op !== 'delete_account') for (const writer of writers.values()) await writer.finish();
-  return data;
+  if (op === 'delete_account') return { data, pushes: [] };
+  for (const writer of writers.values()) await writer.finish();
+  return { data, pushes: await planPushes(tx, ctx.now, writers.values()) };
 }
 
 /**

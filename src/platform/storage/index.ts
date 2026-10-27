@@ -36,6 +36,8 @@ export interface AccountLink {
   outbox: { requestId: string; op: PushOp }[];
   /** Verified sessions ended while offline: `end_session` is retried with the same request id (Step 5.5). */
   pendingEnds: AwaitingReward[];
+  /** This device in the server's `devices` table (push, Step 6.6); made at the first registration. */
+  deviceId?: string;
 }
 
 /** Everything that must change together. An implementation applies it in one transaction. */

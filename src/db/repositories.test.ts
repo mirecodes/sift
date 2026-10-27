@@ -14,6 +14,7 @@ const animal: PlacedAnimal = {
 };
 const settings: Settings = {
   focusMinutes: 30, breakMinutes: 10, soundEnabled: false, theme: 'dark', weekStartsOn: 1, showFocusPresence: true, liveProgress: true,
+  pushAsked: false, pushCategories: { friends: true, together: true, groups: true, war: true, weekly: true },
 };
 const world = { seed: 77, blockThemeId: 'default' };
 

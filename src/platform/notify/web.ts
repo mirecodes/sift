@@ -88,7 +88,6 @@ export function createWebNotify(): NotifyAdapter {
         overtone.stop(t0 + n.length + 0.05);
       }
     },
-    scheduleFocusEnd() {},
-    cancelScheduled() {},
+    schedule() {},
   };
 }

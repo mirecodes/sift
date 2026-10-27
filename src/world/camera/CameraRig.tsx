@@ -49,32 +49,53 @@ export function CameraRig({ mode, side, depth, rise, reducedMotion, controls }: 
   const modeRef = useRef(mode);
   modeRef.current = mode;
 
-  // Home: drag to rotate within ±135°, wheel to zoom within limits.
+  // Home: one finger (or the mouse) drags to rotate within ±135°; two fingers pinch, or the wheel, zoom
+  // within limits (Step 6.4).
   useEffect(() => {
     const el = gl.domElement;
     const limit = MathUtils.degToRad(config.render.azimuthLimitDeg);
-    let dragging = false;
+    const pointers = new Map<number, { x: number; y: number }>();
     let lastX = 0;
+    let pinch = 0;
+    const spread = () => {
+      const [a, b] = [...pointers.values()];
+      return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+    };
+    const zoomBy = (factor: number) => {
+      controls.current.zoom = MathUtils.clamp(controls.current.zoom * factor, config.render.zoomMin, config.render.zoomMax);
+      invalidate();
+    };
     const down = (e: PointerEvent) => {
       if (modeRef.current !== 'home') return;
-      dragging = true;
-      lastX = e.clientX;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       el.setPointerCapture(e.pointerId);
+      lastX = e.clientX;
+      pinch = pointers.size === 2 ? spread() : 0;
     };
     const move = (e: PointerEvent) => {
-      if (!dragging) return;
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size >= 2) {
+        const d = spread();
+        if (pinch > 0 && d > 0) zoomBy(d / pinch);
+        pinch = d;
+        return;
+      }
       controls.current.azimuth = MathUtils.clamp(controls.current.azimuth - (e.clientX - lastX) * 0.005, -limit, limit);
       lastX = e.clientX;
       invalidate();
     };
     const up = (e: PointerEvent) => {
-      dragging = false;
+      pointers.delete(e.pointerId);
       if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+      pinch = 0;
+      // The finger left on the screen keeps rotating from where it is, without a jump.
+      const rest = [...pointers.values()][0];
+      if (rest) lastX = rest.x;
     };
     const wheel = (e: WheelEvent) => {
       if (modeRef.current !== 'home') return;
-      controls.current.zoom = MathUtils.clamp(controls.current.zoom * Math.exp(-e.deltaY * 0.001), config.render.zoomMin, config.render.zoomMax);
-      invalidate();
+      zoomBy(Math.exp(-e.deltaY * 0.001));
     };
     el.addEventListener('pointerdown', down);
     el.addEventListener('pointermove', move);

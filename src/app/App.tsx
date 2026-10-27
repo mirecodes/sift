@@ -8,6 +8,8 @@ import { appStore, selectIslandLevel, selectVisibleAnimals, useApp, type Tab } f
 import { platform } from '../platform';
 import { clearContentGeometry } from '../world/voxel/geometry';
 import { AccountChoiceSheet, OutdatedScreen } from '../screens/account/AccountChoiceSheet';
+import { PushPromptSheet } from '../screens/account/PushPromptSheet';
+import { bindPhaseEffects } from './phaseEffects';
 import { usePrefersReducedMotion } from '../ui/hooks';
 import { strings } from '../ui/strings';
 import { FriendsIcon, GroupIcon, IslandIcon, StatsIcon } from '../ui/components/Icons';
@@ -81,6 +83,7 @@ export function App() {
   const islandMove = useApp((s) => s.islandMove);
   const accountChoice = useApp((s) => s.account.choice !== null);
   const outdated = useApp((s) => s.account.outdated);
+  const pushPrompt = useApp((s) => s.pushPrompt);
   const finishIslandMove = useApp((s) => s.finishIslandMove);
   const moveRefs = useIslandMoveRefs(islandMove);
   const moving = islandMove !== null && !reducedMotion;
@@ -161,6 +164,20 @@ export function App() {
     [signedIn],
   );
 
+  // Native timer notifications and lock-screen progress follow the phase (Steps 6.3, 6.8).
+  useEffect(() => bindPhaseEffects(appStore, platform), []);
+
+  // Deep links (Step 6.5): the URL the app was opened with, universal / app links, tapped pushes.
+  useEffect(() => {
+    const open = (url: string) => appStore.getState().openLink(url);
+    const offLinks = platform.links.onOpen(open);
+    const offPush = platform.push.onOpen(open);
+    return () => {
+      offLinks();
+      offPush();
+    };
+  }, []);
+
   // A new content pack is in use (Step 5.8): rebuild cached meshes with its models and colors.
   const contentVersion = useApp((s) => s.contentVersion);
   const firstContent = useRef(contentVersion);
@@ -233,6 +250,7 @@ export function App() {
       {crossfade > 0 && <div key={crossfade} className="scene-crossfade" aria-hidden="true" />}
       {accountChoice && !focusing && <AccountChoiceSheet />}
       {outdated && <OutdatedScreen />}
+      {pushPrompt && !focusing && <PushPromptSheet />}
       {showTabs && phase.kind === 'break' && tab !== 'island' && <BreakPill />}
       {showTabs && <TabBar tabs={TABS} active={tab} onSelect={setTab} label={strings.aria.tabs} />}
     </>

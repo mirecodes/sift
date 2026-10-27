@@ -17,13 +17,11 @@ import { IDLE, startFocus } from '../../../src/domain/timer/phase';
 import type { ItemDef } from '../../../shared/content/schema';
 import { ApiError, type HandlerCtx } from '../context';
 import { OWNED_TABLES, keyOf } from '../schema';
-import { ensureIsland, hasIsland, profileView, pull, strip, userState } from '../user';
+import { ensureIsland, hasIsland, profileView, pull, STALE_AFTER_MS, strip, userState } from '../user';
 
 type Handler<O extends Op> = (c: HandlerCtx, args: OpArgs<O>) => Promise<OpResult<O>>;
 export type Handlers = { [O in Op]?: Handler<O> };
 
-/** A running session older than its plan plus this is stale (the app was closed): a new start abandons it. */
-const STALE_AFTER_MS = 2 * 3_600_000;
 /** Gold a first-sign-in upload may carry over (§5.7; local saves can be edited). */
 export const IMPORTED_GOLD_CAP = 1000;
 

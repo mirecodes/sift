@@ -40,6 +40,10 @@ function studioSave(): Plugin {
 
 export default defineConfig({
   plugins: [react(), studioSave()],
+  resolve: {
+    // The push plugin's browser fallback imports the Firebase JS SDK; Sift never uses it (no web push).
+    alias: { 'firebase/messaging': join(import.meta.dirname, 'src/platform/native/firebaseWebStub.ts') },
+  },
   test: {
     environment: 'node',
     // Terrain sweeps over hundreds of seeds take several seconds on slow CI machines.

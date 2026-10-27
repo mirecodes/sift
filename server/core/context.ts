@@ -1,4 +1,6 @@
 import type { ErrorCode, Platform } from '../../shared/api/types';
+import type { PushCategory } from '../../shared/rules/push';
+import type { Notice } from '../../shared/types/rows';
 import type { ServerDb, Tx } from './db';
 import type { ProfileRow, Rows, TableName } from './schema';
 
@@ -16,8 +18,19 @@ export class ApiError extends Error {
 /** Side effects outside the database (auth admin, push), provided by the host (edge function or fake). */
 export interface ServerHooks {
   deleteAuthUser?(userId: string): Promise<void>;
-  /** Sends one push message to a user's devices (Phase 6); the server already checked the focus rule. */
-  push?(userId: string, message: { category: string; title: string; body: string; url?: string }): Promise<void>;
+  /**
+   * Sends one push message to a user's devices (Step 6.6). The core already applied the focus rule; the
+   * host skips devices that turned the category off.
+   */
+  push?(userId: string, message: PushMessage): Promise<void>;
+}
+
+export interface PushMessage {
+  category: PushCategory;
+  title: string;
+  body: string;
+  /** A deep-link path the app opens on tap (Step 6.5), e.g. `/war/<id>`. */
+  url?: string;
 }
 
 /** Everything the server core needs from its host. Injected so tests control time and chance. */
@@ -44,6 +57,8 @@ export interface Caller {
  */
 export class UserWriter {
   private seq: number | null = null;
+  /** Notices written for this user in this transaction (push candidates, Step 6.6). */
+  readonly noticed: Notice[] = [];
 
   constructor(
     private readonly tx: Tx,

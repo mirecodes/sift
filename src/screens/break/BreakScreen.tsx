@@ -63,6 +63,7 @@ export function BreakScreen() {
     if (!revealPending || !animal || revealId.current === revealPending) return;
     revealId.current = revealPending;
     if (soundEnabled) platform.notify.play(`reveal:${animal.tierRank}`);
+    platform.haptics.impact('light'); // phones only (Step 6.2)
     const id = window.setTimeout(finishReveal, config.ui.revealMs);
     return () => window.clearTimeout(id);
   }, [revealPending, animal, soundEnabled, finishReveal]);

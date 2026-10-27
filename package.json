@@ -19,7 +19,10 @@
     "content:build": "node tools/run.mjs tools/content-build/build.ts",
     "content:vox": "node tools/run.mjs tools/vox-import/main.ts",
     "content:validate": "node tools/run.mjs tools/content-build/validate.ts",
-    "content:sprites": "node tools/sprite-gen/main.mjs"
+    "content:sprites": "node tools/sprite-gen/main.mjs",
+    "mobile:sync": "npm run build && cap sync",
+    "mobile:ios": "cap open ios",
+    "mobile:android": "cap open android"
   },
   "dependencies": {
     "@aparajita/capacitor-secure-storage": "8.0.1",

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sift</string>
+    <string name="title_activity_main">Sift</string>
+    <string name="package_name">com.mirecodes.sift</string>
+    <string name="custom_url_scheme">com.mirecodes.sift</string>
+</resources>

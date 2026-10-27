@@ -160,8 +160,11 @@ Rank order, lowest to highest: Common (white), Mythic (blue), Epic (pink), Legen
 | Desktop | ≥ 992px | Collection 4-up |
 
 ### 4.3 Touch and Safe Areas
-- Minimum touch target 44px (buttons: 12px vertical padding + 25.6px line height).
-- Respect safe-area insets for future mobile builds.
+- Minimum touch target 44px (buttons: 12px vertical padding + 25.6px line height). On touch screens (`pointer: coarse`) the 40px icon buttons and segmented options grow to 44px; the 44×24 toggle gets an invisible 44px-tall hit area.
+- Respect safe-area insets (`--safe-*` tokens; `viewport-fit=cover`): top bars, the tab bar and bottom actions pad by them, so nothing sits under the notch or the home indicator.
+- Portrait first; tablet landscape uses the same layout with the wider breakpoints.
+- Gestures on the island (Home): one finger rotates, two fingers pinch to zoom; tap pokes. No hover-only behavior: anything hover shows has a press or long-press equivalent.
+- The status bar is hidden during Focus (native), like web fullscreen.
 - The timer is optically centered (~4% above true center).
 
 ---

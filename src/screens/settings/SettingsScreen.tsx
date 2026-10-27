@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { config } from '../../domain/config';
+import { PUSH_CATEGORIES } from '../../../shared/rules/push';
 import { backupFileName, parseBackup, summarizeBackup, type Backup, type BackupError } from '../../domain/backup';
 import { platform } from '../../platform';
 import { useApp } from '../../store';
@@ -82,6 +83,7 @@ export function SettingsScreen() {
   const settings = useApp((s) => s.settings);
   const updateSettings = useApp((s) => s.updateSettings);
   const setView = useApp((s) => s.setView);
+  const setPushCategory = useApp((s) => s.setPushCategory);
   const account = useApp((s) => s.account.status);
   const { focusMinutes, breakMinutes } = config.settings;
 
@@ -119,10 +121,27 @@ export function SettingsScreen() {
           />
         </SettingsRow>
 
+        {platform.name !== 'web' && (
+          <SettingsRow label={strings.settings.liveProgress}>
+            <Toggle label={strings.settings.liveProgress} checked={settings.liveProgress} onChange={(v) => void updateSettings({ liveProgress: v })} />
+          </SettingsRow>
+        )}
+
         <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.settings.sound}</h2>
         <SettingsRow label={strings.settings.chimes}>
           <Toggle label={strings.settings.chimes} checked={settings.soundEnabled} onChange={(v) => void updateSettings({ soundEnabled: v })} />
         </SettingsRow>
+
+        {platform.push.available && account === 'signedIn' && (
+          <>
+            <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.settings.notifications}</h2>
+            {PUSH_CATEGORIES.map((c) => (
+              <SettingsRow key={c} label={strings.push.categories[c]}>
+                <Toggle label={strings.push.categories[c]} checked={settings.pushCategories[c]} onChange={(v) => void setPushCategory(c, v)} />
+              </SettingsRow>
+            ))}
+          </>
+        )}
 
         {runtimeConfig.features.stats && (
           <>

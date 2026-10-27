@@ -150,22 +150,29 @@ type Phase =
 
 ## 7. Platform layer
 
-Capability APIs only through `src/platform/<name>/` (interface `index.ts`, web `web.ts`, later `native.ts`):
+Capability APIs only through `src/platform/<name>/` (interface `index.ts`, web `web.ts`); native versions live together in `platform/native/index.ts` (ADR-050). `platform/index.ts` exports one `Platform` (`platform/types.ts`): `nativePlatform()` (`native/detect.ts`, reads `window.Capacitor`) picks the native set inside the iOS/Android apps, the web set otherwise. Capacitor plugins are imported only by `native/plugins.ts`, a lazily loaded chunk, so the web bundle carries none.
 
-| Adapter | Web | Native (later) |
+| Adapter | Web | iOS / Android (Capacitor 8) |
 |---|---|---|
-| `StorageAdapter` | IndexedDB (Dexie) | Capacitor SQLite / Preferences |
-| `WakeLockAdapter` | Screen Wake Lock API | keep-awake plugin |
-| `FullscreenAdapter` | Fullscreen API | immersive mode |
-| `NotifyAdapter` | Web Audio chimes | scheduled local notification for focus end (JS may be suspended) |
-| `HapticsAdapter` | no-op | Capacitor Haptics |
-| `FilesAdapter` | download link / file picker | share sheet / document picker |
-| `SecureStorageAdapter` | `localStorage` | Keychain / Keystore |
-| `LifecycleAdapter` | `visibilitychange`, `online` | app resume |
+| `StorageAdapter` | IndexedDB (Dexie) | SQLite file (`storage/sqlite.ts` over `SqlDriver`; driver `native/sqliteDriver.ts`, `@capacitor-community/sqlite`) |
+| `WakeLockAdapter` | Screen Wake Lock API | `@capacitor-community/keep-awake` |
+| `FullscreenAdapter` | Fullscreen API | status bar hidden (`@capacitor/status-bar`) |
+| `NotifyAdapter` | Web Audio chimes; `schedule` no-op | chimes in the foreground; `schedule` = local notifications (`@capacitor/local-notifications`, ids 1 focusEnd / 2 breakEnd, Android channels `timer` / `timer_silent`) |
+| `HapticsAdapter` | no-op | `@capacitor/haptics` (light on reveal, medium on war result) |
+| `FilesAdapter` | download link / file picker | file in Cache + share sheet; the WebView file input for open |
+| `SecureStorageAdapter` | `localStorage` | Keychain / Keystore (`@aparajita/capacitor-secure-storage`) |
+| `LifecycleAdapter` | `visibilitychange`, `online` | `App` `resume`, `online` |
+| `PushAdapter` | unavailable | FCM/APNs via `@capacitor-firebase/messaging`; tap → link |
+| `LinksAdapter` | the page URL once (then the address bar goes to `/`) | launch URL + `appUrlOpen` (universal / app links) |
+| `LiveProgressAdapter` | no-op | Sift's own plugin `SiftLiveProgress` (iOS Live Activity, Android chronometer notification, ADR-049) |
 | `RemotePort` | `SupabaseRemote` (fetch) or `FakeRemote` | same |
 
-- "Capability API" = storage, wake lock, fullscreen, audio/notifications, haptics. DOM events, `visibilitychange`, `matchMedia`, `Date.now` are fine in `ui/`, `screens/`, `world/` (ADR-010).
-- Write no untested native stubs before M7 (ADR-002).
+- "Capability API" = storage, wake lock, fullscreen, audio/notifications, haptics, push, links. DOM events, `visibilitychange`, `matchMedia`, `Date.now` are fine in `ui/`, `screens/`, `world/` (ADR-010).
+- **Storage contract**: memory, Dexie and SQLite pass one suite (`storage/contract.suite.ts`; SQLite through `node:sqlite` in tests). Memory and SQLite share the row-store core `storage/rows.ts` (`createRowStorage` over a `RowBackend`); SQLite keeps rows as JSON in `rows(store, id, json)` plus `meta(schema)` and upgrades older files with the same `migrateRows` as backups.
+- **Phase effects** (`app/phaseEffects.ts`, bound once in `App`): on every store change it recomputes `timerAlerts` and `liveStateFor` (`domain/timer/alerts.ts`, pure) from timestamps and hands them to `notify.schedule` / `liveProgress.update`, only when they changed. Screens never schedule alerts.
+- **Deep links** (`shared/rules/links.ts`): `/join/<CODE>`, `/add/<name>-<tag>`, `/war/<id>` (and the old `#/join/CODE`); `openLink` keeps a `pendingLink`, the screen for its kind calls `takeLink(kind)`.
+- **Push** (Step 6.6): permission only after the one-line explanation (`askPush` at the first social action, or a category toggle); `register_device` with token, locale and `settings.pushCategories`; the device id lives in the account link. Server: `notify()` records notices per `UserWriter`; after commit `planPushes` keeps those with a `pushCategoryOf` (`shared/rules/push.ts`) for users not focusing (`focusingNow`: a running, non-stale session) and `sendPushes` calls `hooks.push` (FCM in the edge function; skips devices with the category off).
+- Native projects: `ios/` (Swift Package Manager; app-local plugin and Live Activity sources in `ios/App/App` and `ios/App/SiftLiveActivity`), `android/` (Java plugin in `app/src/main/java/com/mirecodes/sift`). `npm run mobile:sync` builds and copies the web app; setup: docs/guides/MOBILE_SETUP.md.
 
 ## 7a. Backend, accounts and sync (guidance_v2 Phase 5, ADR-047, ADR-048)
 
@@ -223,6 +230,7 @@ config/app.yaml  runtime config
 e2e/             Playwright smoke test
 content/         data only (ADR-041, ADR-045), one file or folder per item, the name is the id: animals/<id>/ (animal.json, model.ts|model.vox+json, skins/<skinId>.json), buildings/<id>/ (building.json, model.ts), themes/<id>.json, skin-families/<id>.json, releases/<id>.json, models/ (loose models, palette-template.vox), sprites/ (generated atlas), pack.json (contentVersion), presets.json; `assemblePack` rejects items in the wrong place (`layoutProblem`); `npm run content:new` scaffolds; guide: docs/guides/CONTENT.md
 tools/           node tools run through Vite's module runner (`node tools/run.mjs <file.ts>`): content-build/ (pack, builder DSL `dsl.ts`, animal builder `animal.ts`, scaffold `new.ts` = `npm run content:new`), vox-import/ (MagicaVoxel → model JSON)
+ios/, android/   Capacitor shells (ADR-050), generated by `cap add`, plus Sift's native plugin sources; `capacitor.config.ts` at the root
 server/          backend (ADR-047): core/ (API dispatcher, handlers, schema, memory DB, contract suite), pg/ (Postgres adapter, SQL generator, PGlite client), edge/ (bundle entry), supabase/ (config.toml, migrations (generated), functions/api (Deno host, push), templates)
 shared/          pure rules that must run identically on client and server (ADR-031)
 ├── api/         types.ts: the versioned API contract
@@ -230,14 +238,14 @@ shared/          pure rules that must run identically on client and server (ADR-
 ├── balance/     balance.ts: gameplay tunables + BALANCE_VERSION
 ├── content/     palette keys, model JSON type, zod schemas, buildPack (validation + family expansion)
 ├── rng/         the one seeded PRNG (mulberry32) + hash01, clamp, lerp
-└── rules/       tier.ts, reward.ts, placement.ts, expiry.ts (later scoring, war, …)
+└── rules/       tier.ts, reward.ts, placement.ts, expiry.ts, links.ts (deep links), push.ts (push categories) (later scoring, war, …)
 src/
 ├── app/         App, routing, runtimeConfig.ts
 ├── screens/     home, focus, break, settings, collection, stats; TabPage, NoticeCard
 ├── domain/      pure logic: config, types, random, timer/, reward/, animals/, island/ (+stream), stats/, content/ (registry + baseline pack)
 ├── world/       Scene, IslandScene, Clouds, RenderDriver, palette, voxel/, island/, animals/, camera/, props/ (camp), stream/, preview/
 ├── store/       Zustand store
-├── platform/    adapters (§7)
+├── platform/    adapters (§7): <name>/index.ts + web.ts, native/ (Capacitor set), types.ts (Platform)
 ├── db/          Dexie schema, repositories
 └── ui/          tokens.css/ts, strings.ts, hooks, components/
 ```

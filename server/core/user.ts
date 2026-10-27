@@ -85,9 +85,22 @@ export async function settleExpirations(c: { tx: Tx; now: number; env: { uuid():
   await notify(w, c.env.uuid(), c.now, { kind: 'animals_departed', animalIds: due.map((d) => d.animalId), gold });
 }
 
-/** Queues a notice for a user (shown on Home or Break, never during Focus). */
+/**
+ * Queues a notice for a user (shown on Home or Break, never during Focus). Notices of a push category
+ * also go out as a push after the transaction commits, unless the user is focusing (`planPushes`).
+ */
 export async function notify(w: UserWriter, id: string, now: number, notice: InboxRow['notice']): Promise<void> {
   await w.put('notices', { id, createdAt: now, notice });
+  w.noticed.push(notice);
+}
+
+/** A running session older than its plan plus this is stale (the app was closed): a new start abandons it. */
+export const STALE_AFTER_MS = 2 * 3_600_000;
+
+/** The user has a running, not stale, server session (the focus rule, §2.14; presence in Phase 7). */
+export async function focusingNow(tx: Tx, userId: string, now: number): Promise<boolean> {
+  const running = await tx.table('sessions').find({ userId, status: 'running' });
+  return running.some((s) => now <= s.startedAt + s.plannedFocusMs + STALE_AFTER_MS);
 }
 
 /** Rows of one user changed after `since` (delta sync). Dismissed notices go out once, so other devices drop them. */

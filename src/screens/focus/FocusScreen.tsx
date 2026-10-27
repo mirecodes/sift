@@ -25,17 +25,15 @@ export function FocusScreen() {
   const display = timerDisplay(resolved, now);
   const overtime = resolved.kind === 'focusOvertime';
 
-  // Keep the screen awake and fullscreen for the whole session; schedule a native end alert.
+  // Keep the screen awake and fullscreen for the whole session (the end alert is scheduled by `bindPhaseEffects`).
   const startedAt = phase.kind === 'focus' ? phase.startedAt : 0;
   const plannedMs = phase.kind === 'focus' ? phase.plannedMs : 0;
   useEffect(() => {
     void platform.wakeLock.request();
     void platform.fullscreen.enter();
-    platform.notify.scheduleFocusEnd(startedAt + plannedMs);
     return () => {
       void platform.wakeLock.release();
       void platform.fullscreen.exit();
-      platform.notify.cancelScheduled();
     };
   }, [startedAt, plannedMs]);
 

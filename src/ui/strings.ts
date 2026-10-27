@@ -63,6 +63,34 @@ export const strings = {
     cancel: 'Cancel',
     backupInvalid: 'This file is not a Sift backup.',
     backupNewer: 'This backup is from a newer version of Sift. Update Sift and try again.',
+    liveProgress: 'Lock screen timer',
+    notifications: 'Notifications',
+    pushOff: 'Notifications are off for Sift. Turn them on in the system settings.',
+  },
+  /** Local notifications at the planned end (Step 6.3); the only thing that reaches the user during Focus. */
+  alerts: {
+    focusEnd: { title: "Time's up", body: 'Open Sift to end focus.' },
+    breakEnd: { title: "Break's over", body: 'Ready for the next one?' },
+  },
+  /** Lock-screen progress (Step 6.8). */
+  live: {
+    focus: 'Focus',
+    break: 'Break',
+    over: "Time's up · open Sift to end focus",
+    endsAt: (time: string) => `Ends at ${time}`,
+  },
+  /** Push (Step 6.6): asked at the first social action, with one line of why. */
+  push: {
+    why: 'Get a note when a friend or your group needs you. Never during focus.',
+    allow: 'Allow',
+    notNow: 'Not now',
+    categories: {
+      friends: 'Friend requests',
+      together: 'Focus together invites',
+      groups: 'Group invites and news',
+      war: 'War reports',
+      weekly: 'Weekly results',
+    },
   },
   collection: {
     title: 'Collection',

@@ -279,6 +279,16 @@ export function createAccount(ctx: AccountCtx) {
       setAccount({ ...SIGNED_OUT });
     },
 
+    /**
+     * Registers this device for push (Step 6.6): its token, app version, locale and category choices.
+     * The device id is made once per sign-in and kept with the account link.
+     */
+    async registerDevice(device: Omit<OpArgs<'register_device'>, 'deviceId'>) {
+      if (!link) return;
+      if (!link.deviceId) await saveLink({ ...link, deviceId: ctx.uuid() });
+      await call('register_device', { deviceId: link.deviceId!, ...device }, { requestId: ctx.uuid() });
+    },
+
     /** In-app account deletion (Step 5.4): server data first, then the local copy. */
     async deleteAccount() {
       await call('delete_account', {}, { requestId: ctx.uuid() });

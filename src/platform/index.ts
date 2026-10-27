@@ -6,24 +6,40 @@ import { createWebHaptics } from './haptics/web';
 import { createWebFiles } from './files/web';
 import { createWebSecureStorage } from './secureStorage/web';
 import { createWebLifecycle } from './lifecycle/web';
+import { createWebPush } from './push/web';
+import { createWebLinks } from './links/web';
+import { createNativePlatform } from './native';
+import { nativePlatform } from './native/detect';
+import type { Platform } from './types';
 
-/** Web implementations. A native entry point swaps these for Capacitor ones (ADR-002). */
-export const platform = {
-  storage: createWebStorage(),
-  wakeLock: createWebWakeLock(),
-  fullscreen: createWebFullscreen(),
-  notify: createWebNotify(),
-  haptics: createWebHaptics(),
-  files: createWebFiles(),
-  secure: createWebSecureStorage(),
-  lifecycle: createWebLifecycle(),
-  /** Which build this is, for the API client header (Step 5.2). Native entry points set ios/android. */
-  name: 'web' as 'web' | 'ios' | 'android',
-};
+function createWebPlatform(): Platform {
+  return {
+    storage: createWebStorage(),
+    wakeLock: createWebWakeLock(),
+    fullscreen: createWebFullscreen(),
+    notify: createWebNotify(),
+    haptics: createWebHaptics(),
+    files: createWebFiles(),
+    secure: createWebSecureStorage(),
+    lifecycle: createWebLifecycle(),
+    push: createWebPush(),
+    links: createWebLinks(),
+    liveProgress: { update() {} },
+    name: 'web',
+  };
+}
 
+/** Web implementations in a browser; Capacitor ones inside the iOS and Android apps (ADR-002, Step 6.2). */
+const native = nativePlatform();
+export const platform: Platform = native ? createNativePlatform(native) : createWebPlatform();
+
+export type { Platform } from './types';
 export type { StorageAdapter } from './storage';
 export type { WakeLockAdapter } from './wakelock';
 export type { FullscreenAdapter } from './fullscreen';
-export type { NotifyAdapter, Sound } from './notify';
+export type { NotifyAdapter, ScheduledAlert, Sound } from './notify';
 export type { HapticsAdapter } from './haptics';
 export type { FilesAdapter } from './files';
+export type { PushAdapter } from './push';
+export type { LinksAdapter } from './links';
+export type { LiveProgressAdapter, LiveProgressView } from './liveProgress';

@@ -49,6 +49,9 @@ import { isNewer, verifyPack } from '../domain/content/remote';
 import { refreshCatalog } from '../domain/animals/catalog';
 import type { ContentPack } from '../../shared/content/pack';
 import type { ContentPackRow } from '../domain/types';
+import { PUSH_CATEGORIES, type PushCategory } from '../../shared/rules/push';
+import { parseDeepLink, type DeepLink } from '../../shared/rules/links';
+import type { PushAdapter } from '../platform/push';
 
 const fetchText = async (url: string) => (await fetch(url)).text();
 /** An image as a data URL, so the stored pack renders offline. */
@@ -100,6 +103,11 @@ export interface AppDeps {
   /** Downloads for content packs (tests replace them). */
   fetchText?: (url: string) => Promise<string>;
   fetchDataUrl?: (url: string) => Promise<string>;
+  /** Push notifications (Step 6.6); absent or unavailable on the web. */
+  push?: PushAdapter;
+  /** For `register_device`. */
+  platformName?: 'web' | 'ios' | 'android';
+  locale?: string;
 }
 
 export interface AppState {
@@ -134,6 +142,10 @@ export interface AppState {
   championWeek: string | null;
   /** Content pack version in use; changes when a downloaded pack is activated (Step 5.8). */
   contentVersion: string;
+  /** The app was opened with a link (Step 6.5); the tab that handles its kind takes it with `takeLink`. */
+  pendingLink: DeepLink | null;
+  /** The one-line push explanation is showing (Step 6.6). */
+  pushPrompt: boolean;
 
   init(): Promise<void>;
   /** Emails a sign-in code (Step 5.4). */
@@ -212,6 +224,19 @@ export interface AppState {
   moveIsland(seed: number): Promise<MoveProblem | 'offline' | null>;
   /** Ends (or skips) the move sequence. */
   finishIslandMove(): void;
+  /** A link opened the app (web URL, universal / app link, tapped push). Ignored if it is not one of ours. */
+  openLink(url: string): void;
+  /** Hands the pending link to the screen that handles it, and clears it. */
+  takeLink<K extends DeepLink['kind']>(kind: K): Extract<DeepLink, { kind: K }> | null;
+  /**
+   * The first social action (friend request, group join) calls this: signed in on a phone and never asked,
+   * it shows the one-line push explanation (Step 6.6). Never at launch.
+   */
+  askPush(): void;
+  /** The answer to the explanation; `allow` asks the system for permission and registers the device. */
+  answerPush(allow: boolean): Promise<void>;
+  /** Turns one push category on or off for this device. */
+  setPushCategory(category: PushCategory, on: boolean): Promise<void>;
 }
 
 /** What the move sequence needs about the island left behind (Step 4.3). */
@@ -260,6 +285,8 @@ export const DEFAULT_SETTINGS: Settings = {
   weekStartsOn: config.settings.weekStartsOn,
   showFocusPresence: config.settings.showFocusPresence,
   liveProgress: config.settings.liveProgress,
+  pushAsked: false,
+  pushCategories: Object.fromEntries(PUSH_CATEGORIES.map((c) => [c, true])) as Settings['pushCategories'],
 };
 
 export function sanitizeSettings(input: Partial<Settings> | undefined): Settings {
@@ -277,6 +304,8 @@ export function sanitizeSettings(input: Partial<Settings> | undefined): Settings
     weekStartsOn: merged.weekStartsOn === 0 ? 0 : 1,
     showFocusPresence: Boolean(merged.showFocusPresence),
     liveProgress: Boolean(merged.liveProgress),
+    pushAsked: Boolean(merged.pushAsked),
+    pushCategories: Object.fromEntries(PUSH_CATEGORIES.map((c) => [c, merged.pushCategories?.[c] !== false])) as Settings['pushCategories'],
   };
 }
 
@@ -356,6 +385,23 @@ export function createAppStore(initialDeps: AppDeps) {
       store.setState({ phase: next, revealPending: animal?.id ?? null, ...(session && animal && { sessions: sessions.map((s) => (s.id === session.id ? { ...s, rewardAnimalId: animal.id } : s)) }) });
     },
   });
+
+  /**
+   * Push registration (Step 6.6): `ask` asks the system for permission (after the explanation); otherwise
+   * only a device that already allowed push is refreshed (token, categories, last seen).
+   */
+  async function registerDevice(ask: boolean): Promise<void> {
+    const push = deps.push;
+    if (!push?.available || !account.linked) return;
+    try {
+      const token = ask ? await push.register() : await push.token();
+      if (!token) return;
+      const { pushCategories } = store.getState().settings;
+      await account.registerDevice({ platform: deps.platformName ?? 'web', pushToken: token, appVersion: deps.clientVersion ?? '0.0.0', locale: deps.locale ?? 'en', categories: pushCategories });
+    } catch {
+      // Offline or not configured: the next start tries again.
+    }
+  }
 
   /** Persistence must never block the cycle: fall back to memory if storage fails. */
   async function commit(change: Parameters<StorageAdapter['commit']>[0]): Promise<void> {
@@ -556,12 +602,44 @@ export function createAppStore(initialDeps: AppDeps) {
     account: ACCOUNT_OFF,
     championWeek: null,
     contentVersion: content.contentVersion,
+    pendingLink: null,
+    pushPrompt: false,
 
     async init() {
       set(await hydrate(true));
       await account.completeRedirect().catch(() => undefined);
       await get().applyExpirations();
       void get().checkContent();
+      void registerDevice(false);
+    },
+
+    openLink(url) {
+      const link = parseDeepLink(url);
+      if (link) set({ pendingLink: link });
+    },
+
+    takeLink(kind) {
+      const link = get().pendingLink;
+      if (link?.kind !== kind) return null;
+      set({ pendingLink: null });
+      return link as Extract<DeepLink, { kind: typeof kind }>;
+    },
+
+    askPush() {
+      if (!deps.push?.available || !account.linked || get().settings.pushAsked) return;
+      set({ pushPrompt: true });
+    },
+
+    async answerPush(allow) {
+      set({ pushPrompt: false });
+      await get().updateSettings({ pushAsked: true });
+      if (allow) await registerDevice(true);
+    },
+
+    async setPushCategory(category, on) {
+      // Touching a toggle is a deliberate choice, so it may ask (the system asks once; later it just answers).
+      await get().updateSettings({ pushAsked: true, pushCategories: { ...get().settings.pushCategories, [category]: on } });
+      await registerDevice(true);
     },
 
     async checkContent() {
@@ -588,9 +666,9 @@ export function createAppStore(initialDeps: AppDeps) {
     },
 
     requestSignInCode: (email) => account.requestCode(email),
-    verifySignInCode: (email, code) => account.verifyCode(email, code),
-    signInWithProvider: (provider) => account.signInWithProvider(provider),
-    resolveAccountChoice: (choice) => account.resolveChoice(choice),
+    verifySignInCode: (email, code) => account.verifyCode(email, code).then(() => registerDevice(false)),
+    signInWithProvider: (provider) => account.signInWithProvider(provider).then(() => registerDevice(false)),
+    resolveAccountChoice: (choice) => account.resolveChoice(choice).then(() => registerDevice(false)),
     cancelAccountChoice: () => account.cancelChoice(),
     signOut: () => account.signOut(),
     deleteAccount: () => account.deleteAccount(),

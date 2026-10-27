@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status bar icon for Sift's notifications: a white island block (Android tints it). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,3L21,8L12,13L3,8Z M3,10L11,14.5L11,21L3,16.5Z M13,14.5L21,10L21,16.5L13,21Z" />
+</vector>

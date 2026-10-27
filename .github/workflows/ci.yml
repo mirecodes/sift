@@ -18,3 +18,43 @@ jobs:
       - run: npm test
       # Content rules (guidance_v2 Step 3.5): schema, references, budgets, prices, dates, sprites present and fresh.
       - run: npm run content:validate
+
+  # Mobile shells (guidance_v2 Step 6.1, docs/guides/MOBILE_SETUP.md): a debug APK (signed with the debug key)
+  # and an iOS simulator build. Store-signed builds need the owner's signing secrets (see the guide).
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run mobile:sync -- android
+      - run: ./gradlew assembleDebug --no-daemon
+        working-directory: android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sift-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+  ios:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run mobile:sync -- ios
+      - run: xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - run: cd build/Build/Products/Debug-iphonesimulator && zip -qr ../../../../sift-ios-simulator.zip App.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sift-ios-simulator
+          path: sift-ios-simulator.zip

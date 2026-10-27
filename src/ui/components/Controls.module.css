@@ -68,6 +68,17 @@
   background: transparent;
   color: var(--color-ink);
 }
+@media (pointer: coarse) {
+  .segmented button {
+    min-height: 44px;
+  }
+  /* A 44px-tall hit area around the 24px toggle. */
+  .toggle::before {
+    content: '';
+    position: absolute;
+    inset: -10px 0;
+  }
+}
 .segmented button[aria-pressed='true'] {
   background: var(--color-primary);
   color: var(--color-on-primary);

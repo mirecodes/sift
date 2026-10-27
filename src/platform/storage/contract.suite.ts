@@ -8,7 +8,7 @@ const animal = (id: string, acquiredAt: number): PlacedAnimal => ({
   id, speciesId: 'chick', tier: 'common', tierRank: 0, tileX: 1, tileZ: -2, acquiredAt, sessionId: 's1',
   status: 'active', endedAt: null, endReason: null, verified: true, pinned: false,
 });
-const settings: Settings = { focusMinutes: 30, breakMinutes: 10, soundEnabled: false, theme: 'dark', weekStartsOn: 1, showFocusPresence: true, liveProgress: true };
+const settings: Settings = { focusMinutes: 30, breakMinutes: 10, soundEnabled: false, theme: 'dark', weekStartsOn: 1, showFocusPresence: true, liveProgress: true, pushAsked: true, pushCategories: { friends: true, together: false, groups: true, war: true, weekly: true } };
 
 /**
  * The storage contract every adapter passes (guidance_v2 §10: "storage adapters share one contract test

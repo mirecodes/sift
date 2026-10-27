@@ -119,14 +119,22 @@
 
 ## Phase 6 — Mobile apps (M7, F9)
 
-- [ ] 6.1 Capacitor shell
-- [ ] 6.2 Native platform adapters
-- [ ] 6.3 Timer in the background
-- [ ] 6.4 Touch, layout, performance
-- [ ] 6.5 Deep links
-- [ ] 6.6 Push notifications
-- [ ] 6.7 Store readiness
-- [ ] 6.8 Lock-screen progress (required, owner decision rev 3)
+- [x] 6.1 Capacitor shell
+  - Capacitor 8.5 `ios/` (SPM) + `android/`, `com.mirecodes.sift`, `mobile:*` scripts; CI jobs `android` (debug APK) and `ios` (simulator build). No Android SDK or Xcode here: native builds are verified by CI only. Icons/splash are Capacitor defaults (owner: MOBILE_SETUP §4).
+- [x] 6.2 Native platform adapters
+  - `platform/native` (all adapters, lazy plugin chunk), `storage/sqlite.ts` + `rows.ts`; storage contract suite on memory, Dexie and `node:sqlite` (incl. an upgrade from schema 3). Web bundle unchanged apart from a 0.8 kB native entry.
+- [x] 6.3 Timer in the background
+  - `domain/timer/alerts.ts` (tested) + `app/phaseEffects.ts` (tested with the store: start, break, stop, Sound and lock-screen toggles).
+- [x] 6.4 Touch, layout, performance
+  - Pinch zoom + one-finger rotate (`CameraRig`), 44px icon buttons / segmented / toggle hit area on `pointer: coarse` (DESIGN.md 4.3); safe areas, DPR cap 2 and Focus low-power were already in place; no shadow maps to reduce.
+- [x] 6.5 Deep links
+  - `shared/rules/links.ts` (tested: Hangul NFC, old hash route, round trips); web reads the URL once; native launch URL + `appUrlOpen`; tapped pushes; Android intent filter, iOS steps in MOBILE_SETUP §8. Screens take links in Phases 7–9.
+- [x] 6.6 Push notifications
+  - `shared/rules/push.ts`, `server/core/push.ts` (tested: categories, focus rule incl. stale sessions, failures never fail a call); store `askPush`/`answerPush`/`setPushCategory` (tested with the fake server). Needs the owner's Firebase project (MOBILE_SETUP §7).
+- [x] 6.7 Store readiness
+  - `PrivacyInfo.xcprivacy`, `ITSAppUsesNonExemptEncryption`, `docs/guides/STORE_READINESS.md` (labels, data safety, age rating, review notes). Block/report is Step 7.2.
+- [x] 6.8 Lock-screen progress (required, owner decision rev 3)
+  - ADR-049 (platform limits checked first); plugin `SiftLiveProgress` in Swift (Live Activity + widget source) and Java (chronometer notification); `liveStateFor` tested. Owner: add the widget extension target in Xcode (MOBILE_SETUP §5) and check on a device. **Phase 6 complete in code; device checks are the owner's.**
 
 ## Phase 7 — Identity, friends, visits, presence, focus together (F7)
 
@@ -169,6 +177,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 6 · **Owner action**: build and try the apps on devices (`docs/guides/MOBILE_SETUP.md`): signing, the Live Activity widget target in Xcode (§5), Firebase + APNs for push (§7), the link domain (§8), icons/splash (§4). Check on devices: SQLite save survives app kills, the focus-end notification while locked, the lock-screen timer (overtime, break auto-removal), pinch zoom, status bar hidden in Focus, share-sheet export. The CI `ios` job assumes a `macos-26` runner with Xcode 26; adjust if GitHub names it differently.
 - 5 · **Owner action**: create the Supabase project and connect it (`docs/guides/BACKEND_SETUP.md`, ~1 hour incl. Apple/Google). Until then try everything with `backend.provider: fake` (any email, code 000000). Not verified here: real email delivery, Apple/Google sign-in, the Deno function on Supabase (the same bundle runs on Postgres in `npm run server:check`).
 - 5 · Sign out clears the device (fresh island). Check that this matches what you want (ADR-048).
 - 4 · Feature flag: Phase 4 ships with `features.islandMove: true`. With `testMode.dummyData` there is one Unicorn: tap the Unicorn counter on Home. Check the bridge colors, timing (~11–14 s), the old island sinking and the preview size in the sheet (the tall underside makes the island look small).
@@ -225,6 +234,19 @@
 - 5.x · Abandoning a verified session is best effort; the server also abandons stale sessions (plan + 2 h). · No blocking network call on Hold to stop.
 - 5.x · Remote content: the pack JSON is fetched from Storage, its atlas stored as a data URL in `contentPacks`. · Works offline after download.
 - 4.3 · New render mode `sequence` (fixed camera, full rate, clouds, no panel insets) for scripted scenes. · War voyages reuse it.
+- 6.1 · Bundle id `com.mirecodes.sift`. · Owner's GitHub name; change before the first store upload if another is wanted.
+- 6.1 · Native projects committed (Capacitor's recommended practice); iOS uses Swift Package Manager. · No CocoaPods; Capacitor 8's default.
+- 6.2 · One `Platform` chosen at runtime from `window.Capacitor`; plugins in one lazy chunk. · Same web build inside the apps (guidance 6.1) and no plugin code on the web.
+- 6.2 · SQLite stores rows as JSON in one table (`rows(store, id, json)`). · Same rows and migrations as IndexedDB; no second schema to keep in step.
+- 6.2 · "Immersive" during Focus = status bar hidden (iOS and Android). · No maintained plugin hides the Android navigation bar; the bar is small and dark.
+- 6.3 · Notification permission is asked at the first Focus start. · That is when the end alert first matters; never at launch.
+- 6.3 · Foreground: no native banner (presentation options empty); the in-app chime plays as before. · Avoids a double alert while the app is open.
+- 6.5 · The link host is a placeholder (`sift.example.com`, `android/gradle.properties`). · Owner picks the domain.
+- 6.6 · Push categories: friends, together, groups (invite, member joined, mission milestone), war (defender reports), weekly. · Guidance list grouped into toggles a person understands.
+- 6.6 · A category toggle may ask for permission; "Not now" is remembered. · Touching a toggle is a deliberate request.
+- 6.6 · Push texts are short and name-free (`server/core/push.ts`). · The Inbox holds the details; no handle lookups in the push path.
+- 6.8 · iOS: a new Live Activity per phase change; the break one is ended at once with dismissal at the break end. · Removes itself without the app (ADR-049).
+- 6.8 · Android: overtime shows as the chronometer going below zero. · The system cannot change the text without the app; verified behavior noted in ADR-049.
 
 - 3.13 · Max animals per tile is a balance value (`placement.maxPerTile` = 4), since the server will place animals too (Step 5.5); with every tile at 4 no reward animal is added (as before when no tile was free; the island grows with every animal, so this needs buildings on almost every tile). · Same rule on client and server.
 - 3.12 · 4-neighbor A* (no diagonals); the day routine's goal is the tile in front of the cabin door, then the last short step into the door is straight. · Diagonals would cut building corners; the door itself is on a camp tile.
