@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { describe, expect, it } from 'vitest';
 import { describeContract } from '../core/contract.suite';
+import { describeSocial } from '../core/social.suite';
 import { TABLES } from '../core/schema';
 import { createPgServerDb } from './pgDb';
 import { pgliteClient } from './pglite';
@@ -30,3 +31,4 @@ describe('Postgres schema (server/supabase/migrations)', () => {
 });
 
 describeContract('postgres (PGlite)', async () => createPgServerDb(pgliteClient(await migrated())));
+describeSocial('postgres (PGlite)', async () => createPgServerDb(pgliteClient(await migrated())));

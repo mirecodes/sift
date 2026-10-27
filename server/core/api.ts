@@ -4,6 +4,7 @@ import { ApiError, UserWriter, type Caller, type HandlerCtx, type ServerEnv } fr
 import { DuplicateKeyError, type Tx } from './db';
 import { coreHandlers, type Handlers } from './handlers/core';
 import { planPushes, sendPushes } from './push';
+import { visitExpired } from './social';
 import { ensureProfile, pull, settleExpirations } from './user';
 
 /** Server-only settings (`app_config` table, §8): version gate and rate limits. */
@@ -152,6 +153,8 @@ export async function runHourlyJob(env: ServerEnv): Promise<{ users: number }> {
   await env.db.transaction(async (tx) => {
     for (const r of await tx.table('api_requests').find({})) if (r.createdAt < now - IDEMPOTENCY_MS) await tx.table('api_requests').delete(r.key);
     for (const r of await tx.table('rate_counters').find({})) if (r.minute < Math.floor(now / 60_000) - 60) await tx.table('rate_counters').delete(r.key);
+    // Visit retention (Step 7.5).
+    for (const v of await tx.table('visits').find({})) if (visitExpired(v.at, now)) await tx.table('visits').delete(v.key);
   });
   return { users: users.length };
 }

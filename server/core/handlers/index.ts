@@ -1,4 +1,5 @@
 import { registerHandlers } from '../api';
+import { socialHandlers } from './social';
 
 let installed = false;
 
@@ -6,5 +7,5 @@ let installed = false;
 export function installServerHandlers(): void {
   if (installed) return;
   installed = true;
-  registerHandlers({});
+  registerHandlers({ ...socialHandlers });
 }

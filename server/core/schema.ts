@@ -85,8 +85,78 @@ export interface ContentReleaseRow {
   publishedAt: number;
 }
 
+// --- Phase 7: friends, moderation, visits, focus together (migration 2) ---
+
+/** One row per pair of users (`userLow < userHigh`), pending until the other side accepts. */
+export interface FriendshipRow {
+  /** `userLow|userHigh` */
+  pair: string;
+  userLow: string;
+  userHigh: string;
+  status: 'pending' | 'accepted';
+  requestedBy: string;
+  createdAt: number;
+  acceptedAt: number | null;
+}
+
+export interface BlockRow {
+  /** `blocker|blocked` */
+  pair: string;
+  blocker: string;
+  blocked: string;
+  createdAt: number;
+}
+
+export interface ReportRow {
+  id: string;
+  reporterId: string;
+  reportedId: string;
+  reason: string;
+  note: string;
+  /** Where the report was made: friends list, group members, visit banner. */
+  context: string;
+  createdAt: number;
+}
+
+/** At most one per visitor per host per UTC day (Step 7.5). */
+export interface VisitRow {
+  /** `hostId|visitorId|day` */
+  key: string;
+  hostId: string;
+  visitorId: string;
+  at: number;
+  /** Data-driven; today only `basic` with an empty payload. */
+  traceKind: string;
+  tracePayload: Record<string, unknown>;
+}
+
+export interface TogetherRoomRow {
+  id: string;
+  hostId: string;
+  plannedMs: number;
+  status: 'lobby' | 'started' | 'closed';
+  createdAt: number;
+  startedAt: number | null;
+}
+
+export interface TogetherParticipantRow {
+  /** `roomId|userId` */
+  key: string;
+  roomId: string;
+  userId: string;
+  state: 'invited' | 'joined' | 'left';
+  invitedAt: number;
+  joinedAt: number | null;
+}
+
 export interface Rows {
   profiles: ProfileRow;
+  friendships: FriendshipRow;
+  blocks: BlockRow;
+  reports: ReportRow;
+  visits: VisitRow;
+  together_rooms: TogetherRoomRow;
+  together_participants: TogetherParticipantRow;
   island_state: Owned<IslandState>;
   sessions: Owned<FocusSession>;
   animals: Owned<PlacedAnimal>;
@@ -121,6 +191,12 @@ export const TABLES: Readonly<Record<TableName, TableSpec>> = {
   app_config: { key: ['key'], migration: 1 },
   rate_counters: { key: ['key'], index: { minute: 'bigint' }, migration: 1 },
   content_releases: { key: ['contentVersion'], migration: 1 },
+  friendships: { key: ['pair'], index: { userLow: 'text', userHigh: 'text' }, migration: 2 },
+  blocks: { key: ['pair'], index: { blocker: 'text', blocked: 'text' }, migration: 2 },
+  reports: { key: ['id'], index: { reportedId: 'text' }, migration: 2 },
+  visits: { key: ['key'], index: { hostId: 'text', visitorId: 'text', at: 'bigint' }, migration: 2 },
+  together_rooms: { key: ['id'], index: { hostId: 'text', status: 'text' }, migration: 2 },
+  together_participants: { key: ['key'], index: { roomId: 'text', userId: 'text' }, migration: 2 },
 };
 
 /** Tables a user's data lives in (account export and deletion). */

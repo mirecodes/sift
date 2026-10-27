@@ -21,7 +21,8 @@ function table<T extends TableName>(q: SqlQuery, name: T): Table<Rows[T]> {
   const cols = columns(name);
   const types = new Map(cols);
   const keyWhere = (offset = 0) => spec.key.map((k, i) => `${snake(k)} = $${i + 1 + offset}`).join(' and ');
-  const keyParams = (key: string) => key.split('|');
+  // Composite keys are joined with `|`; a single-column key may itself contain `|` (e.g. a pair key).
+  const keyParams = (key: string) => (spec.key.length === 1 ? [key] : key.split('|'));
   const values = (row: R) => [...cols.map(([f, t]) => columnValue(t, (row as unknown as Record<string, unknown>)[f])), JSON.stringify(row)];
   const colList = [...cols.map(([f]) => snake(f)), 'data'].join(', ');
   const placeholders = [...cols.map((_, i) => `$${i + 1}`), `$${cols.length + 1}::jsonb`].join(', ');

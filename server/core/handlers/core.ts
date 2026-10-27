@@ -18,6 +18,7 @@ import type { ItemDef } from '../../../shared/content/schema';
 import { ApiError, type HandlerCtx } from '../context';
 import { OWNED_TABLES, keyOf } from '../schema';
 import { ensureIsland, hasIsland, profileView, pull, STALE_AFTER_MS, strip, userState } from '../user';
+import { deleteSocialRows, togetherTiming } from '../social';
 
 type Handler<O extends Op> = (c: HandlerCtx, args: OpArgs<O>) => Promise<OpResult<O>>;
 export type Handlers = { [O in Op]?: Handler<O> };
@@ -61,7 +62,9 @@ export const coreHandlers: Handlers = {
       if (!stale && !args.force) throw new ApiError('session_already_running');
       await c.w.put('sessions', { ...strip(s), status: 'abandoned', endedAt: c.now, effectiveFocusMs: effectiveFocusMs(c.now - s.startedAt) });
     }
-    const session: FocusSession = { id: args.sessionId ?? c.env.uuid(), startedAt: c.now, plannedFocusMs: args.plannedMs, status: 'running', togetherRoomId: args.roomId ?? null, verified: true };
+    // Focus together (Step 7.7): the room's shared start, or a late joiner's own remaining time.
+    const timing = args.roomId ? await togetherTiming(c, args.roomId) : { startedAt: c.now, plannedMs: args.plannedMs };
+    const session: FocusSession = { id: args.sessionId ?? c.env.uuid(), startedAt: timing.startedAt, plannedFocusMs: timing.plannedMs, status: 'running', togetherRoomId: args.roomId ?? null, verified: true };
     await c.w.put('sessions', session);
     return { session };
   },
@@ -255,6 +258,7 @@ export const coreHandlers: Handlers = {
   async delete_account(c) {
     for (const t of OWNED_TABLES) for (const row of await c.tx.table(t).find({ userId: c.userId } as never)) await c.tx.table(t).delete(keyOf(t, row));
     for (const d of await c.tx.table('devices').find({ userId: c.userId })) await c.tx.table('devices').delete(d.deviceId);
+    await deleteSocialRows(c.tx, c.userId);
     await c.tx.table('profiles').delete(c.userId);
     return {};
   },

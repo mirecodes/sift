@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-27.1';
+export const BALANCE_VERSION = '2026-10-27.2';
 
 const MINUTE = 60_000;
 
@@ -64,6 +64,31 @@ export const balance = deepFreeze({
     cost: 1,
     /** New-island previews offered before confirming (Step 4.1). */
     freePreviews: 3,
+  },
+  identity: {
+    /** A chosen name can change once per this many days (the first choice is free). */
+    nameChangeCooldownDays: 30,
+  },
+  social: {
+    maxFriends: 100,
+    /** Visit rows are kept this long (Step 7.5). */
+    visitRetentionDays: 30,
+    /** A visited island's snapshot is reused this long (Step 7.4). */
+    snapshotCacheMs: 60_000,
+    /** Friends' "Focusing now" is refreshed this often while visible (presence is polled, ADR-047). */
+    presencePollMs: 30_000,
+  },
+  together: {
+    /** A room's lobby stays open this long; a room never started then closes. */
+    lobbyMinutes: 5,
+    /** After the start, a participant may still join this long, with their own remaining time. */
+    lateJoinMinutes: 2,
+    /** Extra reward for focusing together: none (rewards stay individual). */
+    rewardBonus: 0,
+    /** Weight of together sessions in group missions (Phase 8). */
+    missionMultiplier: 1.0,
+    /** Participants per room, host included. */
+    maxParticipants: 10,
   },
   /** Allowed shop price ranges [min, max] in gold (§8); `content:validate` enforces them. */
   prices: {

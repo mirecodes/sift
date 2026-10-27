@@ -52,6 +52,8 @@ import type { ContentPackRow } from '../domain/types';
 import { PUSH_CATEGORIES, type PushCategory } from '../../shared/rules/push';
 import { parseDeepLink, type DeepLink } from '../../shared/rules/links';
 import type { PushAdapter } from '../platform/push';
+import type { ReportReason } from '../../shared/api/types';
+import { createSocial, SOCIAL_EMPTY, type Outcome, type SocialSlice } from './social';
 
 const fetchText = async (url: string) => (await fetch(url)).text();
 /** An image as a data URL, so the stored pack renders offline. */
@@ -110,7 +112,7 @@ export interface AppDeps {
   locale?: string;
 }
 
-export interface AppState {
+export interface AppState extends SocialSlice {
   ready: boolean;
   settings: Settings;
   world: WorldState;
@@ -237,6 +239,31 @@ export interface AppState {
   answerPush(allow: boolean): Promise<void>;
   /** Turns one push category on or off for this device. */
   setPushCategory(category: PushCategory, on: boolean): Promise<void>;
+
+  // --- Phase 7: identity, friends, visits, presence, focus together (server data, signed in) ---
+  /** Loads the Friends tab and friends' presence. */
+  refreshSocial(): Promise<void>;
+  /** Chooses or changes the name (the server assigns the tag). */
+  setHandle(name: string): Promise<Outcome>;
+  /** Sends a friend request to a typed `name#tag`. */
+  addFriend(text: string): Promise<{ outcome: Outcome; status?: 'pending' | 'accepted' }>;
+  respondFriend(userId: string, accept: boolean): Promise<Outcome>;
+  cancelFriend(userId: string): Promise<Outcome>;
+  removeFriend(userId: string): Promise<Outcome>;
+  blockUser(userId: string): Promise<Outcome>;
+  unblockUser(userId: string): Promise<Outcome>;
+  reportUser(userId: string, reason: ReportReason, note: string, context: 'friends' | 'group' | 'visit'): Promise<Outcome>;
+  /** Visit mode (Step 7.4): shows a friend's island. */
+  visitIsland(userId: string): Promise<Outcome>;
+  prefetchIsland(userId: string): void;
+  leaveVisit(): void;
+  /** Focus together (Step 7.7): a lobby with this device's focus length. */
+  createRoom(invitees: string[]): Promise<Outcome>;
+  joinRoom(roomId: string): Promise<Outcome>;
+  leaveRoom(): Promise<void>;
+  startRoom(): Promise<Outcome>;
+  /** Refreshes the room; when the host has started it, this device starts its focus at the shared time. */
+  pollRoom(): Promise<void>;
 }
 
 /** What the move sequence needs about the island left behind (Step 4.3). */
@@ -384,6 +411,15 @@ export function createAppStore(initialDeps: AppDeps) {
       const session = sessions.find((s) => s.id === pending.sessionId);
       store.setState({ phase: next, revealPending: animal?.id ?? null, ...(session && animal && { sessions: sessions.map((s) => (s.id === session.id ? { ...s, rewardAnimalId: animal.id } : s)) }) });
     },
+  });
+
+  const social = createSocial({
+    account,
+    now: () => deps.now(),
+    uuid: () => deps.uuid(),
+    get: () => store.getState(),
+    set: (patch) => store.setState(patch),
+    askPush: () => store.getState().askPush(),
   });
 
   /**
@@ -604,6 +640,46 @@ export function createAppStore(initialDeps: AppDeps) {
     contentVersion: content.contentVersion,
     pendingLink: null,
     pushPrompt: false,
+    ...SOCIAL_EMPTY,
+
+    refreshSocial: () => social.refresh(),
+    setHandle: (name) => social.setHandle(name),
+    addFriend: (text) => social.addFriend(text),
+    respondFriend: (userId, accept) => social.respond(userId, accept),
+    cancelFriend: (userId) => social.cancel(userId),
+    removeFriend: (userId) => social.remove(userId),
+    blockUser: (userId) => social.block(userId),
+    unblockUser: (userId) => social.unblock(userId),
+    reportUser: (userId, reason, note, context) => social.report(userId, reason, note, context),
+    visitIsland: (userId) => social.visit(userId),
+    prefetchIsland: (userId) => social.prefetch(userId),
+    leaveVisit: () => social.leaveVisit(),
+    createRoom: (invitees) => social.createRoom(minutesToMs(get().settings.focusMinutes), invitees),
+    joinRoom: (roomId) => social.joinRoom(roomId),
+    leaveRoom: () => social.leaveRoom(),
+    startRoom: async () => {
+      const outcome = await social.startRoom();
+      if (!outcome) await get().pollRoom();
+      return outcome;
+    },
+
+    async pollRoom() {
+      const room = await social.pollRoom();
+      const me = room?.participants.find((p) => p.person.userId === get().account.userId);
+      if (!room || room.status !== 'started' || me?.state !== 'joined' || get().phase.kind === 'focus') return;
+      // The host started: this device's focus starts at the room's server time (Step 7.7).
+      const id = deps.uuid();
+      try {
+        const { session: remote } = await account.call('start_session', { sessionId: id, plannedMs: room.plannedMs, roomId: room.id }, { requestId: `start-${id}` });
+        const startedAt = remote.startedAt - account.serverOffset;
+        const session: FocusSession = { ...remote, startedAt };
+        const next = startFocus(startedAt, remote.plannedFocusMs, id);
+        await commit({ session, phase: next });
+        set({ phase: next, sessions: [...get().sessions, session], revealPending: null, view: 'home', activeTab: 'island', visit: null });
+      } catch {
+        // Too late or closed: the lobby shows it on the next poll.
+      }
+    },
 
     async init() {
       set(await hydrate(true));
@@ -670,8 +746,8 @@ export function createAppStore(initialDeps: AppDeps) {
     signInWithProvider: (provider) => account.signInWithProvider(provider).then(() => registerDevice(false)),
     resolveAccountChoice: (choice) => account.resolveChoice(choice).then(() => registerDevice(false)),
     cancelAccountChoice: () => account.cancelChoice(),
-    signOut: () => account.signOut(),
-    deleteAccount: () => account.deleteAccount(),
+    signOut: () => account.signOut().then(() => set(SOCIAL_EMPTY)),
+    deleteAccount: () => account.deleteAccount().then(() => set(SOCIAL_EMPTY)),
     sync: (force) => account.sync(force),
 
     async exportBackup() {
@@ -828,9 +904,12 @@ export function createAppStore(initialDeps: AppDeps) {
     },
 
     async updateSettings(patch) {
-      const settings = sanitizeSettings({ ...get().settings, ...patch });
+      const before = get().settings;
+      const settings = sanitizeSettings({ ...before, ...patch });
       set({ settings });
       await deps.storage.saveSettings(settings).catch((e) => console.warn('Sift: could not save settings.', e));
+      // "Show when I'm focusing" lives on the server too (Step 7.6).
+      if (settings.showFocusPresence !== before.showFocusPresence) void account.queue({ kind: 'presence_setting', showPresence: settings.showFocusPresence });
     },
 
     async enqueueNotice(notice) {

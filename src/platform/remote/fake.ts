@@ -17,6 +17,8 @@ export interface FakeRemoteOptions {
   uuid?: () => string;
   /** Simulated round trip in ms. */
   latencyMs?: number;
+  /** A server database shared with another fake remote (two devices of two people in tests). */
+  db?: MemoryServerDb;
 }
 
 export interface FakeRemote extends RemotePort {
@@ -39,8 +41,8 @@ const SESSION_KEY = 'sift.fake.session';
 export function createFakeRemote(opts: FakeRemoteOptions): FakeRemote {
   installServerHandlers();
   const saved = opts.store?.get(SERVER_KEY);
-  const db = new MemoryServerDb(opts.store ? (dump) => opts.store!.set(SERVER_KEY, JSON.stringify(dump)) : undefined);
-  if (saved) db.load(JSON.parse(saved) as Record<string, unknown[]>);
+  const db = opts.db ?? new MemoryServerDb(opts.store ? (dump) => opts.store!.set(SERVER_KEY, JSON.stringify(dump)) : undefined);
+  if (saved && !opts.db) db.load(JSON.parse(saved) as Record<string, unknown[]>);
   const env: ServerEnv = {
     db,
     now: opts.now ?? (() => Date.now()),

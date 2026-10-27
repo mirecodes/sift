@@ -4,9 +4,11 @@ import { seededRng } from '../../shared/rng';
 import { handle } from './api';
 import type { ServerEnv } from './context';
 import { MemoryServerDb, type ServerDb } from './db';
+import { installServerHandlers } from './handlers';
 
 /** A server with a controllable clock and seeded randomness (unit tests, the fake remote's bots). */
 export function testServer(opts: { db?: ServerDb; start?: number; seed?: number } = {}) {
+  installServerHandlers();
   const clock = { t: opts.start ?? Date.UTC(2026, 9, 27, 10) };
   let n = 0;
   const env: ServerEnv = {

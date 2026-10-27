@@ -57,6 +57,8 @@ export function createAccount(ctx: AccountCtx) {
   const dismissed = new Set<string>();
   let lastSync = 0;
   let syncing: Promise<void> | null = null;
+  /** Server clock minus device clock at the last answer (shared starts of focus-together rooms). */
+  let serverOffset = 0;
 
   const account = () => ctx.synced().account;
   const setAccount = (patch: Partial<AccountState>) => ctx.set({ account: { ...account(), ...patch } });
@@ -82,6 +84,7 @@ export function createAccount(ctx: AccountCtx) {
     if (!ctx.remote) throw new RemoteError('offline');
     try {
       const res = await callApi(ctx.remote, op, args, { ...opts, ...(link && { sinceSeq: link.seq }) });
+      serverOffset = res.serverNow - ctx.now();
       if (!account().online) setAccount({ online: true });
       await apply(res.delta);
       return res.data;
@@ -127,6 +130,9 @@ export function createAccount(ctx: AccountCtx) {
     },
     get link() {
       return link;
+    },
+    get serverOffset() {
+      return serverOffset;
     },
 
     /** From storage at startup: the link, known ledger ids. */

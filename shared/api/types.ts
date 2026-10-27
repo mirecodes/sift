@@ -87,6 +87,68 @@ export interface ProfileView {
   nameChangedAt: number | null;
 }
 
+/** Another user as the social screens show them (Phase 7). */
+export interface PersonView {
+  userId: string;
+  handle: { name: string; tag: string } | null;
+  /** Their chosen avatar, else the species of their newest animal, else null (a default sprite). */
+  avatarSpeciesId: string | null;
+  /** Focusing now (presence): only if they share it and neither side blocked the other. */
+  focusing: boolean;
+}
+
+/** Everything the Friends tab shows, in one call (Steps 7.3, 7.5, 7.6). */
+export interface SocialState {
+  me: ProfileView;
+  friends: PersonView[];
+  /** Requests to me, oldest first. */
+  incoming: PersonView[];
+  /** My requests, oldest first. */
+  outgoing: PersonView[];
+  blocked: PersonView[];
+  /** Who visited my island lately (newest first, at most 20). */
+  visitors: { person: PersonView; at: number }[];
+  /** Visits to my island in the retention window (the trace prop placeholder, Step 7.5). */
+  visitCount: number;
+}
+
+/** What a visitor needs to draw someone's island (`IslandModel`, Step 7.4). */
+export interface IslandSnapshot {
+  userId: string;
+  handle: { name: string; tag: string } | null;
+  world: WorldState;
+  /** Island size level (monotonic, from every animal ever earned). */
+  level: number;
+  /** Active animals only. */
+  animals: PlacedAnimal[];
+  buildings: PlacedBuilding[];
+  equipped: Equipped;
+  goldPileLevel: number;
+  championWeek: string | null;
+  /** Weekly score, only between members of the same group (Phase 8). */
+  score?: number;
+}
+
+export type ReportReason = 'name' | 'harassment' | 'cheating' | 'other';
+
+/** A focus-together room (Step 7.7). */
+export interface RoomView {
+  id: string;
+  hostId: string;
+  plannedMs: number;
+  status: 'lobby' | 'started' | 'closed';
+  createdAt: number;
+  startedAt: number | null;
+  /** Host first, then by invitation. */
+  participants: {
+    person: PersonView;
+    /** invited · joined (lobby) · focusing · stopped · done (completed) · left */
+    state: 'invited' | 'joined' | 'focusing' | 'stopped' | 'done' | 'left';
+    /** Their revealed animal once done (the Break strip). */
+    animal: { speciesId: string; tierRank: number; skinId?: string } | null;
+  }[];
+}
+
 /** A device's local save, uploaded once at the first sign-in (Step 5.7). */
 export interface LocalSave {
   world: WorldState;
@@ -135,6 +197,26 @@ export interface Ops {
   export_account: { args: Record<string, never>; result: { profile: ProfileView; rows: SyncRows } };
   delete_account: { args: Record<string, never>; result: Record<string, never> };
   register_device: { args: { deviceId: string; platform: Platform; pushToken: string | null; appVersion: string; locale: string; categories?: Record<string, boolean> }; result: Record<string, never> };
+  // --- Phase 7: identity, friends, moderation, visits, presence, focus together ---
+  social_state: { args: Record<string, never>; result: SocialState };
+  /** Chooses or changes the name; the server assigns the tag (kept if free under the new name). */
+  set_handle: { args: { name: string }; result: { profile: ProfileView } };
+  /** Sends a request to an exact handle; a request already waiting the other way is accepted instead. */
+  friend_request: { args: { name: string; tag: string }; result: { status: 'pending' | 'accepted'; person: PersonView } };
+  friend_respond: { args: { userId: string; accept: boolean }; result: Record<string, never> };
+  friend_cancel: { args: { userId: string }; result: Record<string, never> };
+  friend_remove: { args: { userId: string }; result: Record<string, never> };
+  block_user: { args: { userId: string }; result: Record<string, never> };
+  unblock_user: { args: { userId: string }; result: Record<string, never> };
+  report_user: { args: { userId: string; reason: ReportReason; note?: string; context: 'friends' | 'group' | 'visit' }; result: Record<string, never> };
+  /** Friends or members of the same group, neither blocked; records the visit. */
+  get_island_snapshot: { args: { userId: string }; result: { snapshot: IslandSnapshot } };
+  together_create: { args: { plannedMs: number; invitees: string[] }; result: { room: RoomView } };
+  together_room: { args: { roomId: string }; result: { room: RoomView } };
+  together_join: { args: { roomId: string }; result: { room: RoomView } };
+  together_leave: { args: { roomId: string }; result: { room: RoomView } };
+  /** Host only: everyone who joined starts at the same server time. */
+  together_start: { args: { roomId: string }; result: { room: RoomView } };
 }
 
 export type Op = keyof Ops;
@@ -152,6 +234,18 @@ export const MUTATIONS: ReadonlySet<Op> = new Set<Op>([
   'upload_local_save',
   'delete_account',
   'register_device',
+  'set_handle',
+  'friend_request',
+  'friend_respond',
+  'friend_cancel',
+  'friend_remove',
+  'block_user',
+  'unblock_user',
+  'report_user',
+  'together_create',
+  'together_join',
+  'together_leave',
+  'together_start',
 ]);
 
 /** Operations open to signed-out clients. */
