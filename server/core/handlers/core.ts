@@ -53,12 +53,17 @@ export const coreHandlers: Handlers = {
     const { focusMinutes } = balance.timer;
     if (args.plannedMs < focusMinutes.min * 60_000 || args.plannedMs > focusMinutes.max * 60_000) throw new ApiError('invalid');
     await ensureIsland(c);
+    const taken = args.sessionId ? await c.tx.table('sessions').get(args.sessionId) : undefined;
+    if (taken) {
+      if (taken.userId === c.userId && taken.status === 'running') return { session: strip(taken) };
+      throw new ApiError('invalid');
+    }
     for (const s of await c.tx.table('sessions').find({ userId: c.userId, status: 'running' })) {
       const stale = c.now > s.startedAt + s.plannedFocusMs + STALE_AFTER_MS;
       if (!stale && !args.force) throw new ApiError('session_already_running');
       await c.w.put('sessions', { ...strip(s), status: 'abandoned', endedAt: c.now, effectiveFocusMs: effectiveFocusMs(c.now - s.startedAt) });
     }
-    const session: FocusSession = { id: c.env.uuid(), startedAt: c.now, plannedFocusMs: args.plannedMs, status: 'running', togetherRoomId: args.roomId ?? null, verified: true };
+    const session: FocusSession = { id: args.sessionId ?? c.env.uuid(), startedAt: c.now, plannedFocusMs: args.plannedMs, status: 'running', togetherRoomId: args.roomId ?? null, verified: true };
     await c.w.put('sessions', session);
     return { session };
   },

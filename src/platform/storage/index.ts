@@ -1,5 +1,6 @@
 import type { Equipped, FocusSession, InboxRow, IslandHistoryEntry, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../../domain/types';
-import type { StoredPhase } from '../../domain/timer/phase';
+import type { PushOp } from '../../../shared/api/types';
+import type { AwaitingReward, StoredPhase } from '../../domain/timer/phase';
 import type { BackupData } from '../../domain/backup';
 
 export interface PersistedState {
@@ -19,6 +20,20 @@ export interface PersistedState {
   placedBuildings: PlacedBuilding[];
   /** Islands left by island moves, oldest first. */
   islandHistory: IslandHistoryEntry[];
+  /** The signed-in account this save mirrors (Phase 5); absent for a local-only save. */
+  account?: AccountLink;
+}
+
+/** Sign-in state kept with the save (kv `account`): who, the sync cursor and unsent changes (Step 5.6). */
+export interface AccountLink {
+  userId: string;
+  email: string | null;
+  /** Delta-sync cursor: rows up to this sequence number are in the local store. */
+  seq: number;
+  /** Non-economic changes not yet acknowledged by the server, oldest first, each with a stable request id. */
+  outbox: { requestId: string; op: PushOp }[];
+  /** Verified sessions ended while offline: `end_session` is retried with the same request id (Step 5.5). */
+  pendingEnds: AwaitingReward[];
 }
 
 /** Everything that must change together. An implementation applies it in one transaction. */
@@ -44,6 +59,12 @@ export interface Commit {
   /** A new island seed (island move). */
   world?: WorldState;
   islandHistoryAdd?: IslandHistoryEntry[];
+  /** Several sessions at once (sync). */
+  sessions?: FocusSession[];
+  /** Ledger rows from the server: stored as they are, an existing id is left alone (replays). */
+  ledgerSync?: LedgerEntry[];
+  /** Sign-in link; `null` removes it. */
+  account?: AccountLink | null;
 }
 
 export interface StorageAdapter {

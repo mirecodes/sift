@@ -1,6 +1,6 @@
 import type { Equipped, Settings, WorldState } from '../domain/types';
 import type { StoredPhase } from '../domain/timer/phase';
-import type { Commit, PersistedState, StorageAdapter } from '../platform/storage';
+import type { AccountLink, Commit, PersistedState, StorageAdapter } from '../platform/storage';
 import { SiftDB } from './schema';
 import { migrateRows } from './migrations';
 
@@ -25,6 +25,8 @@ export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
       const world = get<WorldState>('world');
       const phase = get<StoredPhase>('phase');
       const equipped = get<Equipped>('equipped');
+      const account = get<AccountLink>('account');
+      if (account) state.account = account;
       if (settings) state.settings = settings;
       if (world) state.world = world;
       if (phase) state.phase = phase;
@@ -69,6 +71,15 @@ export function createDexieStorage(db: SiftDB = new SiftDB()): StorageAdapter {
       await db.transaction('rw', [db.kv, db.sessions, db.animals, db.inbox, db.ledger, db.cosmetics, db.placedBuildings, db.islandHistory], async () => {
         if (change.world) await db.kv.put({ key: 'world', value: change.world });
         if (change.islandHistoryAdd?.length) await db.islandHistory.bulkPut(change.islandHistoryAdd);
+        if (change.sessions?.length) await db.sessions.bulkPut(change.sessions);
+        if (change.ledgerSync?.length) {
+          // Server rows are immutable: store the ones not yet here (a replayed answer brings them again).
+          const known = new Set((await db.ledger.bulkGet(change.ledgerSync.map((e) => e.id))).filter(Boolean).map((e) => e!.id));
+          const fresh = change.ledgerSync.filter((e) => !known.has(e.id));
+          if (fresh.length) await db.ledger.bulkAdd(fresh);
+        }
+        if (change.account === null) await db.kv.delete('account');
+        else if (change.account) await db.kv.put({ key: 'account', value: change.account });
         if (change.ledgerAdd?.length) await db.ledger.bulkAdd(change.ledgerAdd); // add, not put: append-only
         if (change.cosmeticsAdd?.length) await db.cosmetics.bulkPut(change.cosmeticsAdd);
         if (change.equipped) await db.kv.put({ key: 'equipped', value: change.equipped });

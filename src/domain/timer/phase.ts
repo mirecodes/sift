@@ -5,8 +5,19 @@ export type Phase =
   | { kind: 'idle' }
   | { kind: 'focus'; startedAt: number; plannedMs: number; sessionId: string }
   | { kind: 'focusOvertime'; startedAt: number; plannedMs: number; sessionId: string }
-  | { kind: 'break'; startedAt: number; plannedMs: number; rewardId?: string }
-  | { kind: 'breakOver'; rewardId?: string };
+  | { kind: 'break'; startedAt: number; plannedMs: number; rewardId?: string; awaiting?: AwaitingReward }
+  | { kind: 'breakOver'; rewardId?: string; awaiting?: AwaitingReward };
+
+/**
+ * Signed in, a server-verified session ended while the server could not be reached (Step 5.5): the reward
+ * is revealed once `end_session` answers; retries reuse the request id.
+ */
+export interface AwaitingReward {
+  sessionId: string;
+  requestId: string;
+  /** The client's end time; the server clamps it into [start, its now]. */
+  endedAt: number;
+}
 
 /** The phases that are persisted; overtime and break-over are always derived. */
 export type StoredPhase = Extract<Phase, { kind: 'idle' | 'focus' | 'break' }>;
@@ -32,7 +43,7 @@ export function resolvePhase(phase: StoredPhase, now: number): Phase {
       return now - phase.startedAt >= phase.plannedMs ? { ...phase, kind: 'focusOvertime' } : phase;
     case 'break':
       if (now - phase.startedAt < phase.plannedMs) return phase;
-      return phase.rewardId === undefined ? { kind: 'breakOver' } : { kind: 'breakOver', rewardId: phase.rewardId };
+      return { kind: 'breakOver', ...(phase.rewardId !== undefined && { rewardId: phase.rewardId }), ...(phase.awaiting && { awaiting: phase.awaiting }) };
     default:
       return phase;
   }

@@ -23,7 +23,7 @@ import { content } from '../domain/content';
 import { placementProblem, type PlaceProblem } from '../domain/build/placement';
 import type { Tile } from '../domain/island/island';
 import { balance } from '../../shared/balance/balance';
-import { debitEntry, goldBalance, goldEntry, hasStarterGrant, LEDGER_REASON } from '../domain/economy/ledger';
+import { debitEntry, goldBalance, goldEntry, hasStarterGrant, InsufficientGoldError, LEDGER_REASON } from '../domain/economy/ledger';
 import { computeExpirations } from '../../shared/rules/expiry';
 import { canShowNotices, currentNotice, pendingDepartures, type Notice } from '../domain/inbox/inbox';
 import {
@@ -44,6 +44,8 @@ import { clamp, type Rng } from '../domain/random';
 import { createBackup, type Backup } from '../domain/backup';
 import type { StorageAdapter } from '../platform/storage';
 import { createMemoryStorage } from '../platform/storage/memory';
+import { RemoteError, type Provider, type RemotePort } from '../platform/remote';
+import { ACCOUNT_OFF, createAccount, type AccountChoice, type AccountState } from './account';
 
 export type View = 'home' | 'settings' | 'collection' | 'shop' | 'build';
 /** Top-level tabs (guidance_v2 §2.10). `view` is the page inside the Island tab. */
@@ -75,6 +77,8 @@ export interface AppDeps {
   economy?: boolean;
   /** Running app version, for content `minClientVersion`. */
   clientVersion?: string;
+  /** The backend (Phase 5); absent = local only, no accounts. */
+  remote?: RemotePort | null;
 }
 
 export interface AppState {
@@ -103,8 +107,25 @@ export interface AppState {
   islandHistory: IslandHistoryEntry[];
   /** The island-move sequence playing now (memory only; the move itself is already saved). */
   islandMove: IslandMoveSequence | null;
+  /** Sign-in and sync state (Phase 5). */
+  account: AccountState;
+  /** Week the island flies the champion flag (Phase 8), from the server. */
+  championWeek: string | null;
 
   init(): Promise<void>;
+  /** Emails a sign-in code (Step 5.4). */
+  requestSignInCode(email: string): Promise<void>;
+  /** Signs in with the emailed code and links this device (first sign-in may ask `account.choice`). */
+  verifySignInCode(email: string, code: string): Promise<void>;
+  signInWithProvider(provider: Provider): Promise<void>;
+  /** Which data to keep when both this device and the account have some (Step 5.7). */
+  resolveAccountChoice(choice: AccountChoice): Promise<void>;
+  cancelAccountChoice(): Promise<void>;
+  /** Signs out; this device starts over with a fresh local island. */
+  signOut(): Promise<void>;
+  deleteAccount(): Promise<void>;
+  /** Pulls changes from the server (no-op when signed out or focusing); `force` ignores the 5-minute spacing. */
+  sync(force?: boolean): Promise<void>;
   exportBackup(): Promise<Backup>;
   /** Replaces all local data with a validated backup, atomically, and reloads the store. */
   importBackup(backup: Backup): Promise<void>;
@@ -151,7 +172,7 @@ export interface AppState {
    * (Step 3.11). Animals on its tiles walk to the nearest free tile, in the same write. Returns why it
    * does not fit, or null when placed.
    */
-  placeBuilding(p: { defId: string; tile: Tile; rotation: Rotation; movingId?: string }): Promise<PlaceProblem | 'none_left' | 'not_idle' | null>;
+  placeBuilding(p: { defId: string; tile: Tile; rotation: Rotation; movingId?: string }): Promise<PlaceProblem | 'none_left' | 'not_idle' | 'offline' | null>;
   /** Puts a placed building back into the inventory. */
   storeBuilding(id: string): Promise<void>;
   /** A candidate seed for a new island (previews before moving). */
@@ -160,7 +181,7 @@ export interface AppState {
    * Moves to the island of `seed` (Step 4.1): spends the oldest Unicorn, re-places the animals, returns
    * the buildings, in one write; then starts the move sequence. Returns why not, or null.
    */
-  moveIsland(seed: number): Promise<MoveProblem | null>;
+  moveIsland(seed: number): Promise<MoveProblem | 'offline' | null>;
   /** Ends (or skips) the move sequence. */
   finishIslandMove(): void;
 }
@@ -185,7 +206,7 @@ export function selectOccupancy(s: Pick<AppState, 'world' | 'animals' | 'placedB
 }
 
 export class BuyError extends Error {
-  constructor(readonly problem: BuyProblem) {
+  constructor(readonly problem: BuyProblem | 'offline') {
     super(`Cannot buy: ${problem}`);
     this.name = 'BuyError';
   }
@@ -269,6 +290,26 @@ export function createAppStore(initialDeps: AppDeps) {
   const memoryOnly = new Set<string>();
   let expiring: Promise<void> | null = null;
 
+  const account = createAccount({
+    remote: deps.remote ?? null,
+    storage: () => deps.storage,
+    now: () => deps.now(),
+    uuid: () => deps.uuid(),
+    commit: (c) => commit(c),
+    synced: () => store.getState(),
+    set: (patch) => store.setState(patch as Partial<AppState>),
+    memoryOnly,
+    reload: async () => store.setState(await hydrate(false)),
+    async onReward(pending, animal) {
+      const { phase, sessions } = store.getState();
+      if (phase.kind !== 'break' || phase.awaiting?.requestId !== pending.requestId) return; // already left the break
+      const next = startBreak(phase.startedAt, phase.plannedMs, animal?.id);
+      await commit({ phase: next });
+      const session = sessions.find((s) => s.id === pending.sessionId);
+      store.setState({ phase: next, revealPending: animal?.id ?? null, ...(session && animal && { sessions: sessions.map((s) => (s.id === session.id ? { ...s, rewardAnimalId: animal.id } : s)) }) });
+    },
+  });
+
   /** Persistence must never block the cycle: fall back to memory if storage fails. */
   async function commit(change: Parameters<StorageAdapter['commit']>[0]): Promise<void> {
     try {
@@ -333,7 +374,9 @@ export function createAppStore(initialDeps: AppDeps) {
     }
 
     let ledger = loaded.ledger;
-    if (deps.economy && !hasStarterGrant(ledger)) {
+    const accountState = account.restore(loaded.account, ledger);
+    // Signed in, gold comes from the server (it grants its own starter gold).
+    if (deps.economy && !account.linked && !hasStarterGrant(ledger)) {
       const starter = goldEntry(deps.uuid(), deps.now(), balance.economy.starterGold, LEDGER_REASON.starter, null);
       await commit({ ledgerAdd: [starter] });
       ledger = [...ledger, starter];
@@ -351,6 +394,7 @@ export function createAppStore(initialDeps: AppDeps) {
       placedBuildings,
       islandHistory: loaded.islandHistory,
       islandMove: null,
+      account: accountState,
       gold: goldBalance([...ledger, ...(dummy?.ledger ?? [])]),
       ready: true,
       settings,
@@ -367,6 +411,27 @@ export function createAppStore(initialDeps: AppDeps) {
     if (typeof next === 'string') throw new EquipError(next);
     await commit({ equipped: next });
     store.setState({ equipped: next });
+    if (account.linked) void account.queue({ kind: 'equip', equipped: next });
+  }
+
+  /** Sends the whole building layout to the server; the answer (stored layout, moved animals) arrives as a delta. */
+  async function applyLayoutRemote(buildings: PlacedBuilding[]): Promise<PlaceProblem | 'offline' | null> {
+    try {
+      await account.call('apply_layout', { buildings: buildings.filter((b) => !memoryOnly.has(b.id)) }, { requestId: deps.uuid() });
+      return null;
+    } catch (e) {
+      return e instanceof RemoteError && e.code === 'layout_invalid' ? 'occupied' : 'offline';
+    }
+  }
+
+  /** Server answers to a purchase, as the errors the shop already handles. */
+  function buyErrorOf(e: unknown, defId: string): Error {
+    if (!(e instanceof RemoteError)) return e as Error;
+    if (e.code === 'insufficient_gold') return new InsufficientGoldError((content.get(defId) as { price?: number })?.price ?? 0, store.getState().gold);
+    if (e.code === 'already_owned') return new BuyError('owned');
+    if (e.code === 'species_not_found') return new BuyError('species_not_found');
+    if (e.code === 'item_unavailable') return new BuyError('not_for_sale');
+    return new BuyError('offline');
   }
 
   /** Dummy data: the first free, valid tile from the center (no animal on it). */
@@ -438,11 +503,23 @@ export function createAppStore(initialDeps: AppDeps) {
     placedBuildings: [],
     islandHistory: [],
     islandMove: null,
+    account: ACCOUNT_OFF,
+    championWeek: null,
 
     async init() {
       set(await hydrate(true));
+      await account.completeRedirect().catch(() => undefined);
       await get().applyExpirations();
     },
+
+    requestSignInCode: (email) => account.requestCode(email),
+    verifySignInCode: (email, code) => account.verifyCode(email, code),
+    signInWithProvider: (provider) => account.signInWithProvider(provider),
+    resolveAccountChoice: (choice) => account.resolveChoice(choice),
+    cancelAccountChoice: () => account.cancelChoice(),
+    signOut: () => account.signOut(),
+    deleteAccount: () => account.deleteAccount(),
+    sync: (force) => account.sync(force),
 
     async exportBackup() {
       return createBackup(await deps.storage.exportAll(), deps.storage.schemaVersion, deps.now());
@@ -463,6 +540,17 @@ export function createAppStore(initialDeps: AppDeps) {
       const next = startFocus(now, plannedMs, session.id);
       await commit({ session, phase: next });
       set({ phase: next, sessions: [...sessions, session], revealPending: null, view: 'home', activeTab: 'island' });
+      // Signed in: the server confirms the start in the background (Step 5.5); offline, the session stays
+      // unverified and is rewarded locally. Nothing shows during Focus either way.
+      if (account.linked) {
+        void account.confirmStart(session).then(async (ok) => {
+          const current = get().sessions.find((s) => s.id === session.id);
+          if (!ok || !current || current.status !== 'running') return;
+          const verified = { ...current, verified: true };
+          await commit({ session: verified });
+          set({ sessions: get().sessions.map((s) => (s.id === session.id ? verified : s)) });
+        });
+      }
     },
 
     async endFocus() {
@@ -484,6 +572,25 @@ export function createAppStore(initialDeps: AppDeps) {
         effectiveFocusMs: effective,
       };
 
+      // Signed in with a verified start: the server rolls the reward (Step 5.5). Offline, the break shows
+      // "Revealing when you're back online…" and the call is retried with the same request id.
+      if (account.linked && session.verified) {
+        const pending = { sessionId: session.id, requestId: deps.uuid(), endedAt: now };
+        const waiting: StoredPhase = { ...startBreak(now, minutesToMs(settings.breakMinutes)), awaiting: pending } as StoredPhase;
+        await commit({ session, phase: waiting });
+        set({ phase: waiting, sessions: sessions.map((s) => (s.id === session.id ? session : s)), revealPending: null });
+        const out = await account.endVerified(pending);
+        if (out !== 'waiting') {
+          const p = get().phase;
+          if (p.kind === 'break' && p.awaiting?.requestId === pending.requestId) {
+            const next = startBreak(p.startedAt, p.plannedMs, out.animal?.id);
+            await commit({ phase: next });
+            set({ phase: next, revealPending: out.animal?.id ?? null });
+          }
+        }
+        return;
+      }
+
       let animal: PlacedAnimal | undefined;
       const species = rollReward(effective, deps.rng);
       if (species) {
@@ -493,12 +600,15 @@ export function createAppStore(initialDeps: AppDeps) {
           animal = newPlacedAnimal(deps.uuid(), species, tile, now, session.id);
           // With several chosen skins the new animal wears one of them at random, for good (ADR-043).
           if (chosenSkins(get().equipped, species.id).length > 1) animal.skinId = pickSpawnSkin(get().equipped, species.id, deps.rng);
+          // Signed in but started offline (§9 Q16): kept, but out of score and war, and uploaded later.
+          if (account.linked) animal.verified = false;
           session.rewardAnimalId = animal.id;
         }
       }
 
       const next = startBreak(now, minutesToMs(settings.breakMinutes), animal?.id);
       await commit(animal ? { session, animal, phase: next } : { session, phase: next });
+      if (account.linked) void account.queue({ kind: 'local_session', session, animal: animal ?? null });
       set({
         phase: next,
         sessions: sessions.some((s) => s.id === session.id)
@@ -532,6 +642,10 @@ export function createAppStore(initialDeps: AppDeps) {
         sessions: sessions.map((s) => (s.id === session.id ? session : s)),
         revealPending: null,
       });
+      if (account.linked) {
+        if (session.verified) void account.abandonVerified(session.id, now);
+        else void account.queue({ kind: 'local_session', session, animal: null });
+      }
       await get().applyExpirations();
     },
 
@@ -540,7 +654,9 @@ export function createAppStore(initialDeps: AppDeps) {
       if (phase.kind !== 'break') return;
       await commit({ phase: IDLE });
       set({ phase: IDLE, revealPending: null, view: 'home' });
-      await get().applyExpirations();
+      // Signed in: returning Home always pulls (Step 5.6).
+      if (account.linked) await account.sync(true);
+      else await get().applyExpirations();
     },
 
     finishReveal() {
@@ -574,6 +690,7 @@ export function createAppStore(initialDeps: AppDeps) {
       if (!canShowNotices(phase) || !inbox.some((n) => n.id === id)) return;
       await commit({ inboxRemove: [id] });
       set({ inbox: get().inbox.filter((n) => n.id !== id) });
+      if (account.linked) void account.queue({ kind: 'dismiss_notice', id });
     },
 
     async spendGold(amount, reason, refId, grant) {
@@ -586,6 +703,13 @@ export function createAppStore(initialDeps: AppDeps) {
     async buyItem(defId) {
       const problem = buyProblem(defId, get().cosmetics, { now: deps.now(), clientVersion: deps.clientVersion ?? '0.0.0', discovered: selectDiscoveredSpecies(get()) });
       if (problem) throw new BuyError(problem);
+      if (account.linked) {
+        // Signed in, the server spends the gold and grants the item (Step 5.5); it needs a connection.
+        await account.call('purchase', { defId }, { requestId: deps.uuid() }).catch((e) => {
+          throw buyErrorOf(e, defId);
+        });
+        return;
+      }
       const item = content.get(defId) as Parameters<typeof grantFor>[0];
       await get().spendGold(item.price!, LEDGER_REASON.purchase, defId, grantFor(item, deps.uuid(), deps.now()));
     },
@@ -608,6 +732,8 @@ export function createAppStore(initialDeps: AppDeps) {
         ? { ...moving, tileX: tile.x, tileZ: tile.z, rotation }
         : { id: deps.uuid(), defId, tileX: tile.x, tileZ: tile.z, rotation, placedAt: deps.now() };
       const buildings = [...s.placedBuildings.filter((b) => b.id !== building.id), building];
+      // Signed in, the server validates and stores the layout and moves the animals (Step 5.5).
+      if (account.linked) return applyLayoutRemote(buildings);
       // Animals on the new tiles walk to the nearest free tile (save repair does exactly that).
       const moved = repairPlacements(
         { seed: s.world.seed, islandLevel: islandLevel(s.animals), buildings: buildings.map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation })) },
@@ -624,6 +750,10 @@ export function createAppStore(initialDeps: AppDeps) {
 
     async storeBuilding(id) {
       if (!get().placedBuildings.some((b) => b.id === id)) return;
+      if (account.linked) {
+        await applyLayoutRemote(get().placedBuildings.filter((b) => b.id !== id));
+        return;
+      }
       if (!memoryOnly.has(id)) await commit({ buildingsRemove: [id] });
       set({ placedBuildings: get().placedBuildings.filter((b) => b.id !== id) });
     },
@@ -649,6 +779,17 @@ export function createAppStore(initialDeps: AppDeps) {
         historyId: deps.uuid(),
       });
       if (typeof out === 'string') return out;
+      if (account.linked) {
+        // Signed in, the server moves the island (same rule); the sequence plays from the saved result.
+        const before = { oldWorld: s.world, oldAnimals: s.animals.filter(isActive), oldBuildings: s.placedBuildings, spentId: out.spent.id };
+        try {
+          await account.call('move_island', { seed }, { requestId: deps.uuid() });
+        } catch (e) {
+          return e instanceof RemoteError && (e.code === 'no_unicorn' || e.code === 'not_idle') ? e.code : 'offline';
+        }
+        set({ islandMove: before });
+        return null;
+      }
       await commit({
         world: out.world,
         islandHistoryAdd: [out.history],
@@ -671,6 +812,8 @@ export function createAppStore(initialDeps: AppDeps) {
     },
 
     applyExpirations() {
+      // Signed in, the server settles expirations; a pull brings them (every 5 minutes at most from here).
+      if (account.linked) return account.sync();
       // One run at a time, so a timer tick and a phase change never credit the same animal twice.
       expiring ??= expire().finally(() => (expiring = null));
       return expiring;

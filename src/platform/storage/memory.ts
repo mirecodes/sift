@@ -38,7 +38,7 @@ export function createMemoryStorage(): StorageAdapter {
         placedBuildings: rows<PlacedBuilding>('placedBuildings').sort((a, b) => a.placedAt - b.placedAt),
         islandHistory: rows<IslandHistoryEntry>('islandHistory').sort((a, b) => a.to - b.to),
       };
-      for (const { key, value } of rows<{ key: 'settings' | 'world' | 'phase' | 'equipped'; value: never }>('kv')) state[key] = value;
+      for (const { key, value } of rows<{ key: 'settings' | 'world' | 'phase' | 'equipped' | 'account'; value: never }>('kv')) state[key] = value;
       return state;
     },
     async exportAll() {
@@ -71,6 +71,10 @@ export function createMemoryStorage(): StorageAdapter {
       for (const id of change.buildingsRemove ?? []) tables.placedBuildings.delete(id);
       if (change.world) kv('world', change.world);
       for (const h of change.islandHistoryAdd ?? []) put('islandHistory', h);
+      for (const s of change.sessions ?? []) put('sessions', s);
+      for (const e of change.ledgerSync ?? []) if (!tables.ledger.has(e.id)) put('ledger', e);
+      if (change.account === null) tables.kv.delete('account');
+      else if (change.account) kv('account', change.account);
       if (change.session) put('sessions', change.session);
       if (change.animal) put('animals', change.animal);
       for (const a of change.animals ?? []) put('animals', a);

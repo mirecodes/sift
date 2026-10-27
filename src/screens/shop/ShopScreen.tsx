@@ -7,7 +7,7 @@ import { filterShop, isFiltered, itemBadges, NO_FILTER, shopView, type ShopFilte
 import { getSpecies } from '../../domain/animals/catalog';
 import { content } from '../../domain/content';
 import { Segmented } from '../../ui/components/Controls';
-import { selectDiscoveredSpecies, useApp } from '../../store';
+import { BuyError, selectDiscoveredSpecies, useApp } from '../../store';
 import { strings } from '../../ui/strings';
 import { usePrefersReducedMotion } from '../../ui/hooks';
 import { Button, IconButton } from '../../ui/components/Button';
@@ -210,12 +210,15 @@ export function BuySheet({ item, onClose }: { item: ItemDef; onClose: () => void
   }, []);
   const close = () => ref.current?.close();
 
+  const [offline, setOffline] = useState(false);
   const buy = async () => {
     setState('busy');
     try {
       await buyItem(item.id);
       setState('done');
-    } catch {
+    } catch (e) {
+      // Signed in, buying needs the server (Step 5.5).
+      setOffline(e instanceof BuyError && e.problem === 'offline');
       setState('failed');
     }
   };
@@ -250,7 +253,7 @@ export function BuySheet({ item, onClose }: { item: ItemDef; onClose: () => void
       ) : (
         <>
           <p className="type-body-md">{strings.shop.confirmBody(item.price ?? 0, gold)}</p>
-          {state === 'failed' && <p className={`${styles.error} type-body-sm`}>{strings.shop.failed}</p>}
+          {state === 'failed' && <p className={`${styles.error} type-body-sm`}>{offline ? strings.shop.offline : strings.shop.failed}</p>}
           <div className={styles.actions}>
             <Button variant="secondary" onClick={close}>
               {strings.shop.cancel}

@@ -46,7 +46,7 @@ const MAX_ROWS = 20_000;
 
 export const ARGS: { [O in Op]: z.ZodType } = {
   me: z.object({}),
-  start_session: z.object({ plannedMs: time, roomId: z.string().nullable().optional(), force: z.boolean().optional() }),
+  start_session: z.object({ sessionId: z.string().regex(/^[0-9a-zA-Z_-]{1,64}$/).optional(), plannedMs: time, roomId: z.string().nullable().optional(), force: z.boolean().optional() }),
   end_session: z.object({ sessionId: id, endedAt: time, status: z.enum(['completed', 'abandoned']) }),
   sync_pull: z.object({}),
   sync_push: z.object({

@@ -15,5 +15,6 @@
     "noEmit": true,
     "types": ["vite/client", "node"]
   },
-  "include": ["src", "shared", "tools", "content", "server", "vite.config.ts"]
+  "include": ["src", "shared", "tools", "content", "server", "vite.config.ts"],
+  "exclude": ["server/supabase"]
 }

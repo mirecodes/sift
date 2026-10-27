@@ -122,7 +122,8 @@ export type Platform = 'web' | 'ios' | 'android';
 /** Every operation: its arguments and result. Later phases add theirs. */
 export interface Ops {
   me: { args: Record<string, never>; result: { profile: ProfileView; hasData: boolean } };
-  start_session: { args: { plannedMs: number; roomId?: string | null; force?: boolean }; result: { session: FocusSession } };
+  /** `sessionId`: the client's own id for the session (a UUID), so a session started offline-first keeps one id. */
+  start_session: { args: { sessionId?: string; plannedMs: number; roomId?: string | null; force?: boolean }; result: { session: FocusSession } };
   end_session: { args: { sessionId: string; endedAt: number; status: 'completed' | 'abandoned' }; result: { session: FocusSession; animal: PlacedAnimal | null } };
   sync_pull: { args: Record<string, never>; result: Record<string, never> };
   sync_push: { args: { ops: PushOp[] }; result: Record<string, never> };

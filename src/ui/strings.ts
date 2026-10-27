@@ -163,6 +163,7 @@ export const strings = {
     cancel: 'Cancel',
     confirm: 'Move',
     failed: 'Could not move. Try again.',
+    offline: 'Connect to the internet to move your island.',
     skip: 'Skip',
     moving: 'Moving to a new island',
   },
@@ -194,6 +195,7 @@ export const strings = {
       too_full: 'Leave room for your animals.',
       none_left: 'None left to place.',
       not_idle: 'Build on Home only.',
+      offline: 'Connect to the internet to build.',
     },
   },
   shop: {
@@ -230,6 +232,7 @@ export const strings = {
     bought: "It's yours.",
     placeHint: 'Place it in build mode.',
     failed: 'Could not buy. Try again.',
+    offline: 'Connect to the internet to use the shop.',
   },
   notice: {
     ok: 'OK',

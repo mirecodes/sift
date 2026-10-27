@@ -21,7 +21,7 @@ export function MoveIslandSheet({ onClose }: { onClose: () => void }) {
   const moveIsland = useApp((s) => s.moveIsland);
   const reducedMotion = usePrefersReducedMotion();
   const [seeds, setSeeds] = useState(() => [roll()]);
-  const [state, setState] = useState<'confirm' | 'busy' | 'failed'>('confirm');
+  const [state, setState] = useState<'confirm' | 'busy' | 'failed' | 'offline'>('confirm');
   const seed = seeds[seeds.length - 1]!;
   const left = balance.islandMove.freePreviews - seeds.length;
 
@@ -29,7 +29,7 @@ export function MoveIslandSheet({ onClose }: { onClose: () => void }) {
     setState('busy');
     try {
       const problem = await moveIsland(seed);
-      if (problem) setState('failed');
+      if (problem) setState(problem === 'offline' ? 'offline' : 'failed');
       else sheet.current?.close();
     } catch {
       setState('failed');
@@ -42,7 +42,7 @@ export function MoveIslandSheet({ onClose }: { onClose: () => void }) {
       <p className="type-body-md">{strings.move.body}</p>
       <p className={`${sheetStyles.note} type-body-sm`}>{unicorns > 0 ? strings.move.have(unicorns) : strings.move.needUnicorn}</p>
       <p className={`${sheetStyles.note} type-body-sm`}>{left > 0 ? strings.move.previewsLeft(left) : strings.move.noPreviews}</p>
-      {state === 'failed' && <p className={`${sheetStyles.error} type-body-sm`}>{strings.move.failed}</p>}
+      {(state === 'failed' || state === 'offline') && <p className={`${sheetStyles.error} type-body-sm`}>{state === 'offline' ? strings.move.offline : strings.move.failed}</p>}
       <div className={sheetStyles.actions}>
         <Button variant="secondary" onClick={() => setSeeds([...seeds, roll()])} disabled={left <= 0 || state === 'busy'}>
           {strings.move.another}
