@@ -31,6 +31,16 @@
   line-height: 25.6px;
   font-variant-numeric: tabular-nums;
 }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-lg);
+}
+.text {
+  width: 100%;
+  text-align: left;
+}
 .input:focus {
   border-color: var(--color-primary);
   outline: none;

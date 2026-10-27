@@ -33,7 +33,7 @@ const api = createApi({
 
 // Newest published content pack (Step 5.8): purchases are checked against the same catalog clients see.
 try {
-  const [row] = await sql`select data from public.content_releases order by published_at desc nulls last limit 1`.catch(() => []);
+  const [row] = await sql`select data from public.content_releases order by (data->>'publishedAt')::bigint desc limit 1`.catch(() => []);
   const release = row?.data as { packUrl: string; checksum: string } | undefined;
   if (release) {
     const text = await (await fetch(release.packUrl)).text();

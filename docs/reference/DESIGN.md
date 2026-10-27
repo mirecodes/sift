@@ -305,6 +305,8 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - `SOUND`: `Chimes` as a `toggle`.
 - `STATS` (only with the Stats tab): `Week starts on` as a `segmented` control `Monday` / `Sunday` (default Monday).
 - `DATA`: `Export data` and `Import data` rows, each with a `button-secondary` (`Export`, `Import…`). Picking a file shows a `card-feature` below the rows: `body-md` summary (`Backup from 7 Oct 2026: 12 sessions, 8 animals.`), `body-sm` `--color-body-mid` warning `This replaces all data on this device.`, then `button-primary` `Replace data` and `button-secondary` `Cancel`. An unreadable file shows a `body-sm` `--color-accent-red` line in the same place instead.
+- `ACCOUNT` (only with a backend, before `DATA`): signed out, a row with the `body-md` pitch `Sign in to keep your island safe across devices and to play with friends.` and `button-primary` `Sign in`. Signed in: `Signed in as mina@example.com` with `button-secondary` `Sign out`; when offline a `body-sm` `--color-body-mid` line `Offline. Your changes sync when you are back online.`; when the session expired a row with `Sign in again` (primary); a `Delete account` row (secondary). Below, a `body-sm` underlined text button `What leaves this device` opens a sheet with four short bullet lines.
+- Sign out and Delete account confirm in a sheet: `body-md` explanation, Delete needs the word `DELETE` typed, buttons `Export a copy`, `Cancel`, then the action (primary).
 - Content is a single column, max width 560px, centered; changes save immediately (no save button).
 
 ### 7.5 Collection
@@ -350,6 +352,13 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 ### 7.9 Island move (F5)
 - **Sheet** (shared `Sheet` component = the Day-detail `<dialog>` look): `display-sm` `Move to a new island?`, a 200px turning preview of the new island (terrain, stream and camp in the current theme, no animals), `body-md` `This uses 1 Unicorn. Buildings will return to your inventory.`, then two `body-sm` `--color-body-mid` lines: `You have 2 Unicorns.` (or, with none, `You need a Unicorn to move. Unicorns are Legendary rewards.`) and `2 more previews` / `This is the last preview.`. Buttons: `Show another` (secondary, a new preview; 3 previews in all, `balance.islandMove.freePreviews`), `Cancel` (secondary), `Move` (primary; disabled without a Unicorn).
 - **During the move** (≈ 10–15 s, Part II 18): no top bar, panels or tab bar; one `button-secondary` `Skip` at the bottom center (Esc skips too). Skipping shows the new island at once (the move is already saved). Reduced motion: no sequence; the screen fades from canvas white to the new island over `--motion-slow`.
+
+### 7.10 Accounts (Phase 5)
+- **Sign-in sheet** (`Sheet`): `display-sm` `Sign in to Sift`, the pitch in `body-sm` `--color-body-mid`. Step 1: `text-input` `Email` and `Send code` (primary, disabled until it looks like an email). Step 2: `We sent a 6-digit code to …`, `text-input` `Code` (numeric, one-time-code autofill), `Use another email` (secondary) and `Sign in` (primary). Then `or` and two full-width secondary buttons `Continue with Apple`, `Continue with Google`. Errors in `body-sm` `--color-accent-red` (`That code did not work…`, `No connection…`). With the test backend a note `Test backend: any email, code 000000.`
+- `text-input`: like `number-input` but full width, left-aligned, with a `body-sm-strong` label above (`--space-xs` gap).
+- **First sign-in choice** (wide sheet, 560px): `This account already has an island` / `This device has its own island too. Which one do you want to keep?`; a full-width primary `Use the data from your account (recommended)` with the note `A copy of this device is saved to your downloads first.`; then a `text-input` `Type REPLACE to confirm`, the note `The island on your account is replaced for good.` and a secondary `Replace account data with this device`. Closing it cancels the sign-in.
+- **Please update** (server refuses the app version): a full-screen canvas, centered `display-sm` `Please update Sift`, `body-md` text, `Reload`.
+- **Break, waiting for the server** (signed in, offline at End focus): the reward card area shows the `card-feature` with `Revealing when you’re back online…` (`role="status"`); when the answer comes the reward card replaces it and the reveal plays as usual.
 
 ---
 

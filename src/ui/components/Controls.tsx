@@ -82,6 +82,43 @@ export function Segmented<T extends string | number>({ label, options, value, on
   );
 }
 
+/** `text-input` (DESIGN.md 6.4): full-width text field with a visible label. */
+export function TextField({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  placeholder,
+  autoComplete,
+  inputMode,
+  maxLength,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: 'text' | 'email';
+  placeholder?: string;
+  autoComplete?: string;
+  inputMode?: 'text' | 'email' | 'numeric';
+  maxLength?: number;
+}) {
+  return (
+    <label className={styles.field}>
+      <span className="type-body-sm-strong">{label}</span>
+      <input
+        className={`${styles.input} ${styles.text}`}
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+  );
+}
+
 export function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button type="button" role="switch" aria-checked={checked} aria-label={label} className={styles.toggle} onClick={() => onChange(!checked)}>

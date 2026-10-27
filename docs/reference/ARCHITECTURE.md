@@ -160,9 +160,22 @@ Capability APIs only through `src/platform/<name>/` (interface `index.ts`, web `
 | `NotifyAdapter` | Web Audio chimes | scheduled local notification for focus end (JS may be suspended) |
 | `HapticsAdapter` | no-op | Capacitor Haptics |
 | `FilesAdapter` | download link / file picker | share sheet / document picker |
+| `SecureStorageAdapter` | `localStorage` | Keychain / Keystore |
+| `LifecycleAdapter` | `visibilitychange`, `online` | app resume |
+| `RemotePort` | `SupabaseRemote` (fetch) or `FakeRemote` | same |
 
 - "Capability API" = storage, wake lock, fullscreen, audio/notifications, haptics. DOM events, `visibilitychange`, `matchMedia`, `Date.now` are fine in `ui/`, `screens/`, `world/` (ADR-010).
 - Write no untested native stubs before M7 (ADR-002).
+
+## 7a. Backend, accounts and sync (guidance_v2 Phase 5, ADR-047, ADR-048)
+
+- **Local-first, account-optional.** Without a backend (`backend.provider: none`) or signed out, everything is local as before. Signed in, the server owns animals, gold, items, layout and island; IndexedDB is the cache plus an outbox.
+- **Contract**: `shared/api/types.ts` (ops, errors, `API_VERSION`, `MUTATIONS`), documented in `docs/reference/API.md`. Row types shared by client, API and server: `shared/types/rows.ts` (`domain/types.ts` re-exports them).
+- **Server** = `server/core` (pure TS; may import `shared/` and pure `src/domain/`, never store, screens, world or platform): `api.ts` `handle(env, caller, request)` (version gate, auth, zod args `args.ts`, rate limit, idempotency via `api_requests`, one transaction, settle expirations first for `SETTLES`, delta from `sinceSeq`), handlers in `handlers/` registered through `registerHandlers`, `UserWriter` stamps owned rows with one `updatedSeq` per transaction, `user.ts` (profile, island, `settleExpirations`, `pull`). `ServerDb`/`Tx`/`Table` (`db.ts`): `MemoryServerDb` (tests, fake remote) and `createPgServerDb(SqlClient)` (`server/pg`). Tables are specs in `schema.ts` (key + filter columns + `data jsonb`), SQL generated to `server/supabase/migrations` (`npm run server:sql`; test keeps them equal). The same contract suite (`contract.suite.ts`) runs on memory and on PGlite (real Postgres). `server/edge/bundle.ts` → `npm run server:build` → `functions/api/sift.js`, hosted by the Deno `index.ts` (JWT via JWKS, CORS, jobs). `npm run server:check` runs the bundle on PGlite.
+- **Server rules**: rewards rolled and placed on the server (`end_session`); unverified animals (offline-started sessions, `local_session`) leave no gold and count for nothing in score or war; first-sign-in upload trusts animals once, carries gold up to 1,000; one running session per user (stale after plan + 2 h, or `force`).
+- **Client**: `platform/remote` `RemotePort` (`send`, `auth`), `callApi` (typed `RemoteError`, retries `network` with the same request id), `createRemote(backend)` loads `fake.ts` (the server core in the page, `localStorage`, code `000000`, `__siftFake.setOnline`) or `supabase.ts` (REST, no SDK; tokens in `platform/secureStorage`) on first use. `platform/lifecycle` `onResume` (visible or online).
+- **Store** (`store/account.ts`, used by `appStore`): `AccountLink` in kv `account` `{ userId, email, seq, outbox, pendingEnds }`. Signed in: focus starts locally at once and `start_session` confirms it in the background with the client's session id (`verified`); a verified end calls `end_session` (offline: break `awaiting`, retried from `pendingEnds` on sync); an unverified end rewards locally with `verified: false` and queues `local_session`. Purchases, layouts and island moves call the server (offline → `offline` problem). Equip and notice dismissals go through the outbox. `applyExpirations` becomes a pull (every 5 min at most; forced on Home, resume, init). Every answer's delta is merged by `store/sync.ts` `applyDelta` (ledger ids immutable, dismissed notices removed, cursor never moves back). First sign-in: `me` → empty account: `upload_local_save` then full pull replaces the stores (`backupFromRows`); account with data: `account.choice` → "use account" (backup download first) or "replace account" (typed REPLACE). Sign out (and delete account) wipes the device except settings: a fresh local save follows (ADR-048). No local starter gold while linked.
+- **Remote content** (Step 5.8, `features.remoteContent`): `checkContent` (init, resume; not in Focus) → `get_content_manifest` → download, `verifyPack` (SHA-256, schema, models) → kv-less `contentPacks` row → merged on the next return Home (`refreshCatalog`, `clearContentGeometry` via `contentVersion`). Stored packs merge at startup before anything else. `npm run content:publish` uploads pack + atlas to the `content` bucket and records `content_releases`; the server merges the newest at cold start.
 
 ## 8. Data model
 
@@ -199,6 +212,7 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
   - `animals` (`enabled`, `speciesCount`, `allSpecies`): fills the island in memory at startup; never stored, rewards untouched.
   - `dummyData`: `app/devDummy.ts` adds deterministic sample data in memory at startup (store dep `dummy`): ~6 weeks of sessions and a few Inbox notices. Never committed to storage, never exported, not re-added after an import. **Every phase adds sample data for its feature there** (gold, cosmetics, friends, groups, war, …) so it can be seen without real play (ADR-038).
 - They are honored only in development builds (`import.meta.env.DEV`); production builds force them off (`resolveRuntimeConfig`). Committed value is `false`; enable locally, never commit.
+- `backend`: `provider` `none` (default, local only) | `fake` (server core in the browser) | `supabase` (+ `supabaseUrl`, `supabaseAnonKey`); `VITE_BACKEND` overrides the provider for test builds (`npm run e2e` uses `fake`). Incomplete Supabase settings mean `none`. A test keeps the committed value `none`.
 - `features.<name>`: one flag per guidance_v2 phase (`FEATURES` in `runtimeConfig.ts`), read in every build. Committed values are all `false` (a unit test enforces it); the owner turns a phase on once it is finished. The build variable `VITE_FEATURES=stats,…` (or `all`) turns flags on for test builds: `npm run e2e` builds `dist-e2e` with the finished phases' flags (ADR-036).
 
 ## 10. Directory structure
@@ -209,7 +223,10 @@ config/app.yaml  runtime config
 e2e/             Playwright smoke test
 content/         data only (ADR-041, ADR-045), one file or folder per item, the name is the id: animals/<id>/ (animal.json, model.ts|model.vox+json, skins/<skinId>.json), buildings/<id>/ (building.json, model.ts), themes/<id>.json, skin-families/<id>.json, releases/<id>.json, models/ (loose models, palette-template.vox), sprites/ (generated atlas), pack.json (contentVersion), presets.json; `assemblePack` rejects items in the wrong place (`layoutProblem`); `npm run content:new` scaffolds; guide: docs/guides/CONTENT.md
 tools/           node tools run through Vite's module runner (`node tools/run.mjs <file.ts>`): content-build/ (pack, builder DSL `dsl.ts`, animal builder `animal.ts`, scaffold `new.ts` = `npm run content:new`), vox-import/ (MagicaVoxel → model JSON)
+server/          backend (ADR-047): core/ (API dispatcher, handlers, schema, memory DB, contract suite), pg/ (Postgres adapter, SQL generator, PGlite client), edge/ (bundle entry), supabase/ (config.toml, migrations (generated), functions/api (Deno host, push), templates)
 shared/          pure rules that must run identically on client and server (ADR-031)
+├── api/         types.ts: the versioned API contract
+├── types/       rows.ts: stored rows shared by client, API and server
 ├── balance/     balance.ts: gameplay tunables + BALANCE_VERSION
 ├── content/     palette keys, model JSON type, zod schemas, buildPack (validation + family expansion)
 ├── rng/         the one seeded PRNG (mulberry32) + hash01, clamp, lerp
@@ -244,6 +261,7 @@ src/
 | M9 | Economy (guidance_v2 Phase 2): ledger and wallet, expiry, departure presentation, coin pile, HUD counters, collection/poke updates | Done, behind `features.economy` |
 | M10 | Content pipeline & cosmetics (guidance_v2 Phase 3): palette keys, content packs and registry, presets, MagicaVoxel + DSL authoring, Content Studio, sprites and validation, launch content, inventory, skins and themes, Shop, Collection choices, build mode, pathfinding, tile sharing | Done, behind `features.cosmetics` |
 | M11 | Island move (guidance_v2 Phase 4): `moveIsland`, confirm sheet with previews, rainbow-bridge sequence | Done, behind `features.islandMove` |
+| M12 | Backend & API (guidance_v2 Phase 5): contract, server core on Postgres/Supabase, fake and Supabase remotes, accounts, server-authoritative economy, delta sync, first sign-in, remote content | Done; off until `backend.provider` is set (and `features.remoteContent`) |
 
 **Rules for the agent**
 - Every `domain/` module has Vitest tests (time math, 25 min threshold, 60 min cap, probabilities sum to 1, island size and monotonicity).

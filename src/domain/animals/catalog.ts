@@ -17,19 +17,35 @@ export interface AnimalSpecies {
   footprint: readonly [number, number];
 }
 
-/** The species from `content/animals/<id>/animal.json`, by tier, then by id (Step 3.1). */
-export const CATALOG: readonly AnimalSpecies[] = content.all('species').map((s) => ({
-  id: s.id,
-  name: s.name.en,
-  names: s.name,
-  tierRank: s.tierRank,
-  tier: tierName(s.tierRank),
-  modelId: s.model,
-  idleAnimation: s.idle as AnimalSpecies['idleAnimation'],
-  footprint: [1, 1],
-}));
+const species: AnimalSpecies[] = [];
+const BY_ID = new Map<string, AnimalSpecies>();
 
-const BY_ID = new Map(CATALOG.map((a) => [a.id, a]));
+/** The species from `content/animals/<id>/animal.json`, by tier, then by id (Step 3.1). */
+export const CATALOG: readonly AnimalSpecies[] = species;
+
+/** Re-reads the species after a content pack was merged (Step 5.8): new animals join their tier's pool. */
+export function refreshCatalog(): void {
+  const next = content
+    .all('species')
+    .map(
+      (s): AnimalSpecies => ({
+        id: s.id,
+        name: s.name.en,
+        names: s.name,
+        tierRank: s.tierRank,
+        tier: tierName(s.tierRank),
+        modelId: s.model,
+        idleAnimation: s.idle as AnimalSpecies['idleAnimation'],
+        footprint: [1, 1],
+      }),
+    )
+    .sort((a, b) => a.tierRank - b.tierRank || a.id.localeCompare(b.id));
+  species.splice(0, species.length, ...next);
+  BY_ID.clear();
+  for (const a of next) BY_ID.set(a.id, a);
+}
+
+refreshCatalog();
 
 export function getSpecies(id: string): AnimalSpecies {
   const species = BY_ID.get(id);

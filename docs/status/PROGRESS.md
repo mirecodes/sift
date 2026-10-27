@@ -100,14 +100,22 @@
 
 ## Phase 5 — Backend, API, accounts, sync (F6)
 
-- [ ] 5.1 Backend choice (ADR)
-- [ ] 5.2 API contract (ADR)
-- [ ] 5.3 RemotePort adapter
-- [ ] 5.4 Accounts and authentication
-- [ ] 5.5 Server-authoritative economy (when signed in)
-- [ ] 5.6 Sync engine
-- [ ] 5.7 First sign-in migration
-- [ ] 5.8 Remote content delivery (§2.13)
+- [x] 5.1 Backend choice (ADR)
+  - Supabase, one `api` edge function running `server/core` in one Postgres transaction per call (ADR-047). Project creation is the owner's: `docs/guides/BACKEND_SETUP.md`.
+- [x] 5.2 API contract (ADR)
+  - `shared/api/types.ts` + `docs/reference/API.md`; version gate, idempotency, typed errors, `serverNow`, delta sync, rate limits. Contract suite (14 cases) on memory and PGlite; migrations generated and checked; `npm run server:check` runs the bundle on Postgres.
+- [x] 5.3 RemotePort adapter
+  - `platform/remote`: `callApi` (retries with the same request id), `FakeRemote` (server core in the page), `SupabaseRemote` (REST; tested with a mocked fetch: headers, refresh, errors).
+- [x] 5.4 Accounts and authentication
+  - Email code, Apple/Google (web OAuth; native ID token ready for Phase 6), secure storage, Settings → Account, sign out, delete account, privacy sheet. README updated.
+- [x] 5.5 Server-authoritative economy (when signed in)
+  - Server rewards, offline wait, unverified offline-started sessions, purchases/layout/move on the server (store tests with the fake remote; e2e: sign in, server reward, offline wait).
+- [x] 5.6 Sync engine
+  - Outbox, delta merge (`store/sync.ts`, tested), pulls on start, resume, Home, 5 minutes; never in Focus.
+- [x] 5.7 First sign-in migration
+  - Empty account: upload; account with data: choice (backup download first / typed REPLACE). Tested for both answers.
+- [x] 5.8 Remote content delivery (§2.13)
+  - `content:publish`, manifest, `verifyPack`, activation on Home, `refreshCatalog`; server merges the newest pack at cold start. **Phase 5 complete; needs the owner's Supabase project to go live.**
 
 ## Phase 6 — Mobile apps (M7, F9)
 
@@ -161,6 +169,8 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 5 · **Owner action**: create the Supabase project and connect it (`docs/guides/BACKEND_SETUP.md`, ~1 hour incl. Apple/Google). Until then try everything with `backend.provider: fake` (any email, code 000000). Not verified here: real email delivery, Apple/Google sign-in, the Deno function on Supabase (the same bundle runs on Postgres in `npm run server:check`).
+- 5 · Sign out clears the device (fresh island). Check that this matches what you want (ADR-048).
 - 4 · Feature flag: Phase 4 ships with `features.islandMove: true`. With `testMode.dummyData` there is one Unicorn: tap the Unicorn counter on Home. Check the bridge colors, timing (~11–14 s), the old island sinking and the preview size in the sheet (the tall underside makes the island look small).
 - 3 · Feature flag: Phase 3 ships only when you set `features.cosmetics: true` (with `features.economy` for gold). To review with sample data also set `testMode.dummyData: true` (dev only): three equipped skins, the Autumn theme, four placed buildings, more in the build tray, 140 extra gold. Content Studio: `npm run dev`, open `/studio`.
 - 3.13 · Shared tiles (4 animals in corners) only happen when buildings fill the island; check it reads fine if you try it.
@@ -205,6 +215,15 @@
 - 4.2 · Entry is the HUD Unicorn counter (now a button with the flag on); no separate screen. · Phase 2 note; the Unicorn is the currency.
 - 4.3 · The new island rises from below instead of fading in; the old one sinks. · Island meshes have no shared opacity; motion reads the same.
 - 4.3 · Flying and swimming animals cross the bridge like the rest (with the same small hop). · Simplest; the crossing lasts seconds.
+- 5.x · Tables are key + filter columns + `data jsonb`, generated from `server/core/schema.ts` (ADR-047). · One adapter for memory and Postgres; the same tests run on both.
+- 5.x · The guidance's `server/API.md` is `docs/reference/API.md`. · CLAUDE.md: all docs in `docs/`.
+- 5.x · Presence will be polled, not a realtime channel. · No websocket client to maintain on three platforms.
+- 5.x · Clients name their session ids (`start_session.sessionId`). · Focus starts instantly offline-first; no id remapping when the server confirms.
+- 5.x · Unverified animals leave no gold. · The server cannot vouch for them (guidance: excluded from score and war; gold not specified).
+- 5.x · Upload caps carried-over gold at 1,000. · Local saves can be edited.
+- 5.x · Sign out wipes the device except settings (export offered). · Prevents copying account data into another account.
+- 5.x · Abandoning a verified session is best effort; the server also abandons stale sessions (plan + 2 h). · No blocking network call on Hold to stop.
+- 5.x · Remote content: the pack JSON is fetched from Storage, its atlas stored as a data URL in `contentPacks`. · Works offline after download.
 - 4.3 · New render mode `sequence` (fixed camera, full rate, clouds, no panel insets) for scripted scenes. · War voyages reuse it.
 
 - 3.13 · Max animals per tile is a balance value (`placement.maxPerTile` = 4), since the server will place animals too (Step 5.5); with every tile at 4 no reward animal is added (as before when no tile was free; the island grows with every animal, so this needs buildings on almost every tile). · Same rule on client and server.

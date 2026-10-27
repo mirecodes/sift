@@ -5,6 +5,9 @@ import { pendingDepartures } from '../domain/inbox/inbox';
 import { goldPileLevel as goldPileLevelOf } from '../domain/economy/ledger';
 import { balance } from '../../shared/balance/balance';
 import { appStore, selectIslandLevel, selectVisibleAnimals, useApp, type Tab } from '../store';
+import { platform } from '../platform';
+import { clearContentGeometry } from '../world/voxel/geometry';
+import { AccountChoiceSheet, OutdatedScreen } from '../screens/account/AccountChoiceSheet';
 import { usePrefersReducedMotion } from '../ui/hooks';
 import { strings } from '../ui/strings';
 import { FriendsIcon, GroupIcon, IslandIcon, StatsIcon } from '../ui/components/Icons';
@@ -76,6 +79,8 @@ export function App() {
   const building = features.cosmetics && phase.kind === 'idle' && view === 'build';
   const movingId = useBuildUi((s) => (building ? s.placing?.movingId : undefined));
   const islandMove = useApp((s) => s.islandMove);
+  const accountChoice = useApp((s) => s.account.choice !== null);
+  const outdated = useApp((s) => s.account.outdated);
   const finishIslandMove = useApp((s) => s.finishIslandMove);
   const moveRefs = useIslandMoveRefs(islandMove);
   const moving = islandMove !== null && !reducedMotion;
@@ -138,11 +143,30 @@ export function App() {
   }, [showTabs]);
 
   // Expiry check every minute while not focusing (start and phase changes are handled in the store).
+  // Signed in, the same tick pulls from the server at most every 5 minutes (Step 5.6).
+  const signedIn = useApp((s) => s.account.status === 'signedIn');
   useEffect(() => {
-    if (!ready || focusing || !features.economy) return;
+    if (!ready || focusing || (!features.economy && !signedIn)) return;
     const id = setInterval(() => void appStore.getState().applyExpirations(), config.ui.expiryCheckMs);
     return () => clearInterval(id);
-  }, [ready, focusing]);
+  }, [ready, focusing, signedIn]);
+
+  // App resume (foreground or back online): pull at once and look for new content, never during Focus (the store checks).
+  useEffect(
+    () =>
+      platform.lifecycle.onResume(() => {
+        if (signedIn) void appStore.getState().sync(true);
+        void appStore.getState().checkContent();
+      }),
+    [signedIn],
+  );
+
+  // A new content pack is in use (Step 5.8): rebuild cached meshes with its models and colors.
+  const contentVersion = useApp((s) => s.contentVersion);
+  const firstContent = useRef(contentVersion);
+  useEffect(() => {
+    if (contentVersion !== firstContent.current) clearContentGeometry();
+  }, [contentVersion]);
 
   if (!ready) return <div className={styles.blank} />;
 
@@ -207,6 +231,8 @@ export function App() {
       </Scene>
       {screen}
       {crossfade > 0 && <div key={crossfade} className="scene-crossfade" aria-hidden="true" />}
+      {accountChoice && !focusing && <AccountChoiceSheet />}
+      {outdated && <OutdatedScreen />}
       {showTabs && phase.kind === 'break' && tab !== 'island' && <BreakPill />}
       {showTabs && <TabBar tabs={TABS} active={tab} onSelect={setTab} label={strings.aria.tabs} />}
     </>

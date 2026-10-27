@@ -4,6 +4,8 @@ import { createWebFullscreen } from './fullscreen/web';
 import { createWebNotify } from './notify/web';
 import { createWebHaptics } from './haptics/web';
 import { createWebFiles } from './files/web';
+import { createWebSecureStorage } from './secureStorage/web';
+import { createWebLifecycle } from './lifecycle/web';
 
 /** Web implementations. A native entry point swaps these for Capacitor ones (ADR-002). */
 export const platform = {
@@ -13,6 +15,10 @@ export const platform = {
   notify: createWebNotify(),
   haptics: createWebHaptics(),
   files: createWebFiles(),
+  secure: createWebSecureStorage(),
+  lifecycle: createWebLifecycle(),
+  /** Which build this is, for the API client header (Step 5.2). Native entry points set ios/android. */
+  name: 'web' as 'web' | 'ios' | 'android',
 };
 
 export type { StorageAdapter } from './storage';

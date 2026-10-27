@@ -23,6 +23,18 @@ testMode:
   # Turn on the matching `features` flag to see a feature's screen.
   dummyData: true
 
+# Backend for accounts, sync and the social features (guidance_v2 Phase 5).
+#   none:     local only, no accounts (the app as before).
+#   fake:     the real server code running inside the browser, data kept in this browser. For trying the
+#             social features without a server: sign in with any email and the code 000000.
+#   supabase: the real backend; fill in the two values from your Supabase project
+#             (docs/guides/BACKEND_SETUP.md). The anon key is public by design.
+# `VITE_BACKEND=fake` at build time overrides `provider` (the e2e test uses it).
+backend:
+  provider: none
+  supabaseUrl: ''
+  supabaseAnonKey: ''
+
 # Feature flags (one per guidance_v2 phase). A phase stays off until it is
 # finished and the owner turns it on. `VITE_FEATURES=stats,...` (or `all`) at
 # build time turns flags on for test builds only (`npm run e2e` uses it).

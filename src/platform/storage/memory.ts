@@ -1,4 +1,4 @@
-import type { FocusSession, InboxRow, IslandHistoryEntry, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding } from '../../domain/types';
+import type { ContentPackRow, FocusSession, InboxRow, IslandHistoryEntry, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding } from '../../domain/types';
 import type { BackupData } from '../../domain/backup';
 import { migrateRows, SCHEMA_VERSION } from '../../db/migrations';
 import type { Commit, PersistedState, StorageAdapter } from './index';
@@ -37,6 +37,7 @@ export function createMemoryStorage(): StorageAdapter {
         cosmetics: rows<OwnedCosmetic>('cosmetics').sort((a, b) => a.acquiredAt - b.acquiredAt),
         placedBuildings: rows<PlacedBuilding>('placedBuildings').sort((a, b) => a.placedAt - b.placedAt),
         islandHistory: rows<IslandHistoryEntry>('islandHistory').sort((a, b) => a.to - b.to),
+        contentPacks: rows<ContentPackRow>('contentPacks').sort((a, b) => a.fetchedAt - b.fetchedAt),
       };
       for (const { key, value } of rows<{ key: 'settings' | 'world' | 'phase' | 'equipped' | 'account'; value: never }>('kv')) state[key] = value;
       return state;
@@ -73,6 +74,7 @@ export function createMemoryStorage(): StorageAdapter {
       for (const h of change.islandHistoryAdd ?? []) put('islandHistory', h);
       for (const s of change.sessions ?? []) put('sessions', s);
       for (const e of change.ledgerSync ?? []) if (!tables.ledger.has(e.id)) put('ledger', e);
+      if (change.contentPack) put('contentPacks', change.contentPack);
       if (change.account === null) tables.kv.delete('account');
       else if (change.account) kv('account', change.account);
       if (change.session) put('sessions', change.session);

@@ -10,6 +10,7 @@ import { Segmented, SettingsRow, Stepper, Toggle } from '../../ui/components/Con
 import { CloseIcon } from '../../ui/components/Icons';
 import { FeatureCard } from '../../ui/components/Surfaces';
 import { TopBar } from '../../ui/components/TopBar';
+import { AccountSection } from '../account/AccountSection';
 import styles from '../Screen.module.css';
 import local from './SettingsScreen.module.css';
 
@@ -81,6 +82,7 @@ export function SettingsScreen() {
   const settings = useApp((s) => s.settings);
   const updateSettings = useApp((s) => s.updateSettings);
   const setView = useApp((s) => s.setView);
+  const account = useApp((s) => s.account.status);
   const { focusMinutes, breakMinutes } = config.settings;
 
   return (
@@ -136,6 +138,13 @@ export function SettingsScreen() {
                 onChange={(v) => void updateSettings({ weekStartsOn: v })}
               />
             </SettingsRow>
+          </>
+        )}
+
+        {account !== 'off' && (
+          <>
+            <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.account.section}</h2>
+            <AccountSection />
           </>
         )}
 

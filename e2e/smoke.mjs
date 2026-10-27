@@ -389,6 +389,41 @@ check('after the move the Unicorn is spent', await fresh.getByRole('button', { n
 await fresh.reload();
 await fresh.waitForTimeout(1500);
 check('the new island survives a reload', (await seedOf()) !== seedBefore);
+await fresh.close();
+
+// Accounts (Phase 5) with the fake backend: sign in with a code, then a focus rewarded by the server,
+// including the offline wait at the end.
+const acct = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+acct.on('pageerror', (e) => errors.push(e.message));
+await acct.clock.install({ time: morning });
+await acct.goto(URL);
+await acct.waitForTimeout(1500);
+await acct.getByRole('button', { name: 'Open settings' }).click();
+await acct.getByRole('button', { name: 'Sign in', exact: true }).click();
+await acct.getByLabel('Email').fill('mina@example.com');
+await acct.getByRole('button', { name: 'Send code' }).click();
+await acct.waitForTimeout(800);
+await acct.getByLabel('Code').fill('000000');
+await acct.getByRole('button', { name: 'Sign in', exact: true }).last().click();
+await acct.waitForTimeout(1500);
+check('signing in with the emailed code links the device', await acct.getByText('Signed in as mina@example.com').isVisible());
+await acct.getByRole('button', { name: 'Close' }).click();
+await acct.waitForTimeout(500);
+await acct.getByRole('button', { name: 'Start focus' }).click();
+await acct.waitForTimeout(1500); // the server confirms the start in the background
+await acct.clock.fastForward(26 * 60_000);
+await acct.waitForTimeout(500);
+await acct.evaluate(() => window.__siftFake.setOnline(false));
+await acct.getByRole('button', { name: 'End focus' }).click();
+await acct.waitForTimeout(3000); // two quick retries, then the break waits
+check('offline at the end, the break waits for the server', await acct.getByText('Revealing when you’re back online…').isVisible());
+await acct.evaluate(() => {
+  window.__siftFake.setOnline(true);
+  window.dispatchEvent(new Event('online'));
+});
+await acct.waitForTimeout(2000);
+check('back online, the server reveals the reward', (await acct.getByText('Revealing when you’re back online…').count()) === 0 && (await acct.getByText('Nice work.').count()) === 0);
+await acct.close();
 
 check('no page errors', errors.length === 0);
 if (errors.length) console.log(errors.join('\n'));

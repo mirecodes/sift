@@ -44,7 +44,23 @@ import { clamp, type Rng } from '../domain/random';
 import { createBackup, type Backup } from '../domain/backup';
 import type { StorageAdapter } from '../platform/storage';
 import { createMemoryStorage } from '../platform/storage/memory';
-import { RemoteError, type Provider, type RemotePort } from '../platform/remote';
+import { callApi, RemoteError, type Provider, type RemotePort } from '../platform/remote';
+import { isNewer, verifyPack } from '../domain/content/remote';
+import { refreshCatalog } from '../domain/animals/catalog';
+import type { ContentPack } from '../../shared/content/pack';
+import type { ContentPackRow } from '../domain/types';
+
+const fetchText = async (url: string) => (await fetch(url)).text();
+/** An image as a data URL, so the stored pack renders offline. */
+const fetchDataUrl = async (url: string) => {
+  const blob = await (await fetch(url)).blob();
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+};
 import { ACCOUNT_OFF, createAccount, type AccountChoice, type AccountState } from './account';
 
 export type View = 'home' | 'settings' | 'collection' | 'shop' | 'build';
@@ -79,6 +95,11 @@ export interface AppDeps {
   clientVersion?: string;
   /** The backend (Phase 5); absent = local only, no accounts. */
   remote?: RemotePort | null;
+  /** `features.remoteContent`: newer content packs are downloaded from the server (Step 5.8). */
+  remoteContent?: boolean;
+  /** Downloads for content packs (tests replace them). */
+  fetchText?: (url: string) => Promise<string>;
+  fetchDataUrl?: (url: string) => Promise<string>;
 }
 
 export interface AppState {
@@ -111,6 +132,8 @@ export interface AppState {
   account: AccountState;
   /** Week the island flies the champion flag (Phase 8), from the server. */
   championWeek: string | null;
+  /** Content pack version in use; changes when a downloaded pack is activated (Step 5.8). */
+  contentVersion: string;
 
   init(): Promise<void>;
   /** Emails a sign-in code (Step 5.4). */
@@ -126,6 +149,11 @@ export interface AppState {
   deleteAccount(): Promise<void>;
   /** Pulls changes from the server (no-op when signed out or focusing); `force` ignores the 5-minute spacing. */
   sync(force?: boolean): Promise<void>;
+  /**
+   * Checks for a newer content pack (Step 5.8; not during Focus), downloads it in the background,
+   * verifies the checksum and keeps it; it is used from the next return to Home.
+   */
+  checkContent(): Promise<void>;
   exportBackup(): Promise<Backup>;
   /** Replaces all local data with a validated backup, atomically, and reloads the store. */
   importBackup(backup: Backup): Promise<void>;
@@ -289,6 +317,25 @@ export function createAppStore(initialDeps: AppDeps) {
   /** Test-mode and dummy animals: they live in memory only, so their changes are never stored. */
   const memoryOnly = new Set<string>();
   let expiring: Promise<void> | null = null;
+  /** Content packs already merged into the registry, and a downloaded one waiting for Home. */
+  const mergedPacks = new Set<string>();
+  let pendingPack: ContentPackRow | null = null;
+
+  function mergePack(row: ContentPackRow): void {
+    if (mergedPacks.has(row.contentVersion)) return;
+    const pack = JSON.parse(row.json) as ContentPack;
+    content.merge(pack.atlas ? { ...pack, atlas: { ...pack.atlas, image: row.atlas } } : pack);
+    mergedPacks.add(row.contentVersion);
+    refreshCatalog();
+  }
+
+  /** Uses a downloaded pack from now on (on the way Home, so nothing changes mid-break). */
+  function activatePendingPack(): void {
+    if (!pendingPack) return;
+    mergePack(pendingPack);
+    pendingPack = null;
+    store.setState({ contentVersion: content.contentVersion });
+  }
 
   const account = createAccount({
     remote: deps.remote ?? null,
@@ -332,6 +379,8 @@ export function createAppStore(initialDeps: AppDeps) {
       loaded = await deps.storage.load();
     }
 
+    // Downloaded content packs first: owned items and new animals must be known before anything else.
+    for (const row of loaded.contentPacks ?? []) mergePack(row);
     const resetMap = devSwitches && deps.resetMap;
     const settings = sanitizeSettings(loaded.settings);
     let world = loaded.world;
@@ -395,6 +444,7 @@ export function createAppStore(initialDeps: AppDeps) {
       islandHistory: loaded.islandHistory,
       islandMove: null,
       account: accountState,
+      contentVersion: content.contentVersion,
       gold: goldBalance([...ledger, ...(dummy?.ledger ?? [])]),
       ready: true,
       settings,
@@ -505,11 +555,36 @@ export function createAppStore(initialDeps: AppDeps) {
     islandMove: null,
     account: ACCOUNT_OFF,
     championWeek: null,
+    contentVersion: content.contentVersion,
 
     async init() {
       set(await hydrate(true));
       await account.completeRedirect().catch(() => undefined);
       await get().applyExpirations();
+      void get().checkContent();
+    },
+
+    async checkContent() {
+      const remote = deps.remote;
+      if (!deps.remoteContent || !remote || get().phase.kind === 'focus') return;
+      try {
+        const { data } = await callApi(remote, 'get_content_manifest', { clientVersion: deps.clientVersion ?? '0.0.0' }, { retries: 0 });
+        const m = data.manifest;
+        if (!m || !isNewer(m.contentVersion, content.contentVersion) || pendingPack?.contentVersion === m.contentVersion) return;
+        const text = await (deps.fetchText ?? fetchText)(m.packUrl);
+        const pack = await verifyPack(text, m.checksum);
+        if (typeof pack === 'string') {
+          console.warn(`Sift: content pack ${m.contentVersion} rejected (${pack}).`);
+          return;
+        }
+        const atlas = pack.atlas ? await (deps.fetchDataUrl ?? fetchDataUrl)(m.atlasUrl) : '';
+        const row: ContentPackRow = { contentVersion: m.contentVersion, checksum: m.checksum, json: text, atlas, fetchedAt: deps.now() };
+        await commit({ contentPack: row });
+        pendingPack = row;
+        if (get().phase.kind === 'idle' && get().view === 'home') activatePendingPack();
+      } catch (e) {
+        console.warn('Sift: content check failed; trying again later.', e);
+      }
     },
 
     requestSignInCode: (email) => account.requestCode(email),
@@ -654,6 +729,7 @@ export function createAppStore(initialDeps: AppDeps) {
       if (phase.kind !== 'break') return;
       await commit({ phase: IDLE });
       set({ phase: IDLE, revealPending: null, view: 'home' });
+      activatePendingPack();
       // Signed in: returning Home always pulls (Step 5.6).
       if (account.linked) await account.sync(true);
       else await get().applyExpirations();

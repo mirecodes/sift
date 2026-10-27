@@ -51,6 +51,7 @@ export function BreakScreen() {
   const { resolved, now, over } = useBreakClock();
   const display = timerDisplay(resolved, now);
   const rewardId = phase.kind === 'break' ? phase.rewardId : undefined;
+  const awaiting = phase.kind === 'break' && phase.awaiting !== undefined;
   const animal = rewardId ? animals.find((a) => a.id === rewardId) : undefined;
   const species = animal ? getSpecies(animal.speciesId) : undefined;
   // The new animal wears the skin it arrived with, as it will on the island (Step 3.8, ADR-043).
@@ -90,7 +91,10 @@ export function BreakScreen() {
           </TierCard>
         ) : (
           <FeatureCard>
-            <p className={`${styles.message} type-body-md`}>{strings.break.noReward}</p>
+            {/* Signed in, offline at the end: the server reveals the reward later (Step 5.5). */}
+            <p className={`${styles.message} type-body-md`} role={awaiting ? 'status' : undefined}>
+              {awaiting ? strings.account.waiting : strings.break.noReward}
+            </p>
           </FeatureCard>
         )}
 

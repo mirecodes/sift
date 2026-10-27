@@ -1,4 +1,4 @@
-import type { Equipped, FocusSession, InboxRow, IslandHistoryEntry, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../../domain/types';
+import type { ContentPackRow, Equipped, FocusSession, InboxRow, IslandHistoryEntry, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../../domain/types';
 import type { PushOp } from '../../../shared/api/types';
 import type { AwaitingReward, StoredPhase } from '../../domain/timer/phase';
 import type { BackupData } from '../../domain/backup';
@@ -22,6 +22,8 @@ export interface PersistedState {
   islandHistory: IslandHistoryEntry[];
   /** The signed-in account this save mirrors (Phase 5); absent for a local-only save. */
   account?: AccountLink;
+  /** Downloaded content packs (Step 5.8), oldest first. */
+  contentPacks: ContentPackRow[];
 }
 
 /** Sign-in state kept with the save (kv `account`): who, the sync cursor and unsent changes (Step 5.6). */
@@ -65,6 +67,8 @@ export interface Commit {
   ledgerSync?: LedgerEntry[];
   /** Sign-in link; `null` removes it. */
   account?: AccountLink | null;
+  /** A downloaded, verified content pack. */
+  contentPack?: ContentPackRow;
 }
 
 export interface StorageAdapter {
