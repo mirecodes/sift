@@ -1,0 +1,31 @@
+{
+  "kind": "blockTheme",
+  "id": "cherry",
+  "name": {
+    "en": "Cherry Blossom",
+    "ko": "벚꽃"
+  },
+  "price": 200,
+  "purchasable": true,
+  "release": "v2-launch",
+  "ambient": "petals",
+  "cloudTint": "#FFF0F6",
+  "palette": {
+    "grassTop": "#9ED67A",
+    "grassSide": "#7DB85A",
+    "dirtTop": "#9B6B43",
+    "dirtSide": "#86593A",
+    "stoneTop": "#8A8F98",
+    "stoneSide": "#747983",
+    "water": "#6FB8EC",
+    "waterStreak": "#B8E0FF",
+    "cabinLog": "#B98552",
+    "cabinLogDark": "#9A6A3E",
+    "cabinBeam": "#5E3B20",
+    "cabinRoof": "#C7738F",
+    "cabinRoofDark": "#A65A74",
+    "campStone": "#9A9DA3",
+    "campStoneDark": "#6E7179",
+    "firewood": "#6B4526"
+  }
+}

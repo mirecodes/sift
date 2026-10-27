@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { VoxelModel } from './model';
+import { BLOCK_PALETTE_KEYS } from './palette';
 import { assemblePack, buildPack, compareVersions, ContentError, expandFamily, transformPalette, type PackSource } from './pack';
 import type { SkinFamilyDef, SpeciesDef } from './schema';
 
@@ -80,6 +81,35 @@ describe('content pack (Step 3.1)', () => {
     expect(transformPalette({ body: '#FF0000' }, { hueShift: 120 })).toEqual({ body: '#00FF00' });
     expect(transformPalette({ body: '#808080' }, { lightness: { offset: 1, scale: 0 } })).toEqual({ body: '#FFFFFF' });
     expect(transformPalette({ body: '#000000', eye: '#1E1E1E' }, { tint: { color: '#FFFFFF', amount: 0.5 } })).toEqual({ body: '#808080' });
+  });
+
+  it('checks that every item sits in its own folder or file (one folder per animal and building)', () => {
+    const skin = { kind: 'animalSkin', id: 'white-tiger', name: { en: 'W', ko: 'W' }, purchasable: false, release: 'base', speciesId: 'a', palette: {} };
+    const { problems } = assemblePack({
+      ...source([]),
+      files: [
+        { path: 'animals/a/animal.json', data: species('a') },
+        { path: 'animals/b/animal.json', data: species('a2') },
+        { path: 'animals/a/skins/white-tiger.json', data: skin },
+        { path: 'animals/b/skins/white-tiger.json', data: { ...skin, id: 'white-tiger-2' } },
+        { path: 'themes/snow.json', data: species('b') },
+        { path: 'releases/base.json', data: release },
+      ],
+      models: { 'species/a': model, 'species/a2': model, 'species/b': model },
+    });
+    expect(problems).toEqual([
+      'animals/b/animal.json: id must be b (the folder name)',
+      'animals/b/skins/white-tiger.json: id must be white-tiger (the file name)',
+      'themes/snow.json: a species does not belong in themes/snow.json (expected a blockTheme)',
+    ]);
+  });
+
+  it('orders items by release date, then id', () => {
+    const later = { ...release, id: 'later', date: '2026-10-01' };
+    const palette = Object.fromEntries(BLOCK_PALETTE_KEYS.map((k) => [k, '#FFFFFF']));
+    const theme = (id: string, rel: string) => ({ kind: 'blockTheme', id, name: { en: id, ko: id }, purchasable: false, release: rel, palette });
+    const { pack } = assemblePack(source([release, later, theme('z', 'base'), theme('b', 'later'), theme('a', 'later')]));
+    expect(pack.items.filter((i) => i.kind === 'blockTheme').map((i) => i.id)).toEqual(['z', 'a', 'b']);
   });
 
   it('compares content versions number by number', () => {

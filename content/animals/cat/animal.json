@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "cat",
+  "name": {
+    "en": "Cat",
+    "ko": "고양이"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/cat",
+  "release": "base"
+}

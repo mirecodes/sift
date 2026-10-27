@@ -15,7 +15,7 @@ const Version = z.string().regex(/^\d+\.\d+\.\d+$/, 'versions are x.y.z');
 const Locale = z.object({ en: z.string().min(1), ko: z.string().min(1) }).strict();
 const PaletteKey = z.enum(PALETTE_KEYS);
 const Palette = z.partialRecord(PaletteKey, Color);
-/** Key into the pack's models, e.g. `species/tiger` or `buildings/windmill`. */
+/** Key into the pack's models, e.g. `animals/tiger` or `buildings/windmill`: the item folder's `model.ts` / `model.json`, or a loose model under `content/models/`. */
 export const ModelRef = z.string().regex(/^[a-z]+\/[a-z0-9_-]+$/);
 /** Id of a code preset (Step 3.2); checked against `content/presets.json` by `buildPack`. */
 const PresetId = z.string().regex(/^[a-z][a-z0-9_]*$/);

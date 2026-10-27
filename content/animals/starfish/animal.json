@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "starfish",
+  "name": {
+    "en": "Starfish",
+    "ko": "불가사리"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/starfish",
+  "release": "base"
+}

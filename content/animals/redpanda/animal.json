@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "redpanda",
+  "name": {
+    "en": "Red Panda",
+    "ko": "레서판다"
+  },
+  "tierRank": 2,
+  "idle": "default",
+  "model": "animals/redpanda",
+  "release": "base"
+}

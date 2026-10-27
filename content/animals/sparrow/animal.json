@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "sparrow",
+  "name": {
+    "en": "Sparrow",
+    "ko": "참새"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/sparrow",
+  "release": "base"
+}

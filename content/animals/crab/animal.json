@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "crab",
+  "name": {
+    "en": "Crab",
+    "ko": "게"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/crab",
+  "release": "base"
+}

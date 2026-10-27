@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "peacock",
+  "name": {
+    "en": "Peacock",
+    "ko": "공작"
+  },
+  "tierRank": 2,
+  "idle": "default",
+  "model": "animals/peacock",
+  "release": "base"
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "wolf",
+  "name": {
+    "en": "Wolf",
+    "ko": "늑대"
+  },
+  "tierRank": 2,
+  "idle": "default",
+  "model": "animals/wolf",
+  "release": "base"
+}

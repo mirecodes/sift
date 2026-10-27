@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "beaver",
+  "name": {
+    "en": "Beaver",
+    "ko": "비버"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/beaver",
+  "release": "base"
+}

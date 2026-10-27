@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "mole",
+  "name": {
+    "en": "Mole",
+    "ko": "두더지"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/mole",
+  "release": "base"
+}

@@ -346,7 +346,7 @@ function FamilyEditor({ family, focus, onFocus, onChange }: { family: SkinFamily
       {focused && (
         <div className={styles.block}>
           <h3 className={styles.sub}>Override: {getSpecies(focus).name}</h3>
-          {Object.entries({ ...builtinModels()[`species/${getSpecies(focus).modelId}`]!.palette, ...focused.palette }).map(([key, color]) => (
+          {Object.entries({ ...builtinModels()[getSpecies(focus).modelId]!.palette, ...focused.palette }).map(([key, color]) => (
             <label key={key} className={styles.swatch}>
               <input type="color" value={(color as string).toLowerCase()} onChange={(e) => setOverride(key as PaletteKey, e.target.value)} /> {key}
             </label>

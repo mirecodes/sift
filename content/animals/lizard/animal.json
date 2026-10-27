@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "lizard",
+  "name": {
+    "en": "Lizard",
+    "ko": "도마뱀"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/lizard",
+  "release": "base"
+}

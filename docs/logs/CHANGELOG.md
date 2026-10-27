@@ -8,6 +8,12 @@
 
 ## guidance_v2
 
+- 2026-10-27 · **Changed** — Content split for easy additions (owner request, ADR-045): one folder per animal (`content/animals/<id>/animal.json` + `model.ts`, its handcrafted skins in `skins/`) and per building (`content/buildings/<id>/building.json` + `model.ts`), one file per theme (`themes/`), skin family (`skin-families/`) and release. Animal models moved out of `src/assets/voxels` into their folders (refs `animals/<id>`); the butterfly's flap meshes are now derived from its rest pose (`flutterSplit`). The folder or file name must equal the id (`layoutProblem`). Order: animals by tier then id, shop items by release date then id. Sprites unchanged.
+
+- 2026-10-27 · **Added** — `npm run content:new -- <animal|skin|theme|building|family|release> <id>` creates a new item's files from a template (`tools/content-build/new.ts`); `npm run content:vox` converts `.vox` files anywhere under `content/`. CONTENT.md has quick recipes.
+
+- 2026-10-27 · **Fixed** — `npm run e2e` hung opening a second browser context (the first page kept the software GPU busy); the first page now closes after the export check.
+
 - 2026-10-27 · **Docs** — Docs sorted into folders by kind (ADR-044): `plans/` (guidance), `reference/` (ARCHITECTURE, DESIGN), `guides/` (CONTENT), `status/` (PROJECT_STATUS, PROGRESS), `logs/` (CHANGELOG, DECISIONS), `process/` (LOOP); map in `docs/README.md`. `CLAUDE.md`, `README.md` and links updated.
 
 - 2026-10-27 · **Fixed** — Heavy terrain tests timed out on slow machines (Vitest `testTimeout` 30 s). The committed-config test now allows the flags the owner released (`stats`, `economy`, `cosmetics`) and `testMode.dummyData` (memory-only), and still requires every other flag and the destructive developer switches off.

@@ -1,0 +1,27 @@
+{
+  "kind": "skinFamily",
+  "id": "ghost",
+  "name": {
+    "en": "Ghost",
+    "ko": "유령"
+  },
+  "release": "v2-launch",
+  "purchasable": true,
+  "priceByTierRank": [
+    30,
+    40,
+    50,
+    60
+  ],
+  "transform": {
+    "saturation": 0.2,
+    "lightness": {
+      "offset": 0.5,
+      "scale": 0.35
+    },
+    "tint": {
+      "color": "#B9A8FF",
+      "amount": 0.45
+    }
+  }
+}

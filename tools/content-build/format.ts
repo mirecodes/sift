@@ -12,5 +12,6 @@ export function formatContentJson(data: unknown): string {
 
 /** Content Studio may write only item files under `content/` (never models, presets or the pack version). */
 export function isWritableContentPath(path: string): boolean {
-  return /^(species|skins|skinFamilies|blockThemes|buildings|releases)\/[a-z0-9_-]+\.json$/.test(path);
+  const id = '[a-z0-9_-]+';
+  return new RegExp(`^(animals/${id}/(animal|skins/${id})|buildings/${id}/building|(themes|skin-families|releases)/${id})\\.json$`).test(path);
 }

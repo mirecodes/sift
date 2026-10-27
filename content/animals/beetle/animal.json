@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "beetle",
+  "name": {
+    "en": "Beetle",
+    "ko": "딱정벌레"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/beetle",
+  "release": "base"
+}

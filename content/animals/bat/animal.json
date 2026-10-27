@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "bat",
+  "name": {
+    "en": "Bat",
+    "ko": "박쥐"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/bat",
+  "release": "base"
+}

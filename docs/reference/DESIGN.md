@@ -541,8 +541,8 @@ Terrain, water and camp colors are one keyed record, `defaultBlocks` (`grassTop`
 
 ### 16.1 Format
 ```ts
-// src/assets/voxels/<animalId>.ts
-export const chick: VoxelModel = {
+// content/animals/<animalId>/model.ts builds this shape (docs/guides/CONTENT.md)
+const chick: VoxelModel = {
   size: [4, 5, 4],
   keys: { 1: 'body', 2: 'beak', 3: 'eye' },                        // palette index → named key
   palette: { body: '#FFD93D', beak: '#FF8C42', eye: '#1E1E1E' },   // the species' default colors

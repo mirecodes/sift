@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "chick",
+  "name": {
+    "en": "Chick",
+    "ko": "병아리"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/chick",
+  "release": "base"
+}

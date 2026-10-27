@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "frog",
+  "name": {
+    "en": "Frog",
+    "ko": "개구리"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/frog",
+  "release": "base"
+}

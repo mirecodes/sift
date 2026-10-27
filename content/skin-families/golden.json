@@ -1,0 +1,26 @@
+{
+  "kind": "skinFamily",
+  "id": "golden",
+  "name": {
+    "en": "Golden",
+    "ko": "황금"
+  },
+  "release": "v2-launch",
+  "purchasable": true,
+  "priceByTierRank": [
+    30,
+    35,
+    45,
+    60
+  ],
+  "transform": {
+    "lightness": {
+      "offset": 0.08,
+      "scale": 0.9
+    },
+    "tint": {
+      "color": "#F2C230",
+      "amount": 0.65
+    }
+  }
+}

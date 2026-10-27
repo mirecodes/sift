@@ -295,6 +295,8 @@ const { readFile } = await import('node:fs/promises');
 const backupFile = await exportFrom(page);
 const original = JSON.parse(await readFile(backupFile, 'utf8'));
 check('export downloads a sift-backup v1 file', original.format === 'sift-backup' && original.version === 1);
+// The first page is done; closing it frees the shared software GPU so the fresh page can paint.
+await page.close();
 
 const fresh = await (await browser.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true })).newPage();
 fresh.on('pageerror', (e) => errors.push(e.message));

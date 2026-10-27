@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "penguin",
+  "name": {
+    "en": "Penguin",
+    "ko": "펭귄"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/penguin",
+  "release": "base"
+}

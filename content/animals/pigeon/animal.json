@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "pigeon",
+  "name": {
+    "en": "Pigeon",
+    "ko": "비둘기"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/pigeon",
+  "release": "base"
+}

@@ -97,7 +97,7 @@ type Phase =
 | Epic | 10% | 14% | 9: Horse, Cow, Deer, Fox, Wolf, Bear, Panda, Red Panda, Peacock |
 | Legendary | 2% | 4% | 2: Unicorn (rainbow mane, rainbow bursts), Tiger (forehead 王). Both sparkle |
 
-- Catalog is static data (`domain/animals/catalog.ts`): `id`, `name`, `tierRank`, `tier` (label), `modelId`, `idleAnimation`, `footprint`. Duplicates allowed; each is placed.
+- Catalog (`domain/animals/catalog.ts`) is read from the content registry: one `content/animals/<id>/animal.json` per animal, ordered by tier then id: `id`, `name`, `tierRank`, `tier` (label), `modelId` (the model ref `animals/<id>`), `idleAnimation`, `footprint`. Duplicates allowed; each is placed. A new animal is a new folder (ADR-045).
 - **Tier rank, never names**: `TierRank` 0 Common … 3 Legendary. Odds (`config.reward.tierAt*` arrays), species pools, chimes (`reveal:<rank>`), styles (`data-tier="<rank>"`), and later gold, scoring and war all key off the rank. Names live only in `TIERS` (stored label) and `strings.tiers` (display); a rename touches those two lists. The only name comparisons left are the frozen Dexie v2/v3 upgrades.
 
 ## 6. 3D world
@@ -144,7 +144,7 @@ type Phase =
 - **Skins, themes and buildings** (renderer, Steps 3.4/3.8): `world/voxel/geometry.ts` builds animal geometry per `(species, skin)` (species palette ← skin palette, overlay voxels via `withOverlay`), block meshes per theme palette (the island's instanced meshes swap geometry, the layout is not rebuilt), and building meshes per definition (`BUILDING_VOXEL` = 1/8 block, so a footprint tile is 8 voxels; parts are separate meshes around their pivot, animated by part presets; `light` glows at the model's `flame`/`glass` voxels). `IslandScene` reads `model.blockThemeId` for terrain, stream, camp and cloud colors and the theme's `ambient` particles (Home and Break only). Unknown skin or theme ids fall back to the default look. `clearContentGeometry()` drops cached meshes after content changes.
 - **Building placement** (`domain/build/placement.ts` `placementProblem`, on the occupancy grid): every footprint tile on the island and at one height, no camp tile, no other building (the one being moved excepted), no water unless `allowOnWater`, and at least `balance.build.minFreeTiles` (6) land tiles left for animals; tiles with animals are allowed. `footprintTiles(tile, footprint, rotation)`: `tile` is the low-x/low-z corner, 90°/270° swap width and depth. Occupancy marks every footprint tile; a footbridge (`allowOnWater`) stays walkable (`bridge`) but animals never live on water (`isStandable`).
 - **Behavior presets** (Step 3.2): reusable code in `world/presets/` (idle sets, part animations `spin/sway/bob/flap`, particle fields, light glows) referenced by id from content. `content/presets.json` lists the ids per kind; `buildPack` rejects unknown ids and a test keeps the list equal to the code (`PRESET_IDS`). A new preset is an app release; items using it set `minClientVersion`.
-- Voxel models are TS data in `src/assets/voxels/<id>.ts`, merged into one cached `BufferGeometry` per species (hidden faces culled). Voxels reference **named palette keys** (`shared/content/palette.ts`) with a default palette per model; terrain and camp colors are the keyed `defaultBlocks` record (`world/palette.ts`). Raw colors never appear in model shapes.
+- Voxel models are content: `content/animals/<id>/model.ts` (builder `tools/content-build/animal.ts`), read through `content.model(ref)` (`world/voxel/geometry.ts` `modelById`), merged into one cached `BufferGeometry` per species (hidden faces culled). Voxels reference **named palette keys** (`shared/content/palette.ts`) with a default palette per model; terrain and camp colors are the keyed `defaultBlocks` record (`world/palette.ts`). Raw colors never appear in model shapes.
 
 ## 7. Platform layer
 
@@ -205,8 +205,8 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 docs/            by kind (map: docs/README.md): plans/ (guidance_vN), reference/ (ARCHITECTURE, DESIGN, API), guides/ (CONTENT, setup guides), status/ (PROJECT_STATUS, PROGRESS), logs/ (CHANGELOG, DECISIONS: human log), process/ (LOOP)
 config/app.yaml  runtime config
 e2e/             Playwright smoke test
-content/         data only (ADR-041): pack.json (contentVersion), presets.json, species/, skins/, skinFamilies/, blockThemes/, buildings/, releases/, models/ (DSL .ts, .vox + converted .json, palette-template.vox); guide: docs/CONTENT.md
-tools/           node tools run through Vite's module runner (`node tools/run.mjs <file.ts>`): content-build/ (pack, builder DSL), vox-import/ (MagicaVoxel → model JSON)
+content/         data only (ADR-041, ADR-045), one file or folder per item, the name is the id: animals/<id>/ (animal.json, model.ts|model.vox+json, skins/<skinId>.json), buildings/<id>/ (building.json, model.ts), themes/<id>.json, skin-families/<id>.json, releases/<id>.json, models/ (loose models, palette-template.vox), sprites/ (generated atlas), pack.json (contentVersion), presets.json; `assemblePack` rejects items in the wrong place (`layoutProblem`); `npm run content:new` scaffolds; guide: docs/guides/CONTENT.md
+tools/           node tools run through Vite's module runner (`node tools/run.mjs <file.ts>`): content-build/ (pack, builder DSL `dsl.ts`, animal builder `animal.ts`, scaffold `new.ts` = `npm run content:new`), vox-import/ (MagicaVoxel → model JSON)
 shared/          pure rules that must run identically on client and server (ADR-031)
 ├── balance/     balance.ts: gameplay tunables + BALANCE_VERSION
 ├── content/     palette keys, model JSON type, zod schemas, buildPack (validation + family expansion)
@@ -217,7 +217,6 @@ src/
 ├── screens/     home, focus, break, settings, collection, stats; TabPage, NoticeCard
 ├── domain/      pure logic: config, types, random, timer/, reward/, animals/, island/ (+stream), stats/, content/ (registry + baseline pack)
 ├── world/       Scene, IslandScene, Clouds, RenderDriver, palette, voxel/, island/, animals/, camera/, props/ (camp), stream/, preview/
-├── assets/voxels/  animal models + builder
 ├── store/       Zustand store
 ├── platform/    adapters (§7)
 ├── db/          Dexie schema, repositories
@@ -226,7 +225,7 @@ src/
 
 - `shared/` imports only `shared/` (relative paths), uses no browser/Node/Deno globals, never calls `Math.random()` or `Date.now()` (inject `Rng` and `now`); `shared/shared.test.ts` enforces this.
 - `shared/` may import one package, `zod` (content schemas, ADR-041).
-- `domain/` imports only itself and `shared/` (`domain/random.ts` re-exports `shared/rng`); the one exception is `domain/content/baseline.ts`, which bundles the data under `content/` (including `content/models/` builder files, which use `tools/content-build/dsl.ts`) and the built-in models in `src/assets/voxels`. Both authoring paths (MagicaVoxel import, builder DSL) emit the same canonical model JSON (`canonicalModel`). Game code reads species, skins, themes and buildings only through `domain/content` (`content` registry), never by importing an item file. `world/` and `screens/` may use `domain/`, `shared/` and `store/`; `world/` may also import `ui/strings` for text drawn in the scene (poke label). Capability APIs only in `platform/`.
+- `domain/` imports only itself and `shared/` (`domain/random.ts` re-exports `shared/rng`); the one exception is `domain/content/baseline.ts`, which bundles the data under `content/` (including the model builder files, which use `tools/content-build/dsl.ts` or `animal.ts`). Both authoring paths (MagicaVoxel import, builder DSL) emit the same canonical model JSON (`canonicalModel`). Game code reads species, skins, themes and buildings only through `domain/content` (`content` registry), never by importing an item file. `world/` and `screens/` may use `domain/`, `shared/` and `store/`; `world/` may also import `ui/strings` for text drawn in the scene (poke label). Capability APIs only in `platform/`.
 
 ## 11. Milestones
 

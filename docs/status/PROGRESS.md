@@ -187,6 +187,16 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+### Session 2026-10-27 (owner: "implement the rest, decide on your own, document briefly")
+
+- Docs · Folders by kind: `plans/ reference/ guides/ status/ logs/ process/` (ADR-044); the guidance's `server/API.md` lives at `docs/reference/API.md`. · CLAUDE.md: all docs in `docs/`.
+- Docs · `.claude/` paths (loop `progressFile`, guidance deny rule) not changed: the agent may not edit `.claude/`; owner action noted in `docs/process/LOOP.md`. · Rule in LOOP.md.
+- Tests · The committed-config test now accepts the flags the owner turned on (`economy`, `cosmetics`, plus `stats`) and `dummyData`. · The owner committed them on (2026-10-27).
+- Content · One folder per animal/building, one file per other item; name = id, checked (ADR-045). · Owner asked for easy additions.
+- Content · Catalog order = tier then id; shop order = release date then id. · No order list to keep in sync; changes which species a roll picks, not the odds.
+- Content · Butterfly flap meshes derived from the rest pose (`flutterSplit`, byte-equal to the old hand-made ones). · A model file exports one model, so any future `flutter` animal works without code.
+- E2E · The first page closes before the fresh-context backup check. · It kept the software GPU busy and the fresh page never painted (failed before this session too).
+
 - 3.13 · Max animals per tile is a balance value (`placement.maxPerTile` = 4), since the server will place animals too (Step 5.5); with every tile at 4 no reward animal is added (as before when no tile was free; the island grows with every animal, so this needs buildings on almost every tile). · Same rule on client and server.
 - 3.12 · 4-neighbor A* (no diagonals); the day routine's goal is the tile in front of the cabin door, then the last short step into the door is straight. · Diagonals would cut building corners; the door itself is on a camp tile.
 - 3.11 · Touch: a tap moves the ghost and Place confirms; the ghost is not dragged. · Drag already turns the camera (DESIGN.md 7.1); two gestures on one finger would conflict.

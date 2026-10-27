@@ -1,0 +1,17 @@
+{
+  "kind": "animalSkin",
+  "id": "white-tiger",
+  "name": {
+    "en": "White Tiger",
+    "ko": "백호"
+  },
+  "price": 80,
+  "purchasable": true,
+  "release": "v2-launch",
+  "speciesId": "tiger",
+  "palette": {
+    "body": "#ECECE6",
+    "belly": "#FFFFFF",
+    "nose": "#F4A6B7"
+  }
+}

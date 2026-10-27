@@ -1,0 +1,27 @@
+{
+  "kind": "skinFamily",
+  "id": "snowy",
+  "name": {
+    "en": "Snowy",
+    "ko": "눈꽃"
+  },
+  "release": "v2-launch",
+  "purchasable": true,
+  "priceByTierRank": [
+    25,
+    30,
+    40,
+    55
+  ],
+  "transform": {
+    "saturation": 0.2,
+    "lightness": {
+      "offset": 0.5,
+      "scale": 0.5
+    },
+    "tint": {
+      "color": "#DDEBFF",
+      "amount": 0.25
+    }
+  }
+}

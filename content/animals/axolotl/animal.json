@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "axolotl",
+  "name": {
+    "en": "Axolotl",
+    "ko": "우파루파"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/axolotl",
+  "release": "base"
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "bee",
+  "name": {
+    "en": "Bee",
+    "ko": "꿀벌"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/bee",
+  "release": "base"
+}

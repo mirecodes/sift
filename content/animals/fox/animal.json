@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "fox",
+  "name": {
+    "en": "Fox",
+    "ko": "여우"
+  },
+  "tierRank": 2,
+  "idle": "default",
+  "model": "animals/fox",
+  "release": "base"
+}

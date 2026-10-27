@@ -1,0 +1,43 @@
+{
+  "kind": "blockTheme",
+  "id": "future",
+  "name": {
+    "en": "Future City",
+    "ko": "미래 세계"
+  },
+  "price": 200,
+  "purchasable": true,
+  "release": "themes-oct-2026",
+  "ambient": "glints",
+  "cloudTint": "#EAF4FF",
+  "finish": "glossy",
+  "tileTints": [
+    "#5FB8FF",
+    "#7FD3FF",
+    "#A88BFF",
+    "#5FB8FF",
+    "#FF8FD0",
+    "#7FE8FF",
+    "#FFD36B",
+    "#5FB8FF",
+    "#7FF0B8"
+  ],
+  "palette": {
+    "grassTop": "#F4FAFF",
+    "grassSide": "#C9DEF5",
+    "dirtTop": "#4C82C8",
+    "dirtSide": "#3C6CB0",
+    "stoneTop": "#2E5FA8",
+    "stoneSide": "#244E8E",
+    "water": "#5FF0FF",
+    "waterStreak": "#E0FFFF",
+    "cabinLog": "#E8F0FA",
+    "cabinLogDark": "#C7D6E8",
+    "cabinBeam": "#5A7FA8",
+    "cabinRoof": "#4FB6FF",
+    "cabinRoofDark": "#2E8BE0",
+    "campStone": "#BFD8F0",
+    "campStoneDark": "#8AA8C8",
+    "firewood": "#5A7FA8"
+  }
+}

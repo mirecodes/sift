@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "turtle",
+  "name": {
+    "en": "Turtle",
+    "ko": "거북이"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/turtle",
+  "release": "base"
+}

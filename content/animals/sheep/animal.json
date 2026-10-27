@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "sheep",
+  "name": {
+    "en": "Sheep",
+    "ko": "양"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/sheep",
+  "release": "base"
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "horse",
+  "name": {
+    "en": "Horse",
+    "ko": "말"
+  },
+  "tierRank": 2,
+  "idle": "default",
+  "model": "animals/horse",
+  "release": "base"
+}

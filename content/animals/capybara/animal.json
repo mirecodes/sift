@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "capybara",
+  "name": {
+    "en": "Capybara",
+    "ko": "카피바라"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/capybara",
+  "release": "base"
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "ladybug",
+  "name": {
+    "en": "Ladybug",
+    "ko": "무당벌레"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/ladybug",
+  "release": "base"
+}

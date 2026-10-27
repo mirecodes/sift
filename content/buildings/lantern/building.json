@@ -1,0 +1,19 @@
+{
+  "kind": "building",
+  "id": "lantern",
+  "name": {
+    "en": "Lantern",
+    "ko": "등불"
+  },
+  "price": 25,
+  "purchasable": true,
+  "release": "v2-launch",
+  "category": "light",
+  "footprint": {
+    "w": 1,
+    "d": 1
+  },
+  "model": "buildings/lantern",
+  "rotatable": true,
+  "light": "lantern_glow"
+}

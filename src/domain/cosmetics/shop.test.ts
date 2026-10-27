@@ -13,7 +13,7 @@ describe('shop view (Step 3.9)', () => {
     const view = shopView(ctx(['fox', 'tiger']));
     expect(view.featured?.release.id).toBe('v2-launch');
     expect(view.featured?.items.map((i) => i.id)).toEqual(['windmill', 'cherry', 'white-tiger', 'golden:fox', 'lantern']);
-    expect(view.themes.map((t) => t.id)).toEqual(['winter', 'future', 'autumn', 'snow', 'desert', 'cherry']);
+    expect(view.themes.map((t) => t.id)).toEqual(['autumn', 'cherry', 'desert', 'snow', 'future', 'winter']); // by release date, then id
     expect(shopView(ctx([], LAUNCH + DAY)).featured?.release.id).toBe('themes-oct-2026');
     expect(view.buildings.map((g) => g.category)).toEqual(['structure', 'nature', 'light', 'decor']);
     expect(view.buildings.flatMap((g) => g.items.map((b) => b.id))).not.toContain('champion-flag');

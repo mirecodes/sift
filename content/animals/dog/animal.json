@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "dog",
+  "name": {
+    "en": "Dog",
+    "ko": "강아지"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/dog",
+  "release": "base"
+}

@@ -1,0 +1,23 @@
+{
+  "kind": "skinFamily",
+  "id": "pastel",
+  "name": {
+    "en": "Pastel",
+    "ko": "파스텔"
+  },
+  "release": "v2-launch",
+  "purchasable": true,
+  "priceByTierRank": [
+    25,
+    30,
+    35,
+    50
+  ],
+  "transform": {
+    "saturation": 0.6,
+    "lightness": {
+      "offset": 0.35,
+      "scale": 0.6
+    }
+  }
+}
