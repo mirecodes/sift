@@ -21,15 +21,15 @@ testMode:
   # only (never saved or exported): ~6 weeks of focus sessions (Stats) and a
   # few Inbox notices. Each later phase adds its own (gold, friends, groups, …).
   # Turn on the matching `features` flag to see a feature's screen.
-  dummyData: false
+  dummyData: true
 
 # Feature flags (one per guidance_v2 phase). A phase stays off until it is
 # finished and the owner turns it on. `VITE_FEATURES=stats,...` (or `all`) at
 # build time turns flags on for test builds only (`npm run e2e` uses it).
 features:
   stats: false
-  economy: false
-  cosmetics: false
+  economy: true
+  cosmetics: true
   islandMove: false
   remoteContent: false
   friends: false
