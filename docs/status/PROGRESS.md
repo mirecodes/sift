@@ -96,7 +96,7 @@
 - [x] 4.2 Confirm UI
   - `MoveIslandSheet` (shared `ui/components/Sheet`), `SeedIslandPreview`, HUD Unicorn button. Dev server: sheet with preview, Show another, counts, no console errors.
 - [x] 4.3 Move sequence (world)
-  - `world/sequences/islandMove.ts` (tested: 9–15 s, crossing ≤ 6 s even for 100 animals, nearest first, continuous legs, bridge forms/dissolves) + `IslandMove.tsx`; `Scene` motion/overlay/pan, `sequence` mode. Frames checked at 0.8–18 s (rise, bridge, crossing, sink + pan, new island). E2E: move with a Unicorn, Skip, reload. **Phase 4 complete.**
+  - `world/sequences/moveTimeline.ts` (renamed from `islandMove.ts`, which clashed with `IslandMove.tsx` on case-insensitive disks) (tested: 9–15 s, crossing ≤ 6 s even for 100 animals, nearest first, continuous legs, bridge forms/dissolves) + `IslandMove.tsx`; `Scene` motion/overlay/pan, `sequence` mode. Frames checked at 0.8–18 s (rise, bridge, crossing, sink + pan, new island). E2E: move with a Unicorn, Skip, reload. **Phase 4 complete.**
 
 ## Phase 5 — Backend, API, accounts, sync (F6)
 

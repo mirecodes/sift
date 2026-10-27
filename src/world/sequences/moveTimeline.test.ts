@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { arcPoint, MAX_CROSSING_S, moverPose, planIslandMove, stageAt, type MoverInput } from './islandMove';
+import { arcPoint, MAX_CROSSING_S, moverPose, planIslandMove, stageAt, type MoverInput } from './moveTimeline';
 
 const a = [3, 1, 0] as const;
 const b = [8, 1, 0] as const;

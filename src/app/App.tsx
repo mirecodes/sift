@@ -29,7 +29,7 @@ import { TabPage } from '../screens/TabPage';
 import { Scene, type SceneIsland, type SceneLayout } from '../world/Scene';
 import type { WorldMode } from '../world/types';
 import { IslandMoveSequence, type IslandMoveRefs } from '../world/sequences/IslandMove';
-import { REVEAL_RISE } from '../world/sequences/islandMove';
+import { REVEAL_RISE } from '../world/sequences/moveTimeline';
 import { MoveScreen } from '../screens/home/MoveScreen';
 import type { IslandMoveSequence as MoveState } from '../store';
 import { devSecondIsland, DEV_TWO_ISLANDS } from './devTwoIslands';

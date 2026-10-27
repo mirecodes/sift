@@ -6,7 +6,7 @@ import { getSpecies } from '../../domain/animals/catalog';
 import { generateIsland, type Tile } from '../../domain/island/island';
 import { palette } from '../palette';
 import { animalGeometry } from '../voxel/geometry';
-import { arcPoint, moverPose, planIslandMove, stageAt, type MovePlan, type MoverPlan, type Vec3 } from './islandMove';
+import { arcPoint, moverPose, planIslandMove, stageAt, type MovePlan, type MoverPlan, type Vec3 } from './moveTimeline';
 
 const material = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
 const stripeMaterial = new MeshLambertMaterial({ flatShading: true });
