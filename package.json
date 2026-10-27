@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "VITE_FEATURES=stats,economy,cosmetics,islandMove vite build --outDir dist-e2e --emptyOutDir && node e2e/smoke.mjs",
+    "server:sql": "node tools/run.mjs tools/server/sql.ts",
     "content:new": "node tools/run.mjs tools/content-build/new.ts",
     "content:build": "node tools/run.mjs tools/content-build/build.ts",
     "content:vox": "node tools/run.mjs tools/vox-import/main.ts",
@@ -30,6 +31,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.10",
     "@types/node": "^26.6.3",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",

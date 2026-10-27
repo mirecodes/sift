@@ -44,6 +44,6 @@ export default defineConfig({
     environment: 'node',
     // Terrain sweeps over hundreds of seeds take several seconds on slow CI machines.
     testTimeout: 30_000,
-    include: ['src/**/*.test.ts', 'shared/**/*.test.ts', 'tools/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'shared/**/*.test.ts', 'tools/**/*.test.ts', 'server/**/*.test.ts'],
   },
 });
