@@ -14,7 +14,7 @@ async function harness() {
   await store.getState().init();
   const scheduled: ScheduledAlert[][] = [];
   const live: (LiveProgressView | null)[] = [];
-  const off = bindPhaseEffects(store, { notify: { unlock() {}, play() {}, schedule: (a) => void scheduled.push(a) }, liveProgress: { update: (v) => void live.push(v) } }, () => clock.t);
+  const off = bindPhaseEffects(store, { notify: { unlock() {}, play() {}, schedule: (a) => void scheduled.push(a) }, liveProgress: { update: (v) => void live.push(v) } }, { liveProgress: true, now: () => clock.t });
   return { store, clock, scheduled, live, off, get: store.getState };
 }
 

@@ -11,13 +11,19 @@ const clock = (at: number) => new Intl.DateTimeFormat(undefined, { hour: '2-digi
  * the store: on every phase or settings change (start, stop, end, Sound or lock-screen toggles) both are
  * recomputed from timestamps and handed to the platform, only when they changed. Returns unsubscribe.
  */
-export function bindPhaseEffects(store: StoreApi<AppState>, platform: Pick<Platform, 'notify' | 'liveProgress'>, now: () => number = Date.now): () => void {
+export function bindPhaseEffects(
+  store: StoreApi<AppState>,
+  platform: Pick<Platform, 'notify' | 'liveProgress'>,
+  opts: { liveProgress: boolean; now?: () => number },
+): () => void {
+  const now = opts.now ?? Date.now;
   let last = '';
   const apply = (s: AppState) => {
     if (!s.ready) return;
     const at = now();
     const alerts = timerAlerts(s.phase, at, s.settings.soundEnabled).map((a) => ({ ...a, ...strings.alerts[a.kind] }));
-    const live = liveStateFor(s.phase, s.settings.liveProgress, at);
+    // The lock-screen timer ships behind `features.liveProgress`, then follows the user's setting.
+    const live = liveStateFor(s.phase, opts.liveProgress && s.settings.liveProgress, at);
     const view = live && { ...live, title: strings.live[live.phase], detail: strings.live.endsAt(clock(live.endsAt)), overTitle: strings.live.over };
     const key = JSON.stringify([alerts, live]);
     if (key === last) return;

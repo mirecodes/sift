@@ -121,7 +121,7 @@ export function SettingsScreen() {
           />
         </SettingsRow>
 
-        {platform.name !== 'web' && (
+        {platform.name !== 'web' && runtimeConfig.features.liveProgress && (
           <SettingsRow label={strings.settings.liveProgress}>
             <Toggle label={strings.settings.liveProgress} checked={settings.liveProgress} onChange={(v) => void updateSettings({ liveProgress: v })} />
           </SettingsRow>

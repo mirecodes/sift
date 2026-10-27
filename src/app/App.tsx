@@ -165,7 +165,7 @@ export function App() {
   );
 
   // Native timer notifications and lock-screen progress follow the phase (Steps 6.3, 6.8).
-  useEffect(() => bindPhaseEffects(appStore, platform), []);
+  useEffect(() => bindPhaseEffects(appStore, platform, { liveProgress: features.liveProgress }), []);
 
   // Deep links (Step 6.5): the URL the app was opened with, universal / app links, tapped pushes.
   useEffect(() => {
