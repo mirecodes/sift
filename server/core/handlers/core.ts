@@ -19,6 +19,7 @@ import { ApiError, type HandlerCtx } from '../context';
 import { OWNED_TABLES, keyOf } from '../schema';
 import { ensureIsland, hasIsland, profileView, pull, STALE_AFTER_MS, strip, userState } from '../user';
 import { deleteSocialRows, togetherTiming } from '../social';
+import { afterSessionCompleted, beforeAccountDelete } from '../hooks';
 
 type Handler<O extends Op> = (c: HandlerCtx, args: OpArgs<O>) => Promise<OpResult<O>>;
 export type Handlers = { [O in Op]?: Handler<O> };
@@ -98,6 +99,7 @@ export const coreHandlers: Handlers = {
       }
     }
     await c.w.put('sessions', session);
+    if (session.status === 'completed' && session.verified) for (const hook of afterSessionCompleted) await hook(c, session);
     return { session, animal };
   },
 
@@ -256,6 +258,7 @@ export const coreHandlers: Handlers = {
 
   /** In-app account deletion (Step 5.4): every row of the user, then the auth user (host hook). */
   async delete_account(c) {
+    for (const hook of beforeAccountDelete) await hook(c);
     for (const t of OWNED_TABLES) for (const row of await c.tx.table(t).find({ userId: c.userId } as never)) await c.tx.table(t).delete(keyOf(t, row));
     for (const d of await c.tx.table('devices').find({ userId: c.userId })) await c.tx.table('devices').delete(d.deviceId);
     await deleteSocialRows(c.tx, c.userId);

@@ -67,4 +67,5 @@ export function migrationSql(n: number): string {
 export const MIGRATIONS = [...new Set(Object.values(TABLES).map((t) => t.migration))].sort((a, b) => a - b);
 
 /** Committed file name of migration `n`. */
-export const migrationFile = (n: number): string => `2026102700000${n}_sift_${n === 1 ? 'core' : n === 2 ? 'social' : `m${n}`}.sql`;
+const MIGRATION_NAMES: Record<number, string> = { 1: 'core', 2: 'social', 3: 'groups', 4: 'war' };
+export const migrationFile = (n: number): string => `2026102700000${n}_sift_${MIGRATION_NAMES[n] ?? `m${n}`}.sql`;

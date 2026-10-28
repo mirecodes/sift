@@ -149,8 +149,97 @@ export interface TogetherParticipantRow {
   joinedAt: number | null;
 }
 
+// --- Phase 8: groups, ranking, missions, weekly settlement (migration 3) ---
+
+export interface GroupRow {
+  id: string;
+  name: string;
+  ownerId: string;
+  inviteCode: string;
+  inviteCodeEnabled: boolean;
+  /** IANA zone of the ranking week (Monday 00:00 local). */
+  timezone: string;
+  warEnabled: boolean;
+  createdAt: number;
+  /** Start date of the week in progress; older weeks are settled (Step 8.6). */
+  week: string;
+  /** Winners of the last settled week (the crown in the ranking). */
+  championIds: string[];
+  championWeek: string | null;
+}
+
+/** One group per user: keyed by the user. */
+export interface GroupMemberRow {
+  userId: string;
+  groupId: string;
+  role: 'owner' | 'member';
+  joinedAt: number;
+}
+
+export interface GroupInviteRow {
+  id: string;
+  groupId: string;
+  inviterId: string;
+  inviteeId: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: number;
+}
+
+/** Joins and leaves, for eligibility and the rejoin cooldown. */
+export interface MembershipLogRow {
+  id: string;
+  groupId: string;
+  userId: string;
+  kind: 'join' | 'leave' | 'removed' | 'disband';
+  at: number;
+}
+
+export interface WeeklyResultRow {
+  /** `groupId|weekStart|userId` (unique: settlement is idempotent). */
+  key: string;
+  groupId: string;
+  weekStart: string;
+  userId: string;
+  score: number;
+  focusMinutes: number;
+  rank: number;
+  eligible: boolean;
+  rewarded: boolean;
+  balanceVersion: string;
+}
+
+export interface MissionWeekRow {
+  /** `groupId|weekStart` */
+  key: string;
+  groupId: string;
+  weekStart: string;
+  kind: 'focusMinutes';
+  memberCount: number;
+  targetMinutes: number;
+  progressMinutes: number;
+  /** Indices of milestones already paid (each exactly once). */
+  milestonesReached: number[];
+  balanceVersion: string;
+}
+
+export interface MissionContributionRow {
+  /** `groupId|weekStart|userId` */
+  key: string;
+  groupId: string;
+  weekStart: string;
+  userId: string;
+  minutes: number;
+}
+
 export interface Rows {
   profiles: ProfileRow;
+  groups: GroupRow;
+  group_members: GroupMemberRow;
+  group_invites: GroupInviteRow;
+  group_membership_log: MembershipLogRow;
+  weekly_results: WeeklyResultRow;
+  group_mission_weeks: MissionWeekRow;
+  group_mission_contributions: MissionContributionRow;
   friendships: FriendshipRow;
   blocks: BlockRow;
   reports: ReportRow;
@@ -197,6 +286,13 @@ export const TABLES: Readonly<Record<TableName, TableSpec>> = {
   visits: { key: ['key'], index: { hostId: 'text', visitorId: 'text', at: 'bigint' }, migration: 2 },
   together_rooms: { key: ['id'], index: { hostId: 'text', status: 'text' }, migration: 2 },
   together_participants: { key: ['key'], index: { roomId: 'text', userId: 'text' }, migration: 2 },
+  groups: { key: ['id'], index: { inviteCode: 'text' }, unique: [['inviteCode']], migration: 3 },
+  group_members: { key: ['userId'], index: { groupId: 'text' }, migration: 3 },
+  group_invites: { key: ['id'], index: { groupId: 'text', inviteeId: 'text' }, migration: 3 },
+  group_membership_log: { key: ['id'], index: { groupId: 'text', userId: 'text' }, migration: 3 },
+  weekly_results: { key: ['key'], index: { groupId: 'text', weekStart: 'text', userId: 'text' }, migration: 3 },
+  group_mission_weeks: { key: ['key'], index: { groupId: 'text' }, migration: 3 },
+  group_mission_contributions: { key: ['key'], index: { groupId: 'text', weekStart: 'text' }, migration: 3 },
 };
 
 /** Tables a user's data lives in (account export and deletion). */

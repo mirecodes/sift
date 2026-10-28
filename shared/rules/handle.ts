@@ -42,6 +42,17 @@ export function nameProblem(input: string): HandleProblem | null {
 
 export const isTag = (tag: string): boolean => TAG.test(tag);
 
+/** Group names (Step 8.1): 2–24 code points of letters, digits, spaces and simple punctuation. */
+export function groupNameProblem(input: string): 'length' | 'chars' | null {
+  const name = normalizeName(input).replace(/\s+/g, ' ');
+  const length = [...name].length;
+  if (length < 2 || length > 24) return 'length';
+  return /^[\p{L}\p{N} .,'!?&()-]+$/u.test(name) && !/[ㄱ-ㆎ]/u.test(name) ? null : 'chars';
+}
+
+/** A group name as stored: NFC, inner spaces collapsed, trimmed. */
+export const normalizeGroupName = (input: string): string => normalizeName(input).replace(/\s+/g, ' ');
+
 /** `0001`–`9999` from a number 1–9999. */
 export const formatTag = (n: number): string => String(n).padStart(4, '0');
 

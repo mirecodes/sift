@@ -5,6 +5,8 @@ import { DuplicateKeyError, type Tx } from './db';
 import { coreHandlers, type Handlers } from './handlers/core';
 import { planPushes, sendPushes } from './push';
 import { visitExpired } from './social';
+import { settleDueWeeks } from './groups';
+import { weekOf } from '../../shared/rules/week';
 import { ensureProfile, pull, settleExpirations } from './user';
 
 /** Server-only settings (`app_config` table, §8): version gate and rate limits. */
@@ -133,6 +135,40 @@ async function run(env: ServerEnv, caller: Caller, tx: Tx, userId: string, op: O
   if (op === 'delete_account') return { data, pushes: [] };
   for (const writer of writers.values()) await writer.finish();
   return { data, pushes: await planPushes(tx, ctx.now, writers.values()) };
+}
+
+/**
+ * Weekly settlement (Step 8.6, `job_weekly` every 15 minutes): every group whose local week has ended is
+ * settled in its own transaction (scores, winner gold, champion flag, mission rollover, notices), then
+ * the pushes go out. Idempotent; group reads settle lazily too, so a missed run loses nothing.
+ */
+export async function runWeeklyJob(env: ServerEnv): Promise<{ groups: number; settled: number }> {
+  const now = env.now();
+  const groups = await env.db.transaction(async (tx) => (await tx.table('groups').find({})).map((g) => g.id));
+  let settled = 0;
+  for (const id of groups) {
+    const pushes = await env.db.transaction(async (tx) => {
+      const group = await tx.table('groups').get(id);
+      if (!group || weekOf(now, group.timezone) <= group.week) return [];
+      const writers = new Map<string, UserWriter>();
+      const writerFor = async (userId: string) => {
+        let w = writers.get(userId);
+        if (!w) {
+          await tx.lockUser(userId);
+          await ensureProfile(tx, userId, now);
+          w = new UserWriter(tx, userId);
+          writers.set(userId, w);
+        }
+        return w;
+      };
+      await settleDueWeeks({ tx, now, env, writerFor }, group);
+      for (const w of writers.values()) await w.finish();
+      settled++;
+      return planPushes(tx, now, writers.values());
+    });
+    await sendPushes(env, pushes);
+  }
+  return { groups: groups.length, settled };
 }
 
 /**

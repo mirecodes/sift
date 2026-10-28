@@ -149,6 +149,63 @@ export interface RoomView {
   }[];
 }
 
+/** Score parts for the ranking breakdown (Step 8.4); see `shared/rules/scoring.ts`. */
+export interface ScoreView {
+  score: number;
+  activeByTier: number[];
+  activePoints: number;
+  lostInBattle: number;
+  lostPoints: number;
+}
+
+export interface MemberView {
+  person: PersonView;
+  role: 'owner' | 'member';
+  joinedAt: number;
+  /** 1-based; ties share a rank. */
+  rank: number;
+  score: ScoreView;
+  /** This week's focus time (information only). */
+  weekFocusMinutes: number;
+  /** Won the last settled week (crown). */
+  champion: boolean;
+}
+
+export interface MissionView {
+  kind: 'focusMinutes';
+  weekStart: string;
+  memberCount: number;
+  targetMinutes: number;
+  progressMinutes: number;
+  milestones: { minutes: number; gold: number; reached: boolean }[];
+  /** Most first. */
+  contributions: { person: PersonView; minutes: number }[];
+}
+
+/** The Group tab (Steps 8.1–8.5). */
+export interface GroupView {
+  id: string;
+  name: string;
+  ownerId: string;
+  timezone: string;
+  warEnabled: boolean;
+  /** Members see the code to share it; the owner can regenerate or disable it. */
+  inviteCode: string;
+  inviteCodeEnabled: boolean;
+  /** The ranking week in progress and when it settles (server time). */
+  week: { start: string; endsAt: number };
+  members: MemberView[];
+  mission: MissionView;
+}
+
+export interface GroupInviteView {
+  id: string;
+  groupId: string;
+  groupName: string;
+  memberCount: number;
+  inviter: PersonView;
+}
+
 /** A device's local save, uploaded once at the first sign-in (Step 5.7). */
 export interface LocalSave {
   world: WorldState;
@@ -217,6 +274,22 @@ export interface Ops {
   together_leave: { args: { roomId: string }; result: { room: RoomView } };
   /** Host only: everyone who joined starts at the same server time. */
   together_start: { args: { roomId: string }; result: { room: RoomView } };
+  // --- Phase 8: groups, ranking, missions, weekly settlement ---
+  /** The user's group (settling a passed week first), pending invites, and when they may join again. */
+  group_state: { args: Record<string, never>; result: { group: GroupView | null; invites: GroupInviteView[]; rejoinAt: number | null } };
+  group_create: { args: { name: string; timezone: string }; result: { group: GroupView } };
+  group_rename: { args: { name: string }; result: Record<string, never> };
+  /** Any member invites a friend. */
+  group_invite: { args: { userId: string }; result: Record<string, never> };
+  group_invite_respond: { args: { inviteId: string; accept: boolean }; result: Record<string, never> };
+  group_join: { args: { code: string }; result: { group: GroupView } };
+  /** Owner: a new code, or turn the code off / on. */
+  group_code: { args: { action: 'regenerate' | 'disable' | 'enable' }; result: { code: string; enabled: boolean } };
+  group_leave: { args: Record<string, never>; result: Record<string, never> };
+  group_remove_member: { args: { userId: string }; result: Record<string, never> };
+  group_transfer: { args: { userId: string }; result: Record<string, never> };
+  group_set_war: { args: { enabled: boolean }; result: Record<string, never> };
+  group_disband: { args: Record<string, never>; result: Record<string, never> };
 }
 
 export type Op = keyof Ops;
@@ -246,6 +319,17 @@ export const MUTATIONS: ReadonlySet<Op> = new Set<Op>([
   'together_join',
   'together_leave',
   'together_start',
+  'group_create',
+  'group_rename',
+  'group_invite',
+  'group_invite_respond',
+  'group_join',
+  'group_code',
+  'group_leave',
+  'group_remove_member',
+  'group_transfer',
+  'group_set_war',
+  'group_disband',
 ]);
 
 /** Operations open to signed-out clients. */

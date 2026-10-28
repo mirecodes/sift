@@ -1,6 +1,6 @@
 import { buildPack, type ContentPack } from '../../shared/content/pack';
 import type { Caller, ServerHooks } from '../core/context';
-import { handle, runHourlyJob } from '../core/api';
+import { handle, runHourlyJob, runWeeklyJob } from '../core/api';
 import { createPgServerDb, type SqlClient } from '../pg/pgDb';
 import { content } from '../../src/domain/content';
 import { installServerHandlers } from '../core/handlers';
@@ -19,6 +19,7 @@ export function createApi(opts: { client: SqlClient; hooks?: ServerHooks }) {
   return {
     handle: (caller: Caller, body: unknown) => handle(env, caller, body),
     hourly: () => runHourlyJob(env),
+    weekly: () => runWeeklyJob(env),
     /** Merges a published content pack (Step 5.8) so purchases are checked against the newest catalog. */
     mergeContent(pack: ContentPack) {
       content.merge(pack);

@@ -1,7 +1,7 @@
 import type { LedgerEntry } from '../types';
 
 /** Why gold moved. Stored as text so later phases can add reasons without a migration. */
-export const LEDGER_REASON = { starter: 'starter', expiry: 'expiry', purchase: 'purchase' } as const;
+export const LEDGER_REASON = { starter: 'starter', expiry: 'expiry', purchase: 'purchase', weekly: 'weekly_win', mission: 'mission', war: 'war_loot' } as const;
 
 /** The wallet balance: the sum of every gold entry. The ledger is append-only. */
 export const goldBalance = (entries: readonly LedgerEntry[]): number =>

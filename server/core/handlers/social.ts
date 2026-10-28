@@ -16,6 +16,7 @@ import {
   visitExpired,
 } from '../social';
 import { notify, profileView } from '../user';
+import { memberScore, membership } from '../groups';
 import type { Handlers } from './core';
 
 const DAY = 86_400_000;
@@ -156,7 +157,12 @@ export const socialHandlers: Handlers = {
     if (await blockedEither(c.tx, c.userId, args.userId)) throw new ApiError('blocked');
     if (!(await related(c.tx, c.userId, args.userId))) throw new ApiError('not_friends');
     if (args.userId !== c.userId) await recordVisit(c.tx, args.userId, c.userId, c.now);
-    return { snapshot: await islandSnapshot(c.tx, args.userId) };
+    const snapshot = await islandSnapshot(c.tx, args.userId);
+    // Score only between members of the same group (Step 7.4).
+    const mine = await membership(c.tx, c.userId);
+    const group = mine && (await membership(c.tx, args.userId))?.groupId === mine.groupId ? await c.tx.table('groups').get(mine.groupId) : undefined;
+    if (group) snapshot.score = (await memberScore(c.tx, args.userId, group, c.now)).score;
+    return { snapshot };
   },
 
   /** Step 7.7: a lobby with the host's focus length; invitees get a notice (push when not focusing). */
