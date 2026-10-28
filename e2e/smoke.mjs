@@ -281,6 +281,12 @@ check('the placed fence survives a reload', await page.getByText('Nothing to pla
 await page.getByRole('button', { name: 'Store Fence' }).click();
 await settle(500);
 check('a placed building goes back to the tray', (await page.getByRole('button', { name: 'Place Fence' }).isVisible()) && (await page.getByText('On the island').count()) === 0);
+// Arrange mode (Phase 10): the Animals segment swaps the tray for the arrange hint.
+await page.getByRole('button', { name: 'Animals' }).click();
+await settle(300);
+check('the Animals segment shows the arrange hint', await page.getByRole('status').getByText('Drag an animal to a new spot', { exact: false }).isVisible());
+await page.getByRole('button', { name: 'Buildings' }).click();
+await settle(300);
 await page.keyboard.press('Escape');
 await settle(300);
 check('Esc leaves build mode', await page.getByRole('button', { name: 'Start focus' }).isVisible());

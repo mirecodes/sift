@@ -17,6 +17,9 @@ export interface CameraControls {
   shown?: number;
 }
 
+/** Set while something else owns the pointer (dragging an animal in arrange mode): the camera does not turn. */
+export const cameraLock = { current: false };
+
 interface Insets {
   right: number;
   bottom: number;
@@ -75,6 +78,10 @@ export function CameraRig({ mode, side, depth, rise, reducedMotion, controls }: 
     const move = (e: PointerEvent) => {
       if (!pointers.has(e.pointerId)) return;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (cameraLock.current) {
+        lastX = e.clientX;
+        return;
+      }
       if (pointers.size >= 2) {
         const d = spread();
         if (pinch > 0 && d > 0) zoomBy(d / pinch);

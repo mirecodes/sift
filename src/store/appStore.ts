@@ -2,6 +2,7 @@ import { createStore } from 'zustand/vanilla';
 import { config, DEFAULT_BLOCK_THEME } from '../domain/config';
 import type { Equipped, FocusSession, InboxRow, IslandHistoryEntry, LedgerEntry, OwnedCosmetic, PlacedAnimal, PlacedBuilding, Settings, WorldState } from '../domain/types';
 import { moveIsland, type MoveProblem } from '../domain/island/move';
+import { arrangeAnimal, arrangeProblem, type ArrangeProblem } from '../domain/island/arrange';
 import {
   addSkin,
   buyProblem,
@@ -219,6 +220,11 @@ export interface AppState extends SocialSlice {
   placeBuilding(p: { defId: string; tile: Tile; rotation: Rotation; movingId?: string }): Promise<PlaceProblem | 'none_left' | 'not_idle' | 'offline' | null>;
   /** Puts a placed building back into the inventory. */
   storeBuilding(id: string): Promise<void>;
+  /**
+   * Arrange mode (Step 10.1): moves an animal to a tile by hand and pins it there (Home only). Signed in,
+   * the server validates the position with the same occupancy rule (`apply_layout`).
+   */
+  arrangeAnimal(id: string, tile: Tile): Promise<ArrangeProblem | 'not_idle' | 'offline' | null>;
   /** A candidate seed for a new island (previews before moving). */
   rollIslandSeed(): number;
   /**
@@ -1018,12 +1024,35 @@ export function createAppStore(initialDeps: AppDeps) {
         { seed: s.world.seed, islandLevel: islandLevel(s.animals), buildings: buildings.map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation })) },
         s.animals.filter(isActive),
       );
+      // A building put on a pinned animal unpins it (Step 10.1).
+      const unpinned = moved.map((a) => ({ ...a, pinned: false }));
       await commit({
         ...(!memoryOnly.has(building.id) && { buildingsPut: [building] }),
-        animals: moved.filter((a) => !memoryOnly.has(a.id)),
+        animals: unpinned.filter((a) => !memoryOnly.has(a.id)),
       });
-      const byId = new Map(moved.map((a) => [a.id, a]));
+      const byId = new Map(unpinned.map((a) => [a.id, a]));
       set({ placedBuildings: buildings, animals: get().animals.map((a) => byId.get(a.id) ?? a) });
+      return null;
+    },
+
+    async arrangeAnimal(id, tile) {
+      const s = get();
+      if (s.phase.kind !== 'idle') return 'not_idle';
+      const input = { seed: s.world.seed, islandLevel: islandLevel(s.animals), animals: s.animals, buildings: s.placedBuildings };
+      const problem = arrangeProblem(input, id, tile);
+      if (problem) return problem;
+      const moved = arrangeAnimal(s.animals, id, tile);
+      if (!moved) return 'not_standable';
+      if (account.linked && !memoryOnly.has(id)) {
+        try {
+          await account.call('apply_layout', { buildings: s.placedBuildings.filter((b) => !memoryOnly.has(b.id)), animals: [{ id, tileX: tile.x, tileZ: tile.z, pinned: true }] }, { requestId: deps.uuid() });
+          return null; // the delta brings the new position
+        } catch (e) {
+          return e instanceof RemoteError && e.code === 'layout_invalid' ? 'not_standable' : 'offline';
+        }
+      }
+      if (!memoryOnly.has(id)) await commit({ animals: [moved] });
+      set({ animals: get().animals.map((a) => (a.id === id ? moved : a)) });
       return null;
     },
 

@@ -488,6 +488,16 @@ export const strings = {
       not_idle: 'Build on Home only.',
       offline: 'Connect to the internet to build.',
     },
+    /** Arrange animals (Phase 10, DESIGN.md 7.8). */
+    modeBuildings: 'Buildings',
+    modeAnimals: 'Animals',
+    arrangeHint: 'Drag an animal to a new spot, or tap it and then tap where it should go.',
+    arrangeProblems: {
+      not_standable: "Animals can't stand there.",
+      crowded: 'Too crowded there (4 at most).',
+      not_idle: 'Arrange on Home only.',
+      offline: 'Connect to the internet to arrange.',
+    },
   },
   shop: {
     title: 'Shop',

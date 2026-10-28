@@ -191,14 +191,18 @@
 
 ## Phase 10 — Arrange animals by drag and drop (F12, later; owner decision rev 3)
 
-- [ ] 10.1 Arrange mode
-- [ ] 10.2 Sync and authority
-- [ ] 10.3 Tests
+- [x] 10.1 Arrange mode
+  - Build mode `Buildings · Animals` (Animals alone without cosmetics); mouse drag, touch long-press (350 ms, light haptic), tap flow with Cancel/Place; footprint tint + see-through ghost; camera locked while dragging. Screenshots checked; e2e: the Animals segment.
+- [x] 10.2 Sync and authority
+  - `apply_layout` carries pinned animals; the server checks them with the occupancy rule (`layout_invalid` → "can't stand there"); offline drops commit locally.
+- [x] 10.3 Tests
+  - Rule, store (pins survive new rewards and others' expiry, building unpins, invalid drops rejected), island move clears pins, war formation reads pinned tiles (server suite). **Phase 10 complete behind `arrange` (off).**
 
 ## Owner review queue
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- 10 · Feature flag `arrange` (off). Try it with `cosmetics` on or off: drag feel with a mouse and on a phone (long press 350 ms), the see-through ghost size (it looks small on a phone), red/green on each theme.
 - 6 · **Owner action**: build and try the apps on devices (`docs/guides/MOBILE_SETUP.md`): signing, the Live Activity widget target in Xcode (§5), Firebase + APNs for push (§7), the link domain (§8), icons/splash (§4). Check on devices: SQLite save survives app kills, the focus-end notification while locked, the lock-screen timer (overtime, break auto-removal), pinch zoom, status bar hidden in Focus, share-sheet export. The CI `ios` job assumes a `macos-26` runner with Xcode 26; adjust if GitHub names it differently.
 - 5 · **Owner action**: create the Supabase project and connect it (`docs/guides/BACKEND_SETUP.md`, ~1 hour incl. Apple/Google). Until then try everything with `backend.provider: fake` (any email, code 000000). Not verified here: real email delivery, Apple/Google sign-in, the Deno function on Supabase (the same bundle runs on Postgres in `npm run server:check`).
 - 5 · Sign out clears the device (fresh island). Check that this matches what you want (ADR-048).
@@ -268,6 +272,10 @@
 - 6.6 · A category toggle may ask for permission; "Not now" is remembered. · Touching a toggle is a deliberate request.
 - 6.6 · Push texts are short and name-free (`server/core/push.ts`). · The Inbox holds the details; no handle lookups in the push path.
 - 6.8 · iOS: a new Live Activity per phase change; the break one is ended at once with dismissal at the break end. · Removes itself without the app (ADR-049).
+- 10.1 · Mouse drags start on press; touch needs a 350 ms long press. · A touch drag on the island otherwise turns the camera.
+- 10.1 · Releasing where the press began keeps the animal picked (tap flow) instead of dropping it in place. · A click must be able to pick on desktop.
+- 10.1 · Arranging alone opens build mode when cosmetics are off (Animals only). · `arrange` does not depend on buying buildings.
+- 10.2 · Signed in, a drop waits for `apply_layout` and fails with "offline" when it cannot reach the server. · The server owns the layout; no queued layout edits.
 - 9.1 · After `maxRounds` with both sides standing, the defense holds. · An attack must clearly win.
 - 9.1 · New-member protection shields the new member from attacks; they may attack others. · "Protection" is for the newcomer.
 - 9.2 · Attackers land on a wooden strip off the defender island's front edge (+z), not on its tiles. · Defender tiles are occupied; the strip reads as the airship's landing.

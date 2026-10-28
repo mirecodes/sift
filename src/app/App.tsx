@@ -83,7 +83,7 @@ export function App() {
   const equipped = useApp((s) => s.equipped);
   const placedBuildings = useApp((s) => s.placedBuildings);
   const reducedMotion = usePrefersReducedMotion();
-  const building = features.cosmetics && phase.kind === 'idle' && view === 'build';
+  const building = (features.cosmetics || features.arrange) && phase.kind === 'idle' && view === 'build';
   const movingId = useBuildUi((s) => (building ? s.placing?.movingId : undefined));
   const islandMove = useApp((s) => s.islandMove);
   const accountChoice = useApp((s) => s.account.choice !== null);

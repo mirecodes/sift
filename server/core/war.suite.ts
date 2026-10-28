@@ -6,6 +6,7 @@ import type { PlacedAnimal } from '../../shared/types/rows';
 import { getSpecies } from '../../src/domain/animals/catalog';
 import { newPlacedAnimal } from '../../src/domain/animals/placed';
 import { pickNewAnimalTile } from '../../src/domain/island/level';
+import { generateIsland } from '../../src/domain/island/island';
 import type { ServerDb } from './db';
 import { MIN, testServer } from './testing';
 
@@ -102,6 +103,19 @@ export function describeWar(name: string, makeDb: () => Promise<ServerDb> | Serv
       s.clock.t += 49 * HOUR; // b past protection; d's shield (12 h) is over too
       expect(await s.fails('b', 'declare_war', { targetId: 'd' })).toBeNull();
       expect((await s.ok('a', 'war_preview', { targetId: 'd' })).preview.blocked?.code).toBe('shield_active');
+    });
+
+    it('fights the defenders where they were arranged (Phase 10 pins), and rejects invalid pins', async () => {
+      const s = await world();
+      await s.armies(0);
+      const d = (await s.ok('d', 'export_account', {})).rows;
+      const animal = d.animals[0]!;
+      expect(await s.fails('d', 'apply_layout', { buildings: [], animals: [{ id: animal.id, tileX: 0, tileZ: 0, pinned: true }] })).toBe('layout_invalid'); // the campfire
+      const land = generateIsland(9, d.animals.length).tiles.find((t) => !t.water && Math.hypot(t.x, t.z) > 2.5 && (t.x !== animal.tileX || t.z !== animal.tileZ))!;
+      const spot = { tileX: land.x, tileZ: land.z };
+      await s.ok('d', 'apply_layout', { buildings: [], animals: [{ id: animal.id, ...spot, pinned: true }] });
+      const { war } = await s.ok('a', 'declare_war', { targetId: 'd' });
+      expect(war.defenders.find((f) => f.id === animal.id)).toMatchObject({ x: spot.tileX, z: spot.tileZ });
     });
 
     it('moves no gold when the defense holds', async () => {

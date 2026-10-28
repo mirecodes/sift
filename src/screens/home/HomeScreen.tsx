@@ -30,7 +30,7 @@ export function HomeScreen() {
     <div className={layer.layer}>
       <div className={styles.top}>
         <TopBar start={features.economy && <Hud />}>
-          {features.cosmetics && (
+          {(features.cosmetics || features.arrange) && (
             <IconButton aria-label={strings.aria.build} onClick={() => setView('build')}>
               <BuildIcon />
             </IconButton>
