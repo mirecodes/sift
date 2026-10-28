@@ -110,6 +110,8 @@ export interface AppDeps {
   /** For `register_device`. */
   platformName?: 'web' | 'ios' | 'android';
   locale?: string;
+  /** The device's IANA time zone (a new group's ranking week). */
+  timeZone?: string;
 }
 
 export interface AppState extends SocialSlice {
@@ -264,6 +266,21 @@ export interface AppState extends SocialSlice {
   startRoom(): Promise<Outcome>;
   /** Refreshes the room; when the host has started it, this device starts its focus at the shared time. */
   pollRoom(): Promise<void>;
+
+  // --- Phase 8: groups ---
+  refreshGroup(): Promise<void>;
+  /** A new group in this device's time zone. */
+  createGroup(name: string): Promise<Outcome>;
+  joinGroup(code: string): Promise<Outcome>;
+  respondGroupInvite(inviteId: string, accept: boolean): Promise<Outcome>;
+  inviteToGroup(userId: string): Promise<Outcome>;
+  setGroupCode(action: 'regenerate' | 'disable' | 'enable'): Promise<Outcome>;
+  renameGroup(name: string): Promise<Outcome>;
+  leaveGroup(): Promise<Outcome>;
+  removeMember(userId: string): Promise<Outcome>;
+  transferGroup(userId: string): Promise<Outcome>;
+  setGroupWar(enabled: boolean): Promise<Outcome>;
+  disbandGroup(): Promise<Outcome>;
 }
 
 /** What the move sequence needs about the island left behind (Step 4.3). */
@@ -662,6 +679,19 @@ export function createAppStore(initialDeps: AppDeps) {
       if (!outcome) await get().pollRoom();
       return outcome;
     },
+
+    refreshGroup: () => social.refreshGroup(),
+    createGroup: (name) => social.groupAct('group_create', { name, timezone: deps.timeZone ?? 'UTC' }, { social: true }),
+    joinGroup: (code) => social.groupAct('group_join', { code }, { social: true }),
+    respondGroupInvite: (inviteId, accept) => social.groupAct('group_invite_respond', { inviteId, accept }, { social: accept }),
+    inviteToGroup: (userId) => social.groupAct('group_invite', { userId }),
+    setGroupCode: (action) => social.groupAct('group_code', { action }),
+    renameGroup: (name) => social.groupAct('group_rename', { name }),
+    leaveGroup: () => social.groupAct('group_leave', {}),
+    removeMember: (userId) => social.groupAct('group_remove_member', { userId }),
+    transferGroup: (userId) => social.groupAct('group_transfer', { userId }),
+    setGroupWar: (enabled) => social.groupAct('group_set_war', { enabled }),
+    disbandGroup: () => social.groupAct('group_disband', {}),
 
     async pollRoom() {
       const room = await social.pollRoom();

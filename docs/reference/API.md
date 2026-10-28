@@ -58,10 +58,27 @@ The server contract (guidance_v2 Step 5.2). Types: `shared/api/types.ts`; handle
 | `together_join`, `together_leave` | `{ roomId }` → `{ room }` | Join in the lobby or ≤ 2 min after the start (`room_closed`); the host leaving a lobby closes it |
 | `together_start` | `{ roomId }` → `{ room }` | Host only (`not_owner`); then `start_session({ roomId })` gives everyone joined the room's start (≤ 30 s late) or, later within 2 min, their own start with the room's end |
 
-Phase 8–9 operations are added below as they come.
+### Phase 8: groups, ranking, missions, weekly settlement
+
+| Op | Args → data | Notes |
+|---|---|---|
+| `group_state` | `{}` → `{ group, invites, rejoinAt }` | Settles passed weeks first. `group`: members with `rank` (ties share), `score` breakdown, `weekFocusMinutes`, `champion`; `mission` with milestones and contributions; `week.endsAt` |
+| `group_create` | `{ name, timezone }` → `{ group }` | Name 2–24 chars + word filter (`handle_invalid`); IANA zone (`invalid`); `already_in_group`, `rejoin_cooldown`, `handle_required` |
+| `group_join` | `{ code }` → `{ group }` | Code enabled (`not_found`); `group_full` (10); joining notifies members (push `groups`) |
+| `group_invite` | `{ userId }` → `{}` | Any member invites a related user (`not_friends`); notice + push |
+| `group_invite_respond` | `{ inviteId, accept }` → `{}` | Accept = join (same checks) |
+| `group_code` | `{ action }` → `{ code, enabled }` | Owner: `regenerate`, `disable`, `enable` |
+| `group_rename`, `group_set_war`, `group_transfer`, `group_remove_member`, `group_disband` | … → `{}` | Owner only (`not_owner`) |
+| `group_leave` | `{}` → `{}` | Owner with other members: `invalid` (transfer first); the last member disbands. 24 h cooldown |
+
+Jobs: `POST /job/weekly` (every 15 min) settles groups whose week ended (`runWeeklyJob`).
+
+Phase 9 operations are added below.
 
 ## 4. Tables
 
 Generated from `server/core/schema.ts` into `server/supabase/migrations/` (`npm run server:sql`; a test keeps them equal). Every table: key and filter columns plus the whole row as `data jsonb`. Owned tables add `user_id`, `updated_seq`.
+
+Migration 3 (Phase 8): `groups` (unique `invite_code`), `group_members` (key `user_id`: one group per user), `group_invites`, `group_membership_log`, `weekly_results` (key `group|week|user`), `group_mission_weeks` (key `group|week`), `group_mission_contributions` (key `group|week|user`).
 
 Migration 2 (Phase 7): `friendships` (key `low|high`, `status`, `requested_by`), `blocks` (key `blocker|blocked`), `reports`, `visits` (key `host|visitor|day`, `trace_kind`, `trace_payload`; 30-day retention in the hourly job), `together_rooms`, `together_participants` (key `room|user`).

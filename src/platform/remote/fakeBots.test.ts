@@ -17,5 +17,14 @@ describe('sample friends for the test backend (ADR-038)', () => {
     expect(data.visitors.map((v) => v.person.handle?.name)).toEqual(['Jae']);
     const { data: island } = await callApi(fake, 'get_island_snapshot', { userId: 'bot-sora' });
     expect(island.snapshot.animals.length).toBe(6);
+    // Phase 8: an invite into 민지's group, which has a champion and mission progress.
+    await callApi(fake, 'set_handle', { name: 'Mina' }, { requestId: 'r1' });
+    const { data: groups } = await callApi(fake, 'group_state', {});
+    expect(groups.invites.map((i) => i.groupName)).toEqual(['Morning Owls']);
+    await callApi(fake, 'group_invite_respond', { inviteId: groups.invites[0]!.id, accept: true }, { requestId: 'r2' });
+    const { data: mine } = await callApi(fake, 'group_state', {});
+    expect(mine.group!.members).toHaveLength(5);
+    expect(mine.group!.members.find((m) => m.champion)?.person.handle?.name).toBe('소라');
+    expect(mine.group!.mission.progressMinutes).toBe(545);
   });
 });

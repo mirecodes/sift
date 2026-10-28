@@ -1,5 +1,8 @@
 import { API_VERSION, type Op, type OpArgs } from '../../../shared/api/types';
 import { seededRng } from '../../../shared/rng';
+import { BALANCE_VERSION } from '../../../shared/balance/balance';
+import { missionTarget } from '../../../shared/rules/missions';
+import { previousWeek, weekOf } from '../../../shared/rules/week';
 import { handle } from '../../../server/core/api';
 import { pairOf } from '../../../server/core/social';
 import { getSpecies } from '../../domain/animals/catalog';
@@ -70,4 +73,23 @@ export async function seedFakeSocial(fake: FakeRemote, userId: string): Promise<
     const day = Math.floor((now - 2 * HOUR) / (24 * HOUR));
     await tx.table('visits').put({ key: `${userId}|bot-jae|${day}`, hostId: userId, visitorId: 'bot-jae', at: now - 2 * HOUR, traceKind: 'basic', tracePayload: {} });
   });
+
+  // Phase 8: 민지's group (with Jae, 소라, Leo), last week's champion 소라, some mission progress, and an
+  // invite for the user from 민지.
+  const groupId = 'bot-group';
+  if (!(await env.db.transaction((tx) => tx.table('groups').get(groupId)))) {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const week = weekOf(now, timezone);
+    await env.db.transaction(async (tx) => {
+      await tx.table('groups').put({ id: groupId, name: 'Morning Owls', ownerId: 'bot-minji', inviteCode: 'OWLS2026', inviteCodeEnabled: true, timezone, warEnabled: true, createdAt: now - 30 * 24 * HOUR, week, championIds: ['bot-sora'], championWeek: previousWeek(week) });
+      for (const [i, id] of ['bot-minji', 'bot-jae', 'bot-sora', 'bot-leo'].entries()) {
+        await tx.table('group_members').put({ userId: id, groupId, role: i === 0 ? 'owner' : 'member', joinedAt: now - (30 - i) * 24 * HOUR });
+        await tx.table('group_mission_contributions').put({ key: `${groupId}|${week}|${id}`, groupId, weekStart: week, userId: id, minutes: [180, 95, 240, 30][i]! });
+      }
+      await tx.table('group_mission_weeks').put({ key: `${groupId}|${week}`, groupId, weekStart: week, kind: 'focusMinutes', memberCount: 4, targetMinutes: missionTarget(4), progressMinutes: 545, milestonesReached: [0], balanceVersion: BALANCE_VERSION });
+    });
+  }
+  const invited = await env.db.transaction(async (tx) => (await tx.table('group_invites').find({ inviteeId: userId })).length > 0);
+  const member = await env.db.transaction((tx) => tx.table('group_members').get(userId));
+  if (!invited && !member) await env.db.transaction((tx) => tx.table('group_invites').put({ id: `bot-invite-${userId}`, groupId, inviterId: 'bot-minji', inviteeId: userId, status: 'pending', createdAt: now - HOUR }));
 }

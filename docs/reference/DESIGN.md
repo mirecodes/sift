@@ -388,9 +388,20 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - **Invite notice** (7.2a, on Home and Break): `Mina invited you to focus together.` with `Join` (primary) beside `OK`.
 - **During Focus** (the only social element allowed there, §2.14): one static `body-sm` `--color-mute-soft` line under the timer `with 민지 · 재현` and a row of 6px dots, one per other participant: filled `--color-mute-soft` while they focus, hollow (1px ring) once they stopped or finished. Updates silently: no animation, no sound. Hidden when `Show when I'm focusing` is off.
 - **Break**: a `Together` strip under the reward card inside the break panel: one 48px sprite per participant with their handle in `caption` (their revealed animal, or a hollow circle when they stopped or are still focusing).
-- **Home presence**: under the Home panel's start button, a row of up to 3 overlapping 24px avatar circles (canvas ring) and `caption` `3 friends focusing`; tapping it opens Focus together with those friends. Hidden when none.
+- **Home presence** (see also 7.14 for the group): under the Home panel's start button, a row of up to 3 overlapping 24px avatar circles (canvas ring) and `caption` `3 friends focusing`; tapping it opens Focus together with those friends. Hidden when none.
 
 ---
+
+### 7.14 Group (tab, Phase 8)
+- Canvas tab page (6.7), `display-md` title `Group`, content max width 720px. Signed out / offline / no name: the same cards as Friends (7.11), pointing to the Friends tab for the name.
+- **No group**: a `card-feature` `Create a group` (`text-input` `Group name`, `body-sm` `--color-body-mid` `Ranking weeks run Monday to Monday in your time zone (Asia/Seoul).`, `Create` primary); a `card-feature` `Join with a code` (`text-input` `Code`, 8 characters, upper case, `Join` primary); then `eyebrow` `INVITES` with one row per invite (`Morning Owls · 4 members`, `from 민지#4821`, `Join` primary small, `Decline` secondary small). During the rejoin cooldown both cards show `body-sm` `You can join a group again in 5 h.` and their buttons are disabled.
+- **Header** (`card-feature`): `display-sm` group name, `body-sm` `--color-body-mid` `6 members · settles in 2d 4h` (countdown to Monday 00:00 in the group's zone, server time), `Invite` (secondary small: copies or shares `https://<domain>/join/<CODE>`; shows the code). Owner: `⋯` with `Rename`, `New code`, `Turn code off/on`, `War on/off` (Phase 9), `Disband`.
+- **Sub-tabs**: a `segmented` control `Ranking · Missions · Wars · Members` (Wars only with `features.war`).
+- **Ranking**: rows (`settings-row` style): rank in `display-xs` tabular (ties share a number), avatar, handle, a 16px crown (`--color-accent-yellow` fill) for last week's champions, `caption` `Focusing now` when they focus, then on the right the **score** in `body-md-strong` tabular (one decimal at most) over `caption` `--color-body-mid` week focus time (`3h 20m`). Your row has a `--color-hairline` fill. Tapping the score opens the **breakdown** `Sheet`: per tier `Legendary ×1 · 30`, …, and `Lost in battle this week (50%) · 4.5`, total. Row actions: `Visit` (secondary small); `Attack` comes in Phase 9.
+- **Missions**: `card-feature` with `eyebrow` `THIS WEEK · FOCUS TOGETHER`, `display-sm` `620 / 600 min`, a 12px progress bar (`--color-primary` on `--color-hairline`, `--radius-full`) with a 2px tick per milestone (50 / 100 / 150 %); under it three milestone chips (`50% · 10 gold`, `100% · 30 gold`, `150% · 30 gold`; reached ones `--color-primary` fill with white text and a check), `body-sm` `--color-body-mid` `3 days left · 25 min to count`. Then `eyebrow` `CONTRIBUTIONS` with rows (avatar, handle, `body-sm-strong` minutes).
+- **Members**: rows with avatar, handle, role `caption` (`Owner`), presence, `Visit`; owner extra actions in `⋯` (`Make owner`, `Remove`); `Report` for others. At the bottom `Leave group` (secondary): a `Sheet` explains `You can join another group after 24 hours. Weekly rewards need a whole week in one group.`; the owner sees `Make someone else the owner first.` unless alone (then `Leave and disband`).
+- **Notices** (7.2a): `You won the week! +50 gold.`, `민지#4821 won the week.`, `Group mission: 100% reached. +30 gold.`, `Jae#8379 joined your group.`, `You were removed from the group.`, `민지#4821 invited you to Morning Owls.` with `Join`.
+- **Champion flag** (15.8): on the island of a weekly winner during the following week.
 
 ## 8. UI Motion
 
@@ -567,6 +578,9 @@ Terrain, water and camp colors are one keyed record, `defaultBlocks` (`grassTop`
 - Optional theme looks: `tileTints` repeats a list of colors over the top blocks in diagonal bands (block x + z), multiplied with near-white grass colors, for patterned ground; `finish: glossy` draws the blocks with a specular highlight (glass, metal). **Future City** uses both: blue-heavy rainbow bands (`#5FB8FF`, `#7FD3FF`, `#A88BFF`, `#FF8FD0`, `#7FE8FF`, `#FFD36B`, `#7FF0B8`), deep blue glassy sides, a cyan stream, a white-and-blue cabin and `glints`. **Winter** is ice: frosted pale-blue ground, blue-grey rock, a frozen-looking stream, dark wood with a snowy roof, and snow.
 - Buildings and decorations are voxel models at **1/8 block per voxel**: a 1×1 footprint is 8 voxels wide, a 3×3 one 24. They stand on the surface of their tiles (all at one height) and turn in 90° steps.
 - Footprint tint (build mode, Content Studio): flat squares 0.94 block wide on each covered tile, `build-ok` `#5ED67A` when the building fits, `build-bad` `#FF5A5F` when not, 45% opacity.
+
+### 15.8 Champion Flag
+- A weekly winner's island (Step 8.6) flies a flag for the following week: a thin `palette` wood pole 1.2 blocks tall on the corner of the hut tile, with a 0.45 × 0.3 banner in `--color-accent-yellow` that waves gently (a 2-segment sine sway, 0.5 Hz; still with reduced motion and on Focus). Visible on visits and in the ranking's island too. When it first appears on Home it rises up the pole over 1.2 s.
 
 ### 15.5 Stream
 

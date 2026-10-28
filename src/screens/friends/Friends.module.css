@@ -60,6 +60,17 @@
     justify-content: flex-start;
   }
 }
+.trail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-left: auto;
+}
+.highlight {
+  background: var(--color-hairline);
+  border-radius: var(--radius-sm);
+  padding-inline: var(--space-sm);
+}
 .handle {
   display: inline-flex;
   align-items: baseline;

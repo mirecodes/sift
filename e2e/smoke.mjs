@@ -441,6 +441,18 @@ await acct.getByLabel('name#tag').fill('Nobody#0001');
 await acct.getByRole('button', { name: 'Send request' }).click();
 await acct.waitForTimeout(1000);
 check('a request to an unknown handle says so', await acct.getByText('No one with that name#tag.').isVisible());
+await acct.getByRole('button', { name: 'Close' }).click();
+
+// Groups (Phase 8): create one; the ranking lists the creator; the mission shows its target.
+await acct.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Group' }).click();
+await acct.waitForTimeout(1500);
+await acct.getByLabel('Group name').fill('Morning Owls');
+await acct.getByRole('button', { name: 'Create' }).click();
+await acct.waitForTimeout(1500);
+check('a new group shows its name and an 8-letter invite code', (await acct.getByRole('heading', { name: 'Morning Owls' }).isVisible()) && (await acct.getByRole('button', { name: /^Invite · [A-Z2-9]{8}$/ }).isVisible()));
+check('the ranking lists the creator first', await acct.getByLabel('#1').isVisible());
+await acct.getByRole('button', { name: 'Missions' }).click();
+check('the mission target is frozen at the size of a 2-person group', await acct.getByText(/ \/ 600 min$/).isVisible());
 await acct.close();
 
 check('no page errors', errors.length === 0);

@@ -1,4 +1,4 @@
-import type { ErrorCode, IslandSnapshot, Op, OpArgs, OpResult, ReportReason, RoomView, SocialState } from '../../shared/api/types';
+import type { ErrorCode, GroupInviteView, GroupView, IslandSnapshot, Op, OpArgs, OpResult, ReportReason, RoomView, SocialState } from '../../shared/api/types';
 import { balance } from '../../shared/balance/balance';
 import { parseHandle } from '../../shared/rules/handle';
 import { RemoteError } from '../platform/remote';
@@ -14,9 +14,14 @@ export interface SocialSlice {
   visit: IslandSnapshot | null;
   /** The focus-together room the user is in (Step 7.7), from the lobby to the shared break. */
   room: RoomView | null;
+  /** The Group tab (Phase 8): the user's group, invites to other groups, the rejoin cooldown. */
+  group: GroupView | null;
+  groupInvites: GroupInviteView[];
+  rejoinAt: number | null;
+  groupStatus: 'idle' | 'loading' | 'ready' | 'offline';
 }
 
-export const SOCIAL_EMPTY: SocialSlice = { social: null, socialStatus: 'idle', visit: null, room: null };
+export const SOCIAL_EMPTY: SocialSlice = { social: null, socialStatus: 'idle', visit: null, room: null, group: null, groupInvites: [], rejoinAt: null, groupStatus: 'idle' };
 
 /** What the social layer needs from the store. */
 export interface SocialCtx {
@@ -177,6 +182,33 @@ export function createSocial(ctx: SocialCtx) {
     },
     clearRoom(): void {
       ctx.set({ room: null });
+    },
+
+    // --- Groups (Phase 8) ---
+
+    async refreshGroup(): Promise<void> {
+      if (!ctx.account.linked) {
+        ctx.set({ group: null, groupInvites: [], rejoinAt: null, groupStatus: 'idle' });
+        return;
+      }
+      if (ctx.get().groupStatus === 'idle') ctx.set({ groupStatus: 'loading' });
+      try {
+        const res = await run('group_state', {}, { mutation: false });
+        ctx.set({ group: res.group, groupInvites: res.invites, rejoinAt: res.rejoinAt, groupStatus: 'ready' });
+      } catch {
+        ctx.set({ groupStatus: 'offline' });
+      }
+    },
+    /** Any group mutation, then a reload of the tab; the first join may show the push explanation. */
+    async groupAct<O extends Op>(op: O, args: OpArgs<O>, opts: { social?: boolean } = {}): Promise<Outcome> {
+      try {
+        await run(op, args);
+        if (opts.social) ctx.askPush();
+        await api.refreshGroup();
+        return null;
+      } catch (e) {
+        return codeOf(e);
+      }
     },
   };
   return api;

@@ -32,6 +32,7 @@ export const appStore = createAppStore({
   push: platform.push,
   platformName: platform.name,
   locale: typeof navigator === 'undefined' ? 'en' : navigator.language,
+  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 });
 
 export function useApp<T>(selector: (state: AppState) => T): T {

@@ -12,6 +12,7 @@ import { PushPromptSheet } from '../screens/account/PushPromptSheet';
 import { FriendsScreen } from '../screens/friends/FriendsScreen';
 import { LobbySheet } from '../screens/friends/TogetherSheets';
 import { VisitBanner } from '../screens/friends/VisitBanner';
+import { GroupScreen } from '../screens/group/GroupScreen';
 import { bindPhaseEffects } from './phaseEffects';
 import { usePrefersReducedMotion } from '../ui/hooks';
 import { strings } from '../ui/strings';
@@ -28,7 +29,6 @@ import { BuildScreen } from '../screens/build/BuildScreen';
 import { useBuildUi } from '../screens/build/buildState';
 import { BuildIslandLayer } from './BuildIslandLayer';
 import { StatsScreen } from '../screens/stats/StatsScreen';
-import { TabPage } from '../screens/TabPage';
 import { Scene, type SceneIsland, type SceneLayout } from '../world/Scene';
 import type { WorldMode } from '../world/types';
 import { IslandMoveSequence, type IslandMoveRefs } from '../world/sequences/IslandMove';
@@ -91,6 +91,7 @@ export function App() {
   const room = useApp((s) => s.room);
   const pendingLink = useApp((s) => s.pendingLink);
   const visitCount = useApp((s) => s.social?.visitCount);
+  const championWeek = useApp((s) => s.championWeek);
   const finishIslandMove = useApp((s) => s.finishIslandMove);
   const moveRefs = useIslandMoveRefs(islandMove);
   const moving = islandMove !== null && !reducedMotion;
@@ -138,11 +139,17 @@ export function App() {
       });
       return [{ model, mode: 'visit' as const }];
     }
-    const own = buildIslandModel({ ...base, world, animals, ...(features.visitTraceProp && visitCount !== undefined && { visitCount }) });
+    const own = buildIslandModel({
+      ...base,
+      world,
+      animals,
+      ...(features.visitTraceProp && visitCount !== undefined && { visitCount }),
+      ...(features.groups && championWeek && { championWeek }),
+    });
     const list: SceneIsland[] = [{ model: own, mode: 'own' }];
     if (DEV_TWO_ISLANDS !== null) list.push({ model: devSecondIsland(own, DEV_TWO_ISLANDS), mode: 'visit' });
     return list;
-  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings, movingId, moving, islandMove, moveRefs, visit, visitCount]);
+  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings, movingId, moving, islandMove, moveRefs, visit, visitCount, championWeek]);
 
   // Who crosses the bridge, from which old tile to which new one, in the skin they wear.
   const crossing = useMemo(() => {
@@ -174,6 +181,7 @@ export function App() {
   // A friend link opens the Friends tab with the request ready to send (Step 6.5).
   useEffect(() => {
     if (pendingLink?.kind === 'add' && features.friends && ready) setTab('friends');
+    if (pendingLink?.kind === 'join' && features.groups && ready) setTab('group');
   }, [pendingLink, ready, setTab]);
   useEffect(() => {
     document.documentElement.toggleAttribute('data-tabs', showTabs);
@@ -241,7 +249,7 @@ export function App() {
     screen = <FriendsScreen />;
   } else if (tab === 'group') {
     mode = 'paused';
-    screen = <TabPage title={strings.tabs[tab]} />;
+    screen = <GroupScreen />;
   } else if (phase.kind === 'break') {
     mode = 'break';
     screen = <BreakScreen />;

@@ -22,16 +22,36 @@ export function Avatar({ speciesId, size = 48 }: { speciesId: string | null; siz
   );
 }
 
-/** One person row: avatar, handle and an optional line under it, then actions on the right. */
-export function PersonRow({ person, sub, children, onPress }: { person: PersonView; sub?: React.ReactNode; children?: React.ReactNode; onPress?: () => void }) {
+/**
+ * One person row: an optional lead (rank), avatar, handle and a line under it, then actions on the right.
+ * `compact` keeps short trailing values (minutes, a score) on the row on phones instead of wrapping.
+ */
+export function PersonRow({
+  person,
+  sub,
+  lead,
+  children,
+  compact,
+  highlight,
+  onPress,
+}: {
+  person: PersonView;
+  sub?: React.ReactNode;
+  lead?: React.ReactNode;
+  children?: React.ReactNode;
+  compact?: boolean;
+  highlight?: boolean;
+  onPress?: () => void;
+}) {
   return (
-    <li className={styles.row} onPointerDown={onPress}>
+    <li className={`${styles.row} ${highlight ? styles.highlight : ''}`} onPointerDown={onPress}>
+      {lead}
       <Avatar speciesId={person.avatarSpeciesId} />
       <span className={styles.who}>
         <HandleText handle={person.handle} />
         {sub}
       </span>
-      {children && <span className={styles.actions}>{children}</span>}
+      {children && <span className={compact ? styles.trail : styles.actions}>{children}</span>}
     </li>
   );
 }

@@ -155,12 +155,18 @@
 
 ## Phase 8 — Groups: membership, ranking, missions, weekly reward (F11)
 
-- [ ] 8.1 Group membership (ADR)
-- [ ] 8.2 Group tab
-- [ ] 8.3 Scoring (shared rule, owner decision rev 2)
-- [ ] 8.4 Ranking sub-tab
-- [ ] 8.5 Group missions (shared rule `missions.ts`)
-- [ ] 8.6 Weekly settlement (server job)
+- [x] 8.1 Group membership (ADR)
+  - ADR-052; create/join by code/invite, one group each, size 10, owner powers, leave/transfer/disband, 24 h rejoin cooldown; tested on memory and PGlite.
+- [x] 8.2 Group tab
+  - `screens/group/GroupScreen.tsx`: no-group (create, code, invites, cooldown), header (code share, countdown, owner menu), sub-tabs. Screenshots checked; e2e creates a group.
+- [x] 8.3 Scoring (shared rule, owner decision rev 2)
+  - `shared/rules/scoring.ts` tested (active only, departed/spent/unverified out, 50 % inside the week and 0 after, both window modes, bonus, one decimal).
+- [x] 8.4 Ranking sub-tab
+  - Ranks with ties, score + week focus, presence, crown, own row highlighted, breakdown sheet, Visit (Attack in Phase 9).
+- [x] 8.5 Group missions (shared rule `missions.ts`)
+  - Target table n = 2…10 tested; milestones exactly once (two in one session), threshold, mid-week joiner does not raise the target; paid in the `end_session` transaction.
+- [x] 8.6 Weekly settlement (server job)
+  - `runWeeklyJob` + lazy settlement; eligibility, ties, < 3 members, zero top score, idempotent rerun, flag, notices, mission rollover (tested). **Phase 8 complete behind `groups`, `missions` (off).**
 
 ## Phase 9 — War inside a group (F8)
 
@@ -253,6 +259,13 @@
 - 6.6 · A category toggle may ask for permission; "Not now" is remembered. · Touching a toggle is a deliberate request.
 - 6.6 · Push texts are short and name-free (`server/core/push.ts`). · The Inbox holds the details; no handle lookups in the push path.
 - 6.8 · iOS: a new Live Activity per phase change; the break one is ended at once with dismissal at the break end. · Removes itself without the app (ADR-049).
+- 8.1 · Any member may invite friends; only the owner manages the code. · "Invite from the friend list"; the code is shared by members anyway.
+- 8.1 · The rejoin cooldown follows leaving or disbanding, not being removed. · Removal is not the user's choice; owners cannot use it to farm.
+- 8.1 · Groups are created in the device's time zone; new groups have war on (Phase 9 toggle). · Guidance default.
+- 8.5 · Milestone gold goes to current members with ≥ 25 min this week; a member who left keeps their counted minutes but gets no later gold. · "Every member who contributed".
+- 8.5 · A session counts for the week it ended in; one that ended in an already settled week counts for nothing. · Settlement freezes a week.
+- 8.6 · Scores at the boundary undo departures after the boundary (settlement may run late). · Same result whenever the job runs.
+- 8.6 · The flag stays until the next settlement clears it. · No client clock decides it.
 - 7.1 · The first rename after choosing a name is free; the 30-day cooldown starts with it. · A typo at onboarding should not lock a name for a month.
 - 7.1 · Reserved words include `sift`, `admin`, `운영자`, `관리자`, `공식`, … (`RESERVED_NAMES`). · Impersonation of the app.
 - 7.2 · The word filter skips short words that hide in normal names (`dick`/Dickens, `rape`/grape, `새끼`/새끼고양이, `시바`/시바견). · Fewer false rejections; reports cover the rest.

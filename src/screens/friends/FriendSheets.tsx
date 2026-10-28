@@ -114,6 +114,10 @@ export function ReportSheet({ person, context, onClose }: { person: PersonView; 
 /** The `⋯` menu of a person: Remove (friends only), Block, Report. */
 export function PersonMenu({ person, context, friend, onClose }: { person: PersonView; context: 'friends' | 'group' | 'visit'; friend: boolean; onClose: () => void }) {
   const [next, setNext] = useState<'remove' | 'block' | 'report' | null>(null);
+  // A friend outside the user's group can be invited to it (Step 8.1).
+  const canInvite = useApp((s) => friend && !!s.group && !s.group.members.some((m) => m.person.userId === person.userId));
+  const inviteToGroup = useApp((s) => s.inviteToGroup);
+  const [invited, setInvited] = useState<string | null>(null);
   if (next === 'report') return <ReportSheet person={person} context={context} onClose={onClose} />;
   if (next) return <ConfirmSheet kind={next} person={person} onClose={onClose} />;
   return (
@@ -121,7 +125,19 @@ export function PersonMenu({ person, context, friend, onClose }: { person: Perso
       <div className={styles.me}>
         <Avatar speciesId={person.avatarSpeciesId} />
       </div>
+      {invited && <p className={`${sheetStyles.note} type-body-sm`}>{invited}</p>}
       <div className={sheetStyles.actions}>
+        {canInvite && (
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              const outcome = await inviteToGroup(person.userId);
+              setInvited(outcome ? (strings.group.errors[outcome] ?? strings.group.errors.generic!) : strings.group.invited);
+            }}
+          >
+            {strings.group.inviteToGroup}
+          </Button>
+        )}
         {friend && (
           <Button variant="secondary" onClick={() => setNext('remove')}>
             {strings.friends.remove}
