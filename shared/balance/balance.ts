@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-27.3';
+export const BALANCE_VERSION = '2026-10-28.1';
 
 const MINUTE = 60_000;
 
@@ -120,6 +120,35 @@ export const balance = deepFreeze({
     missionMultiplier: 1.0,
     /** Participants per room, host included. */
     maxParticipants: 10,
+  },
+  /** War inside a group (Phase 9, owner decisions rev 2 and 3). */
+  war: {
+    /** Duel odds by tier gap: `byGap[gap]` if present, else `base ** gap`. The higher rank wins `odds : 1`. */
+    lossOdds: { base: 10, byGap: [1, 10, 100, 1000] },
+    /** A fallen animal leaves for good with this chance after the battle. */
+    vanishChanceOnFall: 0.25,
+    /** Defending Unicorns protect defenders within `radius` (Chebyshev): their vanish chance drops. */
+    unicornAura: { radius: 2, metric: 'chebyshev' as const, vanishChance: 0.05, appliesTo: 'defender' as const },
+    /** Never join an attack: they guard the island. */
+    attackExcludedSpecies: ['unicorn'],
+    /** Defender gold from `minGold` → gold taken on an attacker win (§8). */
+    lootBrackets: [
+      { minGold: 0, loot: 0 },
+      { minGold: 20, loot: 5 },
+      { minGold: 50, loot: 10 },
+      { minGold: 100, loot: 20 },
+      { minGold: 200, loot: 35 },
+      { minGold: 500, loot: 60 },
+      { minGold: 1000, loot: 100 },
+    ],
+    /** Most gold one defender can lose to wars in a ranking week (null: no cap). */
+    lootLostCapPerWeek: null as number | null,
+    attackerCooldownHours: 24,
+    defenderShieldHours: 12,
+    newMemberProtectionHours: 48,
+    /** No wars this close to the weekly settlement. */
+    freezeBeforeSettlementMinutes: 60,
+    maxRounds: 500,
   },
   /** Allowed shop price ranges [min, max] in gold (§8); `content:validate` enforces them. */
   prices: {

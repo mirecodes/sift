@@ -1,6 +1,7 @@
 import { registerHandlers } from '../api';
 import { groupHandlers } from './groups';
 import { socialHandlers } from './social';
+import { warHandlers } from './war';
 
 let installed = false;
 
@@ -8,5 +9,5 @@ let installed = false;
 export function installServerHandlers(): void {
   if (installed) return;
   installed = true;
-  registerHandlers({ ...socialHandlers, ...groupHandlers });
+  registerHandlers({ ...socialHandlers, ...groupHandlers, ...warHandlers });
 }

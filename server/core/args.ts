@@ -118,4 +118,8 @@ export const ARGS: { [O in Op]: z.ZodType } = {
   group_transfer: z.object({ userId: id }),
   group_set_war: z.object({ enabled: z.boolean() }),
   group_disband: z.object({}),
+  war_preview: z.object({ targetId: id }),
+  declare_war: z.object({ targetId: id }),
+  war_list: z.object({}),
+  get_war: z.object({ warId: id }),
 };

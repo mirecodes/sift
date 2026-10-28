@@ -206,6 +206,63 @@ export interface GroupInviteView {
   inviter: PersonView;
 }
 
+/** One animal in a battle (Phase 9): tile position, rank, look. */
+export interface WarFighter {
+  id: string;
+  speciesId: string;
+  tierRank: number;
+  skinId?: string;
+  x: number;
+  z: number;
+}
+
+/** A war record: everything a replay needs; decided on the server before any animation (Step 9.5). */
+export interface WarView {
+  id: string;
+  groupId: string;
+  createdAt: number;
+  attacker: PersonView;
+  defender: PersonView;
+  /** The defender's island as it stood (the battlefield). */
+  island: { world: WorldState; level: number; buildings: PlacedBuilding[]; equipped: Equipped; goldPileLevel: number };
+  attackers: WarFighter[];
+  defenders: WarFighter[];
+  rounds: { duels: { a: string; d: string; meet: [number, number]; loser: string }[] }[];
+  winner: 'attacker' | 'defender';
+  fallen: string[];
+  vanished: string[];
+  protected: string[];
+  lootGold: number;
+  seed: number;
+  balanceVersion: string;
+}
+
+/** A row of the Wars sub-tab (Step 9.8), from the viewer's side. */
+export interface WarSummary {
+  id: string;
+  createdAt: number;
+  role: 'attacker' | 'defender';
+  opponent: PersonView;
+  won: boolean;
+  /** The viewer's animals that left for good. */
+  lost: number;
+  /** Gold the viewer gained (+) or lost (−). */
+  gold: number;
+}
+
+/** The Attack confirm sheet (Step 9.6). */
+export interface WarPreview {
+  /** Counts by tier rank (0..3). */
+  attackers: number[];
+  unicornsHome: number;
+  defenders: number[];
+  defenderUnicorns: number;
+  /** Gold taken if the attack wins (their bracket). */
+  lootIfWin: number;
+  /** Why an attack is not possible now, and until when. */
+  blocked: { code: ErrorCode; until?: number } | null;
+}
+
 /** A device's local save, uploaded once at the first sign-in (Step 5.7). */
 export interface LocalSave {
   world: WorldState;
@@ -290,6 +347,14 @@ export interface Ops {
   group_transfer: { args: { userId: string }; result: Record<string, never> };
   group_set_war: { args: { enabled: boolean }; result: Record<string, never> };
   group_disband: { args: Record<string, never>; result: Record<string, never> };
+  // --- Phase 9: war inside a group ---
+  war_preview: { args: { targetId: string }; result: { preview: WarPreview } };
+  /** Decides the battle on the server; retries with the same request id return the same war. */
+  declare_war: { args: { targetId: string }; result: { war: WarView } };
+  /** The last 20 wars in the group involving the caller. */
+  war_list: { args: Record<string, never>; result: { wars: WarSummary[] } };
+  /** A replay: participants, or members of the war's group. */
+  get_war: { args: { warId: string }; result: { war: WarView } };
 }
 
 export type Op = keyof Ops;
@@ -330,6 +395,7 @@ export const MUTATIONS: ReadonlySet<Op> = new Set<Op>([
   'group_transfer',
   'group_set_war',
   'group_disband',
+  'declare_war',
 ]);
 
 /** Operations open to signed-out clients. */

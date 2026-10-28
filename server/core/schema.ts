@@ -1,4 +1,4 @@
-import type { IslandState, SyncedBuilding, SyncedNotice } from '../../shared/api/types';
+import type { IslandState, SyncedBuilding, SyncedNotice, WarView } from '../../shared/api/types';
 import type { Equipped, FocusSession, IslandHistoryEntry, LedgerEntry, OwnedCosmetic, PlacedAnimal } from '../../shared/types/rows';
 
 /**
@@ -231,8 +231,17 @@ export interface MissionContributionRow {
   minutes: number;
 }
 
+// --- Phase 9: war (migration 4) ---
+
+/** A decided battle (Step 9.5): the record is the replay. */
+export interface WarRow extends Omit<WarView, 'attacker' | 'defender'> {
+  attackerId: string;
+  defenderId: string;
+}
+
 export interface Rows {
   profiles: ProfileRow;
+  wars: WarRow;
   groups: GroupRow;
   group_members: GroupMemberRow;
   group_invites: GroupInviteRow;
@@ -293,6 +302,7 @@ export const TABLES: Readonly<Record<TableName, TableSpec>> = {
   weekly_results: { key: ['key'], index: { groupId: 'text', weekStart: 'text', userId: 'text' }, migration: 3 },
   group_mission_weeks: { key: ['key'], index: { groupId: 'text' }, migration: 3 },
   group_mission_contributions: { key: ['key'], index: { groupId: 'text', weekStart: 'text' }, migration: 3 },
+  wars: { key: ['id'], index: { groupId: 'text', attackerId: 'text', defenderId: 'text', createdAt: 'bigint' }, migration: 4 },
 };
 
 /** Tables a user's data lives in (account export and deletion). */
