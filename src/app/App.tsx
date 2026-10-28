@@ -13,6 +13,8 @@ import { FriendsScreen } from '../screens/friends/FriendsScreen';
 import { LobbySheet } from '../screens/friends/TogetherSheets';
 import { VisitBanner } from '../screens/friends/VisitBanner';
 import { GroupScreen } from '../screens/group/GroupScreen';
+import { WarScreen } from '../screens/group/WarScreen';
+import { WarReplay, type WarReplayRefs } from '../world/sequences/WarReplay';
 import { bindPhaseEffects } from './phaseEffects';
 import { usePrefersReducedMotion } from '../ui/hooks';
 import { strings } from '../ui/strings';
@@ -97,6 +99,21 @@ export function App() {
   const moving = islandMove !== null && !reducedMotion;
   const [crossfade, setCrossfade] = useState(0);
 
+  // War replay (Step 9.6): the defender's island with both armies; Skip/2× through shared refs.
+  const war = useApp((s) => s.war);
+  const warRefs = useMemo<WarReplayRefs>(() => ({ speed: { current: 1 }, skip: { current: false }, time: { current: 0 } }), []);
+  const [warDone, setWarDone] = useState(false);
+  const [warRun, setWarRun] = useState(0);
+  useEffect(() => {
+    if (warDone) platform.haptics.impact('medium'); // the war result (Step 6.2)
+  }, [warDone]);
+  useEffect(() => {
+    setWarDone(false);
+    warRefs.speed.current = 1;
+    warRefs.skip.current = reducedMotion; // reduced motion: straight to the result
+    warRefs.time.current = 0;
+  }, [war, warRun, warRefs, reducedMotion]);
+
   // Reduced motion: no sequence, the new island fades in (Step 4.3).
   useEffect(() => {
     if (islandMove && reducedMotion) {
@@ -125,6 +142,19 @@ export function App() {
         { model: next, mode: 'own' as const, motion: { lift: moveRefs.newLift, bobY: moveRefs.newBob, calm: true } },
       ];
     }
+    // A battle: the defender's island as it stood, without its animals (they are the defending army).
+    if (war) {
+      const model = buildIslandModel({
+        ownerId: war.defender.userId,
+        world: war.island.world,
+        islandLevel: war.island.level,
+        animals: [],
+        equipped: war.island.equipped,
+        buildings: war.island.buildings,
+        goldPileLevel: war.island.goldPileLevel,
+      });
+      return [{ model, mode: 'battle' as const }];
+    }
     // Visit mode (Step 7.4): the friend's island instead of the user's own.
     if (visit) {
       const model = buildIslandModel({
@@ -149,7 +179,7 @@ export function App() {
     const list: SceneIsland[] = [{ model: own, mode: 'own' }];
     if (DEV_TWO_ISLANDS !== null) list.push({ model: devSecondIsland(own, DEV_TWO_ISLANDS), mode: 'visit' });
     return list;
-  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings, movingId, moving, islandMove, moveRefs, visit, visitCount, championWeek]);
+  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings, movingId, moving, islandMove, moveRefs, visit, visitCount, championWeek, war]);
 
   // Who crosses the bridge, from which old tile to which new one, in the skin they wear.
   const crossing = useMemo(() => {
@@ -169,7 +199,16 @@ export function App() {
   const tab = focusing || !TABS.some((t) => t.id === activeTab) ? 'island' : activeTab;
   // The tab bar is hidden on Focus (focus rule) and on the Island tab's Settings and Collection pages.
   const visiting = visit !== null && !focusing;
-  const showTabs = ready && TABS.length > 1 && !focusing && !moving && !visiting && !(tab === 'island' && phase.kind === 'idle' && view !== 'home');
+  const fighting = war !== null && !focusing;
+  const showTabs = ready && TABS.length > 1 && !focusing && !moving && !visiting && !fighting && !(tab === 'island' && phase.kind === 'idle' && view !== 'home');
+
+  // A war link (`/war/<id>`, Step 6.5) opens its replay once signed in.
+  const signedInNow = useApp((s) => s.account.status === 'signedIn');
+  useEffect(() => {
+    if (pendingLink?.kind !== 'war' || !features.war || !ready || !signedInNow) return;
+    const link = appStore.getState().takeLink('war');
+    if (link) void appStore.getState().watchWar(link.id);
+  }, [pendingLink, ready, signedInNow]);
 
   // A crossfade when entering or leaving a friend's island (DESIGN.md 7.12).
   const wasVisiting = useRef(visiting);
@@ -238,6 +277,9 @@ export function App() {
   } else if (moving) {
     mode = 'sequence';
     screen = <MoveScreen />;
+  } else if (fighting) {
+    mode = 'sequence';
+    screen = <WarScreen refs={warRefs} done={warDone} onReplay={() => setWarRun((n) => n + 1)} />;
   } else if (visiting) {
     mode = 'home';
     screen = <VisitBanner />;
@@ -277,6 +319,10 @@ export function App() {
         islands={islands}
         reducedMotion={reducedMotion}
         theme={theme}
+        {...(fighting &&
+          war && {
+            overlay: () => <WarReplay key={`${war.id}:${warRun}`} war={war} refs={warRefs} onDone={() => setWarDone(true)} />,
+          })}
         {...(crossing && {
           pan: moveRefs.pan,
           overlay: ({ positions }: SceneLayout) => (

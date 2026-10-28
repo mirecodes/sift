@@ -1,0 +1,66 @@
+/* War sheets, Wars sub-tab and the battle screen (DESIGN.md 7.15). */
+.armies {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+.army p {
+  margin: 0 0 var(--space-xs);
+}
+.tiers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-xs);
+}
+.tiers li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.badgeWon,
+.badgeLost {
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+.badgeWon {
+  background: var(--color-accent-green);
+  color: var(--color-ink);
+}
+.badgeLost {
+  background: var(--color-hairline);
+}
+.controls {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--space-3xl) + var(--safe-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--space-sm);
+  z-index: 20;
+}
+.result {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--space-2xl) + var(--safe-bottom));
+  transform: translateX(-50%);
+  width: min(400px, calc(100% - 2 * var(--gutter)));
+  display: grid;
+  gap: var(--space-sm);
+  z-index: 20;
+}
+.result h2,
+.result p {
+  margin: 0;
+}
+.loss {
+  color: var(--color-accent-red);
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}

@@ -44,6 +44,10 @@ function noticeText(notice: Notice, animals: readonly PlacedAnimal[], social: So
       return strings.notice.removedFromGroup;
     case 'group_invite':
       return strings.notice.groupInvite(who(notice.inviterId));
+    case 'war_report':
+      return notice.role === 'defender'
+        ? strings.notice.warDefender(notice.opponentId ? who(notice.opponentId) : undefined, strings.stats.clock(notice.at ?? Date.now()), notice.result === 'win', notice.vanished ?? 0, -(notice.gold ?? 0))
+        : strings.notice.warAttacker(notice.result === 'win', notice.gold ?? 0);
     default:
       return strings.notice.generic;
   }
@@ -58,9 +62,11 @@ export function NoticeCard() {
   const dismiss = useApp((s) => s.dismissNotice);
   const joinRoom = useApp((s) => s.joinRoom);
   const setTab = useApp((s) => s.setTab);
+  const watchWar = useApp((s) => s.watchWar);
   if (!row) return null;
   const invite = row.notice.kind === 'together_invite' ? row.notice : null;
   const groupInvite = row.notice.kind === 'group_invite' && features.groups;
+  const replay = row.notice.kind === 'war_report' && row.notice.role === 'defender' && features.war ? row.notice.warId : null;
   return (
     <Panel key={row.id} className={styles.card} role="status">
       <p className={`${styles.text} type-body-md`}>{noticeText(row.notice, animals, social, group)}</p>
@@ -72,6 +78,16 @@ export function NoticeCard() {
           }}
         >
           {strings.group.join}
+        </Button>
+      )}
+      {replay && (
+        <Button
+          onClick={() => {
+            void dismiss(row.id);
+            void watchWar(replay);
+          }}
+        >
+          {strings.war.watchReplay}
         </Button>
       )}
       {invite && (

@@ -52,7 +52,7 @@ import type { ContentPackRow } from '../domain/types';
 import { PUSH_CATEGORIES, type PushCategory } from '../../shared/rules/push';
 import { parseDeepLink, type DeepLink } from '../../shared/rules/links';
 import type { PushAdapter } from '../platform/push';
-import type { ReportReason } from '../../shared/api/types';
+import type { ReportReason, WarPreview } from '../../shared/api/types';
 import { createSocial, SOCIAL_EMPTY, type Outcome, type SocialSlice } from './social';
 
 const fetchText = async (url: string) => (await fetch(url)).text();
@@ -281,6 +281,16 @@ export interface AppState extends SocialSlice {
   transferGroup(userId: string): Promise<Outcome>;
   setGroupWar(enabled: boolean): Promise<Outcome>;
   disbandGroup(): Promise<Outcome>;
+
+  // --- Phase 9: war ---
+  /** What an attack on `targetId` would look like, or why it cannot happen now. */
+  previewWar(targetId: string): Promise<WarPreview | Outcome>;
+  /** Attacks; the server decides; the replay starts. */
+  declareWar(targetId: string): Promise<Outcome>;
+  loadWars(): Promise<void>;
+  /** Replays a stored war (Wars sub-tab, a defender's notice, a `/war/<id>` link). */
+  watchWar(warId: string): Promise<Outcome>;
+  closeWar(): void;
 }
 
 /** What the move sequence needs about the island left behind (Step 4.3). */
@@ -692,6 +702,11 @@ export function createAppStore(initialDeps: AppDeps) {
     transferGroup: (userId) => social.groupAct('group_transfer', { userId }),
     setGroupWar: (enabled) => social.groupAct('group_set_war', { enabled }),
     disbandGroup: () => social.groupAct('group_disband', {}),
+    previewWar: (targetId) => social.previewWar(targetId),
+    declareWar: (targetId) => social.declareWar(targetId),
+    loadWars: () => social.loadWars(),
+    watchWar: (warId) => social.watchWar(warId),
+    closeWar: () => social.closeWar(),
 
     async pollRoom() {
       const room = await social.pollRoom();

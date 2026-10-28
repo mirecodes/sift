@@ -170,15 +170,24 @@
 
 ## Phase 9 — War inside a group (F8)
 
-- [ ] 9.1 Rules and config
-- [ ] 9.2 Formation (shared)
-- [ ] 9.3 Simulation (shared, deterministic)
-- [ ] 9.4 Gold loot (shared rule `war/loot.ts`, owner decision rev 3)
-- [ ] 9.5 Server: `declare_war(targetId, requestId)`
-- [ ] 9.6 Attacker experience
-- [ ] 9.7 Defender experience
-- [ ] 9.8 Wars sub-tab
-- [ ] 9.9 Performance
+- [x] 9.1 Rules and config
+  - `balance.war` (§9.1 values, loot brackets, cap null); armies (Unicorns stay home) tested.
+- [x] 9.2 Formation (shared)
+  - `landingFormation` (rows off the front edge, highest rank first, Tigers lead) tested; defenders use their stored tiles (pinned ones in Phase 10).
+- [x] 9.3 Simulation (shared, deterministic)
+  - `simulateBattle` in `shared/rules/war.ts` (one file instead of `war/*.ts`); determinism, invariants over 300 seeds, duel odds and 25 % / 5 % vanish over 10,000 runs each, aura boundaries tested.
+- [x] 9.4 Gold loot (shared rule `war/loot.ts`, owner decision rev 3)
+  - `lootFor` in `shared/rules/war.ts`: every bracket boundary, balance below loot, zero, weekly cap tested; defender win moves nothing (server test).
+- [x] 9.5 Server: `declare_war(targetId, requestId)`
+  - Checks, locks, settle, seed, one write, notices, idempotent retry; suite on memory and PGlite (protection, freeze, cooldown, shield, loot, vanished, replay from the seed, lists, access).
+- [x] 9.6 Attacker experience
+  - Attack sheet (armies by tier, loot, odds, blockers), replay (airship, landing strip, formation, aura squares, rounds, result with Watch again), Skip / 2× / Esc, reduced motion → result. Timeline tested (≤ 30 s for 100 v 100). Screenshots checked. The loot chest walk is not drawn: the gold shows in the result and the HUD.
+- [x] 9.7 Defender experience
+  - `war_report` notice with Watch replay; vanished animals and gold arrive with the delta before the island draws.
+- [x] 9.8 Wars sub-tab
+  - Last 20 with result, losses, gold, Replay and Copy link (`/war/<id>` opens the replay). E2E: empty state.
+- [x] 9.9 Performance
+  - Fighters: one instanced mesh per species and skin (≤ ~40 draw calls for 200 animals); no shadow maps. Reference devices and targets in ADR-053; measuring on them is the owner's (no devices here). **Phase 9 complete behind `war` (off).**
 
 ## Phase 10 — Arrange animals by drag and drop (F12, later; owner decision rev 3)
 
@@ -259,6 +268,12 @@
 - 6.6 · A category toggle may ask for permission; "Not now" is remembered. · Touching a toggle is a deliberate request.
 - 6.6 · Push texts are short and name-free (`server/core/push.ts`). · The Inbox holds the details; no handle lookups in the push path.
 - 6.8 · iOS: a new Live Activity per phase change; the break one is ended at once with dismissal at the break end. · Removes itself without the app (ADR-049).
+- 9.1 · After `maxRounds` with both sides standing, the defense holds. · An attack must clearly win.
+- 9.1 · New-member protection shields the new member from attacks; they may attack others. · "Protection" is for the newcomer.
+- 9.2 · Attackers land on a wooden strip off the defender island's front edge (+z), not on its tiles. · Defender tiles are occupied; the strip reads as the airship's landing.
+- 9.5 · Cooldown and shield are derived from the `wars` rows, not stored separately. · One source of truth.
+- 9.6 · No loot-chest walk; the result panel shows the gold and the HUD updates. · The rest of the sequence is complete; the chest is polish for later.
+- 9.6 · Losers shrink away while tipping over instead of fading. · Instancing (Step 9.9) has no per-instance transparency.
 - 8.1 · Any member may invite friends; only the owner manages the code. · "Invite from the friend list"; the code is shared by members anyway.
 - 8.1 · The rejoin cooldown follows leaving or disbanding, not being removed. · Removal is not the user's choice; owners cannot use it to farm.
 - 8.1 · Groups are created in the device's time zone; new groups have war on (Phase 9 toggle). · Guidance default.

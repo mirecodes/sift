@@ -403,6 +403,13 @@ All buttons: `button` type, `--radius-sm`, padding `--space-md` `--space-xl`. On
 - **Notices** (7.2a): `You won the week! +50 gold.`, `민지#4821 won the week.`, `Group mission: 100% reached. +30 gold.`, `Jae#8379 joined your group.`, `You were removed from the group.`, `민지#4821 invited you to Morning Owls.` with `Join`.
 - **Champion flag** (15.8): on the island of a weekly winner during the following week.
 
+### 7.15 War (Phase 9)
+- **Attack** (Ranking row, `button-secondary` small, only with `features.war` and war on in the group; not on your own row) opens a `Sheet`: `display-sm` `Attack 민지#4821?`; two columns `Your army` / `Their army`, each a list of tier rows (`badge-tier` + `×3`); under yours `body-sm` `--color-body-mid` `Unicorns stay home to guard your island.` (with ≥ 1 Unicorn); `body-md` `If you win: +20 gold`; `body-sm` `--color-body-mid` `Your fallen animals have a 25% chance to leave for good. Their animals near a Unicorn are protected (5%).` and `You can attack again in 24 hours.`; buttons `Cancel`, `Attack` (primary). When blocked, the primary is disabled and a `body-sm` line says why (`They were attacked recently. Try again in 3 h.`, `New members are protected for 2 days.`, `No battles in the hour before the weekly results.`, `You attacked recently. Try again in 5 h.`, `You need an animal that can fight (Unicorns stay home).`).
+- **Battle** (render mode `sequence`, the defender's island, Part II 15.9): no top bar, tabs or panels; bottom center `Skip` and `2×` (`button-secondary`, `aria-pressed` on 2×). Esc skips.
+- **Result** (`panel` at the bottom center, like Break): `display-sm` `Victory` / `Defeat` (from the viewer's side; spectators read `민지#4821 won`), then `body-md` lines: `Your army: 4 home, 2 fell` and `1 left for good` (`--color-accent-red`), and the gold `+20 gold` / `−20 gold` (none when 0). Buttons `Watch again` (secondary) and `Done` (primary). Reduced motion: the result panel only, over the island.
+- **Wars** sub-tab: rows (newest first) with the opponent's avatar and handle, `caption` `You attacked · 2 h ago` / `Attacked you · 2 h ago`, a `badge` `Won` (`--color-accent-green` fill) or `Lost` (`--color-hairline`), `caption` `−1 animal · +20 gold`, then `Replay` (secondary small) and a share icon button (copies `/war/<id>`). Empty: `body-sm` `No battles yet.`
+- **Defender notice** (7.2a): `Jae#8379 attacked your island at 14:02. You lost: 2 animals left for good and 20 gold was taken.` (or `You held your ground.`) with `Watch replay` (primary) beside `OK`.
+
 ## 8. UI Motion
 
 | Token | Duration | Usage |
@@ -581,6 +588,15 @@ Terrain, water and camp colors are one keyed record, `defaultBlocks` (`grassTop`
 
 ### 15.8 Champion Flag
 - A weekly winner's island (Step 8.6) flies a flag for the following week: a thin `palette` wood pole 1.2 blocks tall on the corner of the hut tile, with a 0.45 × 0.3 banner in `--color-accent-yellow` that waves gently (a 2-segment sine sway, 0.5 Hz; still with reduced motion and on Focus). Visible on visits and in the ranking's island too. When it first appears on Home it rises up the pole over 1.2 s.
+
+### 15.9 Battle Replay (Phase 9)
+- Drawn in the defender island's space, which shows without its own animals (they are the defending army).
+- **Landing strip**: a wooden deck (`#8A5A34`, 0.12 thick) off the island's front edge, as wide as the island, deep enough for the formation rows.
+- **Airship**: a voxel ship (wood hull with a darker rail and cabin, two ropes, a cream balloon with a red band) flies in from the left over 3.5 s, descending, and docks at the end of the strip; after the result it flies off to the right.
+- **Landing** (1.2 s): attackers appear with a hop on their formation spots (highest ranks nearest the island, Tigers first), facing the island.
+- **Aura**: a pale yellow square (`#FFF4B8`, 22 % opacity, 5 × 5 tiles) under each defending Unicorn.
+- **Rounds**: each pair runs to the meeting point, bumps (a quick squash and a small hop), the loser tips over and shrinks away (instanced meshes per species and skin, so no per-animal transparency); winners stay where they met. Rounds last 0.45–1 s so the battle takes at most 26 s; 2× halves it.
+- Reduced motion: no replay; the result panel shows over the island.
 
 ### 15.5 Stream
 

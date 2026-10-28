@@ -73,7 +73,16 @@ The server contract (guidance_v2 Step 5.2). Types: `shared/api/types.ts`; handle
 
 Jobs: `POST /job/weekly` (every 15 min) settles groups whose week ended (`runWeeklyJob`).
 
-Phase 9 operations are added below.
+### Phase 9: war inside a group
+
+| Op | Args → data | Notes |
+|---|---|---|
+| `war_preview` | `{ targetId }` → `{ preview }` | Both armies by tier, Unicorns home, `lootIfWin`, and `blocked` (`settlement_freeze`, `cooldown_active`, `shield_active`, `protected_new_member`, `no_army`) with `until` |
+| `declare_war` | `{ targetId }` → `{ war }` | Same group (`not_in_group`), war on (`war_disabled`), the checks above; decides the battle (seeded, shared rule), vanishes animals, moves loot, stores the war, notifies both (push the defender unless focusing). Same `requestId` → same war |
+| `war_list` | `{}` → `{ wars }` | Last 20 wars in the group involving the caller, from their side (`won`, `lost`, `gold`) |
+| `get_war` | `{ warId }` → `{ war }` | Participants or members of the war's group (`not_found`) |
+
+Migration 4: `wars` (key `id`; `group_id`, `attacker_id`, `defender_id`, `created_at`; the row holds armies with positions, rounds, result, loot, seed, `balance_version`).
 
 ## 4. Tables
 

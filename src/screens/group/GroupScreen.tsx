@@ -19,6 +19,7 @@ import { ReportSheet } from '../friends/FriendSheets';
 import { FocusingNow, PersonRow } from '../friends/Person';
 import { TabPage } from '../TabPage';
 import { WarsTab } from './WarsTab';
+import { AttackSheet } from './WarSheets';
 import f from '../friends/Friends.module.css';
 import styles from './Group.module.css';
 
@@ -427,6 +428,7 @@ export function GroupScreen() {
   const refreshSocial = useApp((s) => s.refreshSocial);
   const [sub, setSub] = useState<Sub>('ranking');
   const [signIn, setSignIn] = useState(false);
+  const [attacking, setAttacking] = useState<MemberView | null>(null);
 
   useEffect(() => {
     if (status !== 'signedIn') return;
@@ -472,7 +474,21 @@ export function GroupScreen() {
       <div className={styles.stack}>
         <Header group={group} owner={group.ownerId === me} />
         <Segmented label={strings.group.title} options={tabs} value={sub} onChange={setSub} />
-        {sub === 'ranking' && <Ranking group={group} me={me} />}
+        {sub === 'ranking' && (
+          <Ranking
+            group={group}
+            me={me}
+            {...(features.war &&
+              group.warEnabled && {
+                attack: (m: MemberView) => (
+                  <Button variant="secondary" className={f.small} onClick={() => setAttacking(m)}>
+                    {strings.war.attack}
+                  </Button>
+                ),
+              })}
+          />
+        )}
+        {attacking && <AttackSheet target={attacking} onClose={() => setAttacking(null)} />}
         {sub === 'missions' && <Missions group={group} />}
         {sub === 'wars' && <WarsTab group={group} />}
         {sub === 'members' && <Members group={group} me={me} />}

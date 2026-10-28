@@ -1,4 +1,4 @@
-import type { ErrorCode, GroupInviteView, GroupView, IslandSnapshot, Op, OpArgs, OpResult, ReportReason, RoomView, SocialState } from '../../shared/api/types';
+import type { ErrorCode, GroupInviteView, GroupView, IslandSnapshot, Op, OpArgs, OpResult, ReportReason, RoomView, SocialState, WarPreview, WarSummary, WarView } from '../../shared/api/types';
 import { balance } from '../../shared/balance/balance';
 import { parseHandle } from '../../shared/rules/handle';
 import { RemoteError } from '../platform/remote';
@@ -19,9 +19,13 @@ export interface SocialSlice {
   groupInvites: GroupInviteView[];
   rejoinAt: number | null;
   groupStatus: 'idle' | 'loading' | 'ready' | 'offline';
+  /** The war being replayed (Phase 9); the scene shows its battlefield. */
+  war: WarView | null;
+  /** The Wars sub-tab (last 20 wars in the group involving the user). */
+  wars: WarSummary[];
 }
 
-export const SOCIAL_EMPTY: SocialSlice = { social: null, socialStatus: 'idle', visit: null, room: null, group: null, groupInvites: [], rejoinAt: null, groupStatus: 'idle' };
+export const SOCIAL_EMPTY: SocialSlice = { social: null, socialStatus: 'idle', visit: null, room: null, group: null, groupInvites: [], rejoinAt: null, groupStatus: 'idle', war: null, wars: [] };
 
 /** What the social layer needs from the store. */
 export interface SocialCtx {
@@ -199,6 +203,46 @@ export function createSocial(ctx: SocialCtx) {
         ctx.set({ groupStatus: 'offline' });
       }
     },
+    // --- War (Phase 9) ---
+
+    async previewWar(targetId: string): Promise<WarPreview | Outcome> {
+      try {
+        return (await run('war_preview', { targetId }, { mutation: false })).preview;
+      } catch (e) {
+        return codeOf(e);
+      }
+    },
+    /** The server decides the battle; the replay starts, the delta brings vanished animals and gold. */
+    async declareWar(targetId: string): Promise<Outcome> {
+      try {
+        const { war } = await run('declare_war', { targetId });
+        ctx.set({ war, visit: null });
+        return null;
+      } catch (e) {
+        return codeOf(e);
+      }
+    },
+    async loadWars(): Promise<void> {
+      try {
+        ctx.set({ wars: (await run('war_list', {}, { mutation: false })).wars });
+      } catch {
+        // keeps the last list
+      }
+    },
+    async watchWar(warId: string): Promise<Outcome> {
+      try {
+        ctx.set({ war: (await run('get_war', { warId }, { mutation: false })).war, visit: null });
+        return null;
+      } catch (e) {
+        return codeOf(e);
+      }
+    },
+    closeWar(): void {
+      ctx.set({ war: null });
+      void api.refreshGroup();
+      void api.loadWars();
+    },
+
     /** Any group mutation, then a reload of the tab; the first join may show the push explanation. */
     async groupAct<O extends Op>(op: O, args: OpArgs<O>, opts: { social?: boolean } = {}): Promise<Outcome> {
       try {

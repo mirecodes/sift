@@ -453,6 +453,9 @@ check('a new group shows its name and an 8-letter invite code', (await acct.getB
 check('the ranking lists the creator first', await acct.getByLabel('#1').isVisible());
 await acct.getByRole('button', { name: 'Missions' }).click();
 check('the mission target is frozen at the size of a 2-person group', await acct.getByText(/ \/ 600 min$/).isVisible());
+// War (Phase 9): the Wars sub-tab starts empty; nobody else is in the group to attack.
+await acct.getByRole('button', { name: 'Wars' }).click();
+check('the Wars sub-tab starts empty', await acct.getByText('No battles yet.').isVisible());
 await acct.close();
 
 check('no page errors', errors.length === 0);

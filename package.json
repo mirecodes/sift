@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "VITE_FEATURES=stats,economy,cosmetics,islandMove,friends,presence,together,groups,missions VITE_BACKEND=fake vite build --outDir dist-e2e --emptyOutDir && node e2e/smoke.mjs",
+    "e2e": "VITE_FEATURES=stats,economy,cosmetics,islandMove,friends,presence,together,groups,missions,war VITE_BACKEND=fake vite build --outDir dist-e2e --emptyOutDir && node e2e/smoke.mjs",
     "server:build": "node tools/server/build.mjs",
     "server:check": "node tools/server/build.mjs && node tools/server/bundle-check.mjs",
     "server:sql": "node tools/run.mjs tools/server/sql.ts",
