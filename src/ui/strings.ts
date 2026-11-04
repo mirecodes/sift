@@ -67,6 +67,28 @@ export const strings = {
     notifications: 'Notifications',
     pushOff: 'Notifications are off for Sift. Turn them on in the system settings.',
   },
+  /** Settings › Test tools: development builds with the fake backend only (never shipped). */
+  testTools: {
+    section: 'Test tools',
+    note: 'Development only. Changes the test server in this browser.',
+    army: 'Test army',
+    armyButton: 'Add animals',
+    timers: 'War cooldowns and shields',
+    timersButton: 'Reset',
+    attack: 'A friend attacks you',
+    attackButton: 'Start',
+    done: {
+      army: 'Added 9 animals of every tier, a Unicorn among them.',
+      timers: 'Cooldowns, shields and new-member protection are over.',
+      attack: 'Done. Check the notice on Home and Group › Wars.',
+    },
+    problems: {
+      no_island: 'Finish signing in first.',
+      no_group: 'Join Morning Owls first (the invite is in the Group tab).',
+      no_bot: 'Your group has no sample friends. Join Morning Owls instead.',
+      failed: (code: string) => `It did not work (${code}).`,
+    },
+  },
   /** Local notifications at the planned end (Step 6.3); the only thing that reaches the user during Focus. */
   alerts: {
     focusEnd: { title: "Time's up", body: 'Open Sift to end focus.' },
