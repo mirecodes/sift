@@ -7,6 +7,7 @@ import { platform } from '../platform';
 import { appStore, selectIslandLevel, selectOccupancy, useApp } from '../store';
 import { buildUi, useBuildUi } from '../screens/build/buildState';
 import { drag, dropPickedAnimal, lastDrop } from '../screens/build/arrange';
+import { buildingDrag, dragBuildingTo, dropBuilding, onGhost, startBuildingDrag } from '../screens/build/moveBuilding';
 import { useGhostProblem } from '../screens/build/BuildScreen';
 import { ArrangeLayer } from '../world/build/ArrangeLayer';
 import { BuildLayer } from '../world/build/BuildLayer';
@@ -20,6 +21,11 @@ const SLOP_PX = 8;
 function animalOn(tile: Tile): string | null {
   const ids = selectOccupancy(appStore.getState()).get(tileKey(tile))?.animalIds ?? [];
   return ids.at(-1) ?? null;
+}
+
+/** The placed building covering a tile, if any. */
+function buildingOn(tile: Tile): string | null {
+  return selectOccupancy(appStore.getState()).get(tileKey(tile))?.buildingId ?? null;
 }
 
 const drop = dropPickedAnimal;
@@ -55,7 +61,8 @@ export function BuildIslandLayer() {
     const up = () => {
       if (press.current?.timer !== undefined) window.clearTimeout(press.current.timer);
       press.current = null;
-      if (buildUi.getState().dragging) void drop();
+      const s = buildUi.getState();
+      if (s.dragging) void (s.mode === 'animals' ? drop() : dropBuilding());
     };
     window.addEventListener('pointerdown', down, { capture: true });
     window.addEventListener('pointermove', move);
@@ -121,12 +128,15 @@ export function BuildIslandLayer() {
   }
 
   const onTap = (t: Tile) => {
-    if (buildUi.getState().placing) buildUi.setState({ tile: { x: t.x, z: t.z } });
-    else {
-      // A tap on a placed building selects it; anywhere else clears the selection.
-      const info = selectOccupancy(appStore.getState()).get(tileKey(t));
-      buildUi.setState({ selected: info?.buildingId ?? null });
-    }
+    const s = buildUi.getState();
+    // The click that ends a drag is not a tap.
+    if (s.dragging || Date.now() - buildingDrag.at < 400) return;
+    if (s.placing) return void buildUi.setState({ tile: { x: t.x, z: t.z }, note: null });
+    // A tap on a placed building selects it; with one selected, a tap on empty ground moves it there.
+    const id = buildingOn(t);
+    if (id || !s.selected) return void buildUi.setState({ selected: id });
+    const b = placed.find((x) => x.id === s.selected);
+    if (b) buildUi.setState({ placing: { defId: b.defId, rotation: b.rotation, movingId: b.id }, tile: { x: t.x, z: t.z }, selected: null, note: null });
   };
 
   return (
@@ -136,7 +146,35 @@ export function BuildIslandLayer() {
       tile={tile}
       valid={problem === null}
       selectedTiles={selectedTiles}
-      onHover={(t) => buildUi.getState().placing && buildUi.setState({ tile: { x: t.x, z: t.z } })}
+      onDown={(t, pointerType) => {
+        const s = buildUi.getState();
+        // Touch drags the ghost at once (with a mouse it already follows the pointer, and a drag turns the
+        // camera); a placed building drags with a mouse at once, by touch after a long press.
+        if (s.placing) {
+          if (pointerType !== 'mouse' && onGhost(t)) startBuildingDrag(t);
+          return;
+        }
+        const id = buildingOn(t);
+        if (!id) return;
+        if (pointerType === 'mouse') startBuildingDrag(t, id);
+        else if (press.current) {
+          press.current.timer = window.setTimeout(() => {
+            if (!press.current) return;
+            platform.haptics.impact('light');
+            startBuildingDrag(t, id);
+          }, LONG_PRESS_MS);
+        }
+      }}
+      onMove={(t, pointerType) => {
+        const s = buildUi.getState();
+        if (s.dragging) dragBuildingTo(t);
+        else if (s.placing && pointerType === 'mouse' && !press.current && (s.tile?.x !== t.x || s.tile?.z !== t.z)) buildUi.setState({ tile: { x: t.x, z: t.z }, note: null });
+      }}
+      onUp={(t) => {
+        if (!buildUi.getState().dragging) return;
+        if (t) dragBuildingTo(t);
+        void dropBuilding();
+      }}
       onTap={onTap}
     />
   );

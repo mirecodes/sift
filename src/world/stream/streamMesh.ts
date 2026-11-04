@@ -260,8 +260,16 @@ export function bankMesh(
         ];
         for (const [ka, kb, nx, nz, nb] of sides) {
           if (Number.isNaN(nb)) continue;
-          const [p, q] = [corners[ka] as (typeof corners)[number], corners[kb] as (typeof corners)[number]];
-          if (p.v <= 0 || q.v <= 0) continue;
+          const [ca, cb] = [corners[ka] as (typeof corners)[number], corners[kb] as (typeof corners)[number]];
+          if (ca.v <= 0 && cb.v <= 0) continue;
+          // Where the channel edge crosses this side, the side wall runs up to the crossing, so it meets the
+          // channel wall at the bank corner instead of leaving a notch next to the fall.
+          const cross = (a: typeof ca, b: typeof ca): V2 => {
+            const t = a.v / (a.v - b.v);
+            return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
+          };
+          const p: V2 = ca.v > 0 ? ca : cross(cb, ca);
+          const q: V2 = cb.v > 0 ? cb : cross(ca, cb);
           const neighbor = nx === 0 ? surfaceAt(tile.x, nb) : surfaceAt(nb, tile.z);
           if (neighbor !== undefined && neighbor >= top - 1e-6) continue;
           const n = [nx, 0, nz] as const;

@@ -22,16 +22,20 @@ interface Props {
   valid: boolean;
   /** Tiles of the selected placed building, outlined. */
   selectedTiles: readonly Tile[];
-  onHover(tile: Tile): void;
+  /** Pointer moved over a tile (any pointer type; the handler decides between hover and drag). */
+  onMove(tile: Tile, pointerType: string): void;
+  onDown(tile: Tile, pointerType: string): void;
+  /** Released over a tile, or off the island (null). */
+  onUp(tile: Tile | null): void;
   onTap(tile: Tile): void;
 }
 
 /**
  * Build mode in the island's space (Step 3.11): invisible tile targets for pointer and touch, the
  * see-through ghost of the building being placed on its footprint tint, and the outline of a selected
- * building. Drags still rotate the camera; only short taps count.
+ * building. Drags on empty ground rotate the camera; a press on the ghost or a building can drag it.
  */
-export function BuildLayer({ tiles, placing, tile, valid, selectedTiles, onHover, onTap }: Props) {
+export function BuildLayer({ tiles, placing, tile, valid, selectedTiles, onMove, onDown, onUp, onTap }: Props) {
   const mesh = useRef<InstancedMesh>(null);
   const heights = useMemo(() => new Map(tiles.map((t) => [`${t.x},${t.z}`, t.top])), [tiles]);
   useLayoutEffect(() => {
@@ -56,10 +60,15 @@ export function BuildLayer({ tiles, placing, tile, valid, selectedTiles, onHover
         key={tiles.length}
         ref={mesh}
         args={[hitPlane, hitMaterial, tiles.length]}
+        onPointerDown={(e) => {
+          const t = at(e);
+          if (t) onDown(t, e.pointerType);
+        }}
         onPointerMove={(e) => {
           const t = at(e);
-          if (t && e.pointerType === 'mouse') onHover(t);
+          if (t) onMove(t, e.pointerType);
         }}
+        onPointerUp={(e) => onUp(at(e) ?? null)}
         onClick={(e) => {
           const t = at(e);
           if (!t || e.delta > TAP_SLOP) return;

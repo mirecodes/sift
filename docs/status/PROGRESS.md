@@ -237,6 +237,12 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+### Session 2026-11-04 (owner: stream edge at the fall, move buildings by drag and tap)
+
+- Build · Releasing a drag places the building at once when it fits; otherwise the ghost stays with the reason. · Same as dropping an animal; Place stays for the tap flow.
+- Build · A mouse does not drag the ghost (it already follows the pointer; a press-drag still turns the camera); touch does. · Otherwise every mouse drag while placing would grab the ghost and the view could not turn.
+- Build · With a building selected, a tap on empty ground starts moving it there (it no longer just clears the selection; Cancel or Esc does). · Mirrors the animal tap flow (tap it, tap where it goes).
+
 ### Session 2026-11-04 (owner: re-proportion animals, articulated motion by tier)
 
 - Models · Owner chose to relax the caps (width 8, depth 8 / 12, flat wingspan 14); tier heights unchanged. · Asked first: it conflicted with ADR-025.
