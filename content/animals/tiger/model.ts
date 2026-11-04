@@ -30,17 +30,17 @@ export default defineModel([6, 10, 12], {
     b.box(2, 7, 0, 2, 1, 1, 2); // black tip
   });
   b.part('head', [2.5, 5, 8], () => {
-    b.box(0, 5, 8, 6, 4, 3, 1); // head
-    b.box(1, 5, 11, 4, 2, 1, 3); // muzzle
+    b.box(1, 5, 8, 4, 4, 3, 1); // head, as deep as it is wide
+    b.box(1, 5, 10, 4, 1, 1, 3); // white cheeks
+    b.box(2, 5, 11, 2, 2, 1, 3); // muzzle
     b.box(2, 6, 11, 2, 1, 1, 4); // nose
-    b.setM(1, 7, 10, 2); // eyes
-    b.box(1, 8, 10, 4, 1, 1, 2); // 王: top bar
-    b.box(2, 8, 8, 2, 1, 2, 2); // 王: stroke back over the head
-    b.setM(0, 6, 9, 2); // cheek stripes
-    b.setM(0, 7, 8, 2);
+    b.setM(1, 7, 10, 2); // eyes, far apart
+    b.box(2, 8, 8, 2, 1, 2, 2); // 王 mark on top, clear of the eyes
+    b.box(1, 8, 8, 4, 1, 1, 2);
+    b.setM(1, 6, 8, 2); // cheek stripes on the sides
   });
-  b.pair('ear', [0.5, 8.5, 9], () => {
-    b.box(0, 9, 9, 2, 1, 1, 1);
-    b.set(0, 9, 9, 2); // dark tip
+  b.pair('ear', [1, 8.5, 9], () => {
+    b.set(1, 9, 9, 1);
+    b.set(1, 9, 8, 2); // dark back
   });
 });

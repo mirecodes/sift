@@ -58,6 +58,14 @@ describe('animal models (content/animals/<id>/model.ts, DESIGN.md 16)', () => {
       expect(new Set(keys).size).toBe(keys.length);
     });
 
+    it('shows its eyes as two separate dots (DESIGN.md 16.2)', () => {
+      const eyes = model.voxels.filter(([, , , c]) => model.keys[c] === 'eye');
+      if (eyes.length !== 2) return; // the eye key also paints stripes or patches (tiger, bee, panda…)
+      const [a, b] = [eyes[0]!, eyes[1]!];
+      const touching = Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) === 1;
+      expect(touching).toBe(false);
+    });
+
     it('articulates with anatomy parts when it has a rig (ADR-055)', () => {
       const parts = Object.keys(raw.parts ?? {});
       for (const p of parts) expect(isAnimalPart(p), p).toBe(true);

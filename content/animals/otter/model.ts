@@ -16,8 +16,8 @@ export default defineModel([5, 7, 5], {
   b.part('head', [2, 3.5, 2], () => {
     b.box(1, 4, 1, 3, 3, 3, 1);
     b.box(1, 4, 3, 3, 1, 1, 2); // muzzle
-    b.set(2, 5, 3, 3); // nose
-    b.setM(1, 6, 3, 3); // eyes
+    b.set(2, 4, 3, 3); // nose, in the muzzle
+    b.setM(1, 6, 3, 3); // eyes, a row above
     b.setM(0, 6, 2, 1); // ears
   });
 });

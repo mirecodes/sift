@@ -2,7 +2,7 @@ import type { TierRank } from '../../../domain/config';
 import type { RigBone } from '../../voxel/geometry';
 import { HeadRig, type AnimalRig } from './AnimalRig';
 import { BirdRig, OwlRig, PeacockRig, PenguinRig } from './birds';
-import { BearRig, CanineRig, FelineRig, HoofedRig, QuadrupedRig, ReptileRig, TurtleRig } from './quadrupeds';
+import { BearRig, CanineRig, FelineRig, HoofedRig, QuadrupedRig, ReptileRig, SitterRig, TurtleRig } from './quadrupeds';
 import { BeeRig, BeetleRig, CrabRig, FishRig, FlyerRig } from './small';
 
 export { AnimalRig, type Motion, type RigFrame } from './AnimalRig';
@@ -20,6 +20,7 @@ export const RIGS = {
   feline: FelineRig,
   hoofed: HoofedRig,
   bear: BearRig,
+  sitter: SitterRig,
   reptile: ReptileRig,
   turtle: TurtleRig,
   bird: BirdRig,

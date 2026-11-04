@@ -11,13 +11,15 @@ export default defineModel([5, 8, 10], {
   b.pair('legF', [1, 1.5, 6], () => b.box(1, 0, 6, 1, 2, 1, 4));
   b.pair('legB', [1, 1.5, 2], () => b.box(1, 0, 2, 1, 2, 1, 4));
   b.box(1, 2, 2, 3, 3, 5, 1); // body
+  // A slim tail: one voxel thick, sweeping back and curving up, with light rings.
   b.part('tail', [2, 3.5, 1.5], () => {
-    b.box(1, 3, 0, 3, 2, 2, 1);
-    b.box(1, 3, 0, 3, 2, 1, 5); // ring
+    b.box(2, 3, 0, 1, 1, 2, 1);
+    b.set(2, 3, 0, 5); // ring
   });
-  b.part('tail2', [2, 4.5, 0], () => {
-    b.box(1, 5, 0, 3, 2, 1, 1);
-    b.box(1, 5, 0, 3, 1, 1, 5); // ring
+  b.part('tail2', [2, 3.5, 0], () => {
+    b.box(2, 4, 0, 1, 3, 1, 1);
+    b.set(2, 5, 0, 5); // ring
+    b.set(2, 6, 0, 4); // dark tip
   });
   b.part('head', [2, 4, 6.5], () => {
     b.box(0, 4, 7, 5, 3, 2, 1);

@@ -13,7 +13,9 @@ export default defineModel([7, 8, 12], {
   b.box(2, 7, 5, 3, 1, 3, 1); // shoulder hump
   b.part('tail', [3, 5, 0.5], () => b.set(3, 5, 0, 1));
   b.part('head', [3, 5, 8.5], () => {
-    b.box(1, 4, 9, 5, 3, 2, 1);
+    b.box(1, 4, 8, 5, 3, 3, 1); // round head, 3 deep
+    b.erase(1, 6, 8, 1, 1, 1);
+    b.erase(5, 6, 8, 1, 1, 1);
     b.box(2, 4, 11, 3, 2, 1, 2); // muzzle
     b.set(3, 5, 11, 3); // nose
     b.setM(2, 6, 10, 3); // eyes

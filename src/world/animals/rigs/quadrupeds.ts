@@ -256,6 +256,60 @@ export class BearRig extends QuadrupedRig {
   }
 }
 
+/**
+ * Animals that sit upright (panda, otter): front legs are arms. No body tilts (they would tip over);
+ * instead munching, waving and, from Epic, clapping.
+ */
+export class SitterRig extends QuadrupedRig {
+  protected override stepSwing = 0.35;
+
+  protected override sleep(lie: number): void {
+    this.turn('head', 0.35 * lie, 0, 0);
+    this.turn('legFL', -0.3 * lie, 0, 0);
+    this.turn('legFR', -0.3 * lie, 0, 0);
+  }
+
+  protected override repertoire(): Motion[] {
+    return [
+      ...super.repertoire().filter((m) => !['sit', 'stretch', 'scratch'].includes(m.id)),
+      {
+        id: 'munch',
+        minRank: 0,
+        needs: ['head', 'legFL', 'legFR'],
+        length: 2.2,
+        play: (p, w) => {
+          const chew = Math.sin(p * TAU * 5);
+          this.turn('head', (0.15 + chew * 0.08) * w, 0, 0);
+          this.turn('legFL', -0.35 * w - chew * 0.12 * w, 0, 0);
+          this.turn('legFR', -0.35 * w + chew * 0.12 * w, 0, 0);
+        },
+      },
+      {
+        id: 'wave',
+        minRank: 1,
+        needs: ['legFR'],
+        length: 1.9,
+        play: (p, w) => {
+          this.turn('legFR', -1.6 * w, 0, (0.25 + Math.sin(p * TAU * 3) * 0.4) * w);
+          this.turn('head', 0, 0, 0.2 * w);
+        },
+      },
+      {
+        id: 'clap',
+        minRank: 2,
+        needs: ['legFL', 'legFR'],
+        length: 1.6,
+        play: (p, w) => {
+          const clap = Math.abs(Math.sin(p * TAU * 3));
+          this.turn('legFL', -1.1 * w, 0, -0.35 * clap * w);
+          this.turn('legFR', -1.1 * w, 0, 0.35 * clap * w);
+          this.turn('head', -0.15 * w, 0, 0);
+        },
+      },
+    ];
+  }
+}
+
 /** Lizard, frog, axolotl: sprawled legs that swing sideways, a body that snakes, push-ups. */
 export class ReptileRig extends QuadrupedRig {
   protected override gait(f: RigFrame): void {

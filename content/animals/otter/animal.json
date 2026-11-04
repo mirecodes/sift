@@ -7,7 +7,7 @@
   },
   "tierRank": 1,
   "idle": "default",
-  "rig": "quadruped",
+  "rig": "sitter",
   "model": "animals/otter",
   "release": "base"
 }

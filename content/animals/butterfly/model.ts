@@ -1,36 +1,32 @@
 import { defineModel } from '../../../tools/content-build/animal';
 
-// Butterfly (`flutter`): a slim dark body with large flat wings spread in the horizontal plane, monarch
-// style: orange panes, black border and veins, white dots on the border. The wings are parts hinged at
-// the body so they can flap (DESIGN.md 18).
+// Butterfly (`flutter`): a slim body with a round head and two separate eyes, curled antennae and small,
+// delicate flat wings (fore- and hindwing with a notch between), orange with dark tips and a pale dot.
+// The wings are parts hinged at the body so they can flap (DESIGN.md 18).
 const WING_ROWS: readonly (readonly [z: number, from: number])[] = [
-  [7, 2], [6, 0], [5, 0], [4, 0], [3, 1], // forewing, front
-  [2, 1], [1, 2], [0, 3], // hindwing, back
+  [4, 1], [3, 0], // forewing
+  [2, 1], [1, 1], [0, 2], // hindwing
 ];
-const ROOT = 5; // last wing column, next to the body
+const ROOT = 3; // last wing column, next to the body
 
-export default defineModel([14, 3, 8], {
+export default defineModel([9, 3, 6], {
   1: ['body', '#3A2A20'], // body
-  2: ['wing', '#FF8A1F'], // wing panes
-  3: ['accent', '#26201C'], // border, veins, antennae
-  4: ['accent2', '#FFF6E0'], // dots
+  2: ['wing', '#FF9A3C'], // wings
+  3: ['accent', '#3A2A20'], // wing tips, antennae
+  4: ['accent2', '#FFF3D6'], // dots
   5: ['eye', '#1E1E1E'], // eyes
 }, (b) => {
-  b.box(6, 0, 1, 2, 2, 6, 1); // body
-  b.box(6, 0, 7, 2, 2, 1, 1); // head
-  b.set(6, 1, 7, 5);
-  b.set(7, 1, 7, 5);
-  b.set(6, 2, 7, 3); // antennae
-  b.set(7, 2, 7, 3);
-  b.pair('wing', [ROOT + 0.5, 1, 3.5], () => {
-    for (const [z, from] of WING_ROWS) {
-      for (let x = from; x <= ROOT; x++) {
-        const edge = x === from || z === 7 || z === 0 || (z === 6 && x < 2) || (z === 1 && x < 3);
-        const vein = z === 3 && x < ROOT; // between fore- and hindwing
-        const ray = x === 3 && z >= 4 && z <= 6; // forewing vein
-        const color = edge ? ((x + z) % 2 === 0 && x < ROOT - 1 ? 4 : 3) : vein || ray ? 3 : 2;
-        b.set(x, 1, z, color);
-      }
-    }
+  b.box(4, 0, 0, 1, 2, 5, 1); // slim body
+  b.box(3, 0, 5, 3, 2, 1, 1); // round head
+  b.set(3, 1, 5, 5); // eyes, one on each side
+  b.set(5, 1, 5, 5);
+  b.set(3, 2, 5, 3); // antennae
+  b.set(5, 2, 5, 3);
+  b.pair('wing', [ROOT + 0.5, 1, 2], () => {
+    for (const [z, from] of WING_ROWS) for (let x = from; x <= ROOT; x++) b.set(x, 1, z, 2);
+    b.set(0, 1, 3, 3); // dark tips
+    b.set(1, 1, 4, 3);
+    b.set(1, 1, 3, 4); // pale dot
+    b.set(2, 1, 1, 4);
   });
 });

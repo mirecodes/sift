@@ -7,7 +7,7 @@
   },
   "tierRank": 2,
   "idle": "default",
-  "rig": "bear",
+  "rig": "sitter",
   "model": "animals/panda",
   "release": "base"
 }
