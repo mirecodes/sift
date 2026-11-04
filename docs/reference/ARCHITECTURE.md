@@ -256,6 +256,7 @@ interface ActivePhase { phase: Phase }  // restores an in-progress session
 
 ```
 docs/            by kind (map: docs/README.md): plans/ (guidance_vN), reference/ (ARCHITECTURE, DESIGN, API), guides/ (CONTENT, setup guides), status/ (PROJECT_STATUS, PROGRESS), logs/ (CHANGELOG, DECISIONS: human log), process/ (LOOP)
+.claude/agents/  implementation subagents `coder-sonnet` (Sonnet), `coder-opus` (Opus, medium); when to use them: CLAUDE.md "Delegation" (ADR-057)
 config/app.yaml  runtime config
 e2e/             Playwright smoke test
 content/         data only (ADR-041, ADR-045), one file or folder per item, the name is the id: animals/<id>/ (animal.json, model.ts|model.vox+json, skins/<skinId>.json), buildings/<id>/ (building.json, model.ts), themes/<id>.json, skin-families/<id>.json, releases/<id>.json, models/ (loose models, palette-template.vox), sprites/ (generated atlas), pack.json (contentVersion), presets.json; `assemblePack` rejects items in the wrong place (`layoutProblem`); `npm run content:new` scaffolds; guide: docs/guides/CONTENT.md

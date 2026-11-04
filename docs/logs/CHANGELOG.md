@@ -53,6 +53,8 @@
 
 - 2026-10-27 · **Fixed** — Heavy terrain tests timed out on slow machines (Vitest `testTimeout` 30 s). The committed-config test now allows the flags the owner released (`stats`, `economy`, `cosmetics`) and `testMode.dummyData` (memory-only), and still requires every other flag and the destructive developer switches off.
 
+- 2026-10-27 · **Added** — Owner request: token-cost delegation (ADR-057; ADR-044 on its branch, renumbered when merged on 2026-11-04). `CLAUDE.md` gains a "Delegation" section (when to hand implementation to a subagent, which one, how to brief and review); new subagents `.claude/agents/coder-sonnet.md` (Sonnet) and `.claude/agents/coder-opus.md` (Opus, medium effort) write code and tests only, never docs or commits.
+
 - 2026-10-08 · **Changed** — Owner feedback on Phase 3 (ADR-043, replaces Q13 "one skin per species"): choose one or several skins per species; a new animal arrives in one of them at random and keeps it (`PlacedAnimal.skinId`); others follow the choice with a fixed pick. The Collection's species sheet is now a grid of floating picture cards (3:4, small price under unowned ones) with multi-select, `Select all owned`, and buying in place; a bought skin joins the choice. Old one-skin `equipped` rows still load (DESIGN.md 7.5).
 
 - 2026-10-08 · **Added** — Owner feedback on Phase 3: two island themes in release `themes-oct-2026` (from 2026-10-09, content version 2026-10-08.2): **Winter** (ice blue, snow, 160 gold) and **Future City** (glassy blue with rainbow tile bands and glints, 200 gold). Themes can now band colors over the ground (`tileTints`) and be glossy (`finish`); new `glints` particle preset; sprites regenerated (DESIGN.md 15.7, CONTENT.md).
