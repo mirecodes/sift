@@ -272,6 +272,8 @@
 - 6.6 · A category toggle may ask for permission; "Not now" is remembered. · Touching a toggle is a deliberate request.
 - 6.6 · Push texts are short and name-free (`server/core/push.ts`). · The Inbox holds the details; no handle lookups in the push path.
 - 6.8 · iOS: a new Live Activity per phase change; the break one is ended at once with dismissal at the break end. · Removes itself without the app (ADR-049).
+- Test · Dev builds with an online feature and no backend use the test backend. · A Sign in that can never work looked like being offline.
+- Test · The signed-in start also names the account `테스터`. · Ready to join groups at once; the first name can still be changed once for free.
 - Test · War testing uses Settings › Test tools writing into the fake server, not relaxed rules in `server/core`. · Production server code stays untouched; the blockers stay testable.
 - Test · "Reset" moves past war times back a day instead of deleting wars. · Keeps the war history and replays.
 - 10.1 · Mouse drags start on press; touch needs a 350 ms long press. · A touch drag on the island otherwise turns the camera.

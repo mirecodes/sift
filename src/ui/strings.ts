@@ -105,6 +105,8 @@ export const strings = {
   friends: {
     title: 'Friends',
     signedOut: 'Sign in to add friends and visit their islands.',
+    /** No account server in this build (`backend.provider: none`). */
+    noBackend: 'Friends and groups need the Sift server, which is not set up in this version yet.',
     offline: "Can't reach Sift right now.",
     retry: 'Try again',
     loading: 'Loading…',

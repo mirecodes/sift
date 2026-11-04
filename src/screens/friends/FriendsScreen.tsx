@@ -135,7 +135,13 @@ export function FriendsScreen() {
   }, [status, refresh]);
 
   let body: JSX.Element;
-  if (status !== 'signedIn') {
+  if (status === 'off') {
+    body = (
+      <FeatureCard className={styles.card}>
+        <p className="type-body-md">{strings.friends.noBackend}</p>
+      </FeatureCard>
+    );
+  } else if (status !== 'signedIn') {
     body = (
       <FeatureCard className={styles.card}>
         <p className="type-body-md">{strings.friends.signedOut}</p>

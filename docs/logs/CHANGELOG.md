@@ -8,6 +8,9 @@
 
 ## guidance_v2
 
+- 2026-11-04 · **Added** — `testMode.signedIn` (dev, test backend): start signed in as `테스터`. `npm run dev:all` is now `vite --mode all` (every OS) and also turns on sample data and the signed-in start.
+- 2026-11-04 · **Fixed** — With friends or groups on and no backend, the Sign in button failed with "No connection". Development builds now use the test backend in that case; other builds say the server is not set up instead of offering Sign in.
+
 - 2026-11-04 · **Added** — Settings › Test tools (dev builds with the fake backend): add a verified test army (every tier, a Unicorn), reset war cooldowns/shields/protection, let a sample friend attack you. `npm run dev:all` starts the dev server with every feature and the test backend. Guide: `docs/guides/BACKEND_SETUP.md` §0.
 
 - 2026-10-28 · **Added** — Phase 10, arrange animals (flag `arrange`; ADR-054). Step 10.1: build mode `Buildings · Animals` (Animals alone when cosmetics are off); mouse drag, touch long-press drag, tap then Place; footprint tint and a see-through ghost; the camera holds still while dragging. Placed animals are pinned: new rewards and others' expiry never move them, a building on one unpins it, an island move clears pins. Step 10.2: `apply_layout` validates pinned animals on the server. Step 10.3: rule, store and server tests; war defenders stand on pinned tiles. E2E: the Animals segment.

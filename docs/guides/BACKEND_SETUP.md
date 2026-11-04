@@ -6,8 +6,9 @@ How to connect Sift to its backend (Supabase): accounts, sync, shop, friends, gr
 
 ## 0. Try it without a server (2 minutes)
 
-1. `npm run dev:all`: every feature on and the test backend, without editing `config/app.yaml`. (Or set `backend.provider: fake` and the features you want there, then `npm run dev`.)
-2. Sign in from the Friends tab or Settings → Account. Any email, code `000000`. Apple/Google sign in at once.
+1. `npm run dev:all`: every feature on, the test backend, sample data, and you start **already signed in** as `테스터` (tester@example.com). Nothing to edit in `config/app.yaml`; works on Windows, macOS and Linux.
+   - Or `npm run dev` after turning on features in `config/app.yaml`: with friends, groups or war on and `backend.provider: none`, development builds use the test backend by themselves. `testMode.signedIn: true` starts signed in there too.
+2. To sign in by hand (another account, or after Sign out): Friends tab or Settings → Account. Any email, code `000000`. Apple/Google sign in at once.
 3. The "server" runs inside the browser and keeps its data in `localStorage` (clear site data to reset). In the browser console, `__siftFake.setOnline(false)` simulates a lost connection.
 
 This runs the same server code as production, so what works here works on Supabase.
@@ -16,7 +17,7 @@ This runs the same server code as production, so what works here works on Supaba
 
 At sign-in four sample accounts appear: friends 민지 (focusing now), Jae and 소라, a request from Leo, and an invite into their group **Morning Owls**. A test run:
 
-1. **Friends** tab: pick a name, see the friends, Visit an island, accept Leo.
+1. **Friends** tab: see the friends (pick a name first if you signed in by hand), Visit an island, accept Leo.
 2. **Group** tab: Join Morning Owls (or create your own group: the sample friends are not in it).
 3. **Settings → Test tools → Test army → Add animals**: 9 server-verified animals of every tier, a Unicorn among them (a new account has none, and only verified animals fight).
 4. Group → Ranking → **Attack** a member: preview, replay, result. Attacking again shows the 24-hour cooldown.
