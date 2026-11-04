@@ -11,6 +11,7 @@ Read `docs/reference/ARCHITECTURE.md` and `docs/reference/DESIGN.md` before any 
 - Defaults the agent picks where the guidance is silent go, one line each, into "Decisions taken by the agent" in `docs/status/PROGRESS.md`.
 - If a request conflicts with the guidance, `ARCHITECTURE.md` or `DESIGN.md`, ask first.
 - Edit files only with the Edit/Write tools, never via shell redirection or heredoc. Read the file first if needed.
+- Work directly on `main` (owner, 2026-11-04): commit and push there; no feature branches or pull requests unless asked.
 
 ## Delegation (token cost)
 
