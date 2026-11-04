@@ -6,11 +6,26 @@ How to connect Sift to its backend (Supabase): accounts, sync, shop, friends, gr
 
 ## 0. Try it without a server (2 minutes)
 
-1. In `config/app.yaml` set `backend.provider: fake` and turn on the features you want (`friends`, `groups`, …).
-2. `npm run dev`, open Settings → Account → Sign in. Any email, code `000000`. Apple/Google sign in at once.
-3. The "server" runs inside the browser and keeps its data in `localStorage` (clear site data to reset). In the browser console, `__siftFake.setOnline(false)` simulates a lost connection.
+1. `npm run dev:all`: every feature on, the test backend, sample data, and you start **already signed in** as `테스터` (tester@example.com). Nothing to edit in `config/app.yaml`; works on Windows, macOS and Linux.
+   - Or `npm run dev` after turning on features in `config/app.yaml`: with friends, groups or war on and `backend.provider: none`, development builds use the test backend by themselves. `testMode.signedIn: true` starts signed in there too.
+2. To sign in by hand (another account, or after Sign out): Friends tab or Settings → Account. Any email, code `000000`. Apple/Google sign in at once.
+3. The "server" runs inside the browser and keeps its data in `localStorage` (clear site data to reset); open tabs share it. In the browser console, `__siftFake.setOnline(false)` simulates a lost connection.
 
 This runs the same server code as production, so what works here works on Supabase.
+
+### Sample friends and a war test (needs `testMode.dummyData: true`)
+
+At sign-in four sample accounts appear: friends 민지 (focusing now), Jae and 소라, a request from Leo, and an invite into their group **Morning Owls**. A test run:
+
+1. **Friends** tab: see the friends (pick a name first if you signed in by hand), Visit an island, accept Leo.
+2. **Group** tab: Join Morning Owls (or create your own group: the sample friends are not in it).
+3. **Settings → Test tools → Test army → Add animals**: 9 server-verified animals of every tier, a Unicorn among them (a new account has none, and only verified animals fight).
+4. Group → Ranking → **Attack** a member: preview, replay, result. Attacking again shows the 24-hour cooldown.
+5. Settings → Test tools → **War cooldowns and shields → Reset**: cooldowns, shields and new-member protection end (past wars move back a day, so their times read "1 d ago"). The hour before the weekly settlement still blocks.
+6. Settings → Test tools → **A friend attacks you → Start**: a sample friend attacks you (the defender's notice and Group › Wars › Replay).
+7. Home: tap the Unicorn counter to **move to a new island** (the test army's Unicorn pays).
+
+Test tools show only in `npm run dev` with the test backend; production builds do not contain them.
 
 ## 1. What you need
 

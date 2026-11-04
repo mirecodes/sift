@@ -4,6 +4,7 @@ import { BALANCE_VERSION } from '../../../shared/balance/balance';
 import { missionTarget } from '../../../shared/rules/missions';
 import { previousWeek, weekOf } from '../../../shared/rules/week';
 import { handle } from '../../../server/core/api';
+import { UserWriter } from '../../../server/core/context';
 import { pairOf } from '../../../server/core/social';
 import { getSpecies } from '../../domain/animals/catalog';
 import { newPlacedAnimal } from '../../domain/animals/placed';
@@ -93,3 +94,66 @@ export async function seedFakeSocial(fake: FakeRemote, userId: string): Promise<
   const member = await env.db.transaction((tx) => tx.table('group_members').get(userId));
   if (!invited && !member) await env.db.transaction((tx) => tx.table('group_invites').put({ id: `bot-invite-${userId}`, groupId, inviterId: 'bot-minji', inviteeId: userId, status: 'pending', createdAt: now - HOUR }));
 }
+
+/** Every tier once or more; the Unicorn stays home in wars and pays for an island move. */
+const TEST_ARMY = ['tiger', 'wolf', 'peacock', 'fox', 'cat', 'owl', 'dog', 'chick', 'unicorn'];
+
+/**
+ * Test tools (Settings › Test tools, dev builds with the fake backend). Each writes straight into the fake
+ * server; the app then pulls the change like any other.
+ */
+export const testTools = {
+  /** Verified animals on the user's island, so they can attack (and move the island) without focusing. */
+  async grantArmy(fake: FakeRemote, userId: string): Promise<'ok' | 'no_island'> {
+    const env = fake.env;
+    const now = env.now();
+    return env.db.transaction(async (tx) => {
+      const island = await tx.table('island_state').get(userId);
+      if (!island) return 'no_island';
+      const animals: PlacedAnimal[] = (await tx.table('animals').find({ userId })).map(({ userId: _u, updatedSeq: _s, ...a }) => a);
+      const w = new UserWriter(tx, userId);
+      const rng = seededRng(now);
+      for (const [i, s] of TEST_ARMY.entries()) {
+        const tile = pickNewAnimalTile(island.seed, animals, rng);
+        if (!tile) break;
+        const id = `test-${now}-${i}`;
+        const animal = newPlacedAnimal(id, getSpecies(s), tile, now - (i + 1) * MIN, `${id}-s`);
+        animals.push(animal);
+        await w.put('sessions', { id: animal.sessionId, startedAt: animal.acquiredAt - 30 * MIN, plannedFocusMs: 25 * MIN, endedAt: animal.acquiredAt, effectiveFocusMs: 30 * MIN, status: 'completed', rewardAnimalId: id, togetherRoomId: null, verified: true });
+        await w.put('animals', animal);
+      }
+      await w.finish();
+      return 'ok';
+    });
+  },
+
+  /**
+   * Moves every war clock of the user's group back a day, and the user's group join two days: cooldowns,
+   * shields and new-member protection end now (the hour before the weekly settlement still blocks).
+   */
+  async resetWarTimers(fake: FakeRemote, userId: string): Promise<void> {
+    const env = fake.env;
+    const now = env.now();
+    await env.db.transaction(async (tx) => {
+      const member = await tx.table('group_members').get(userId);
+      if (!member) return;
+      for (const war of await tx.table('wars').find({ groupId: member.groupId }))
+        await tx.table('wars').put({ ...war, createdAt: Math.min(war.createdAt, now - 25 * HOUR) });
+      const profile = await tx.table('profiles').get(userId);
+      if (profile?.joinedGroupAt) await tx.table('profiles').put({ ...profile, joinedGroupAt: Math.min(profile.joinedGroupAt, now - 49 * HOUR) });
+    });
+  },
+
+  /** A sample friend in the user's group attacks them (the defender's side: notice, losses, replay). */
+  async botAttack(fake: FakeRemote, userId: string): Promise<'ok' | 'no_group' | 'no_bot' | string> {
+    const env = fake.env;
+    const member = await env.db.transaction((tx) => tx.table('group_members').get(userId));
+    if (!member) return 'no_group';
+    const bots = await env.db.transaction(async (tx) => (await tx.table('group_members').find({ groupId: member.groupId })).map((m) => m.userId).filter((id) => id.startsWith('bot-')));
+    if (!bots.length) return 'no_bot';
+    await testTools.resetWarTimers(fake, userId);
+    const bot = bots[Math.floor(env.random() * bots.length)]!;
+    const res = await handle(env, { userId: bot, platform: 'web', appVersion: '0.0.0', apiVersion: API_VERSION }, { op: 'declare_war', args: { targetId: userId }, requestId: `${bot}-war-${env.now()}` });
+    return res.ok ? 'ok' : res.error.code;
+  },
+};

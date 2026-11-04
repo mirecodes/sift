@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MemberView, WarPreview } from '../../../shared/api/types';
 import { formatHandle } from '../../../shared/rules/handle';
+import { runtimeConfig } from '../../app/runtimeConfig';
 import { useApp } from '../../store';
 import type { Outcome } from '../../store/social';
 import { strings } from '../../ui/strings';
@@ -68,6 +69,8 @@ export function AttackSheet({ target, onClose }: { target: MemberView; onClose: 
           {blocked ? (strings.war.blocked[blocked.code]?.(hours) ?? strings.war.errors.generic) : (strings.war.blocked[error!]?.(hours) ?? strings.war.errors[error!] ?? strings.war.errors.generic)}
         </p>
       )}
+      {/* Development builds with the test backend: where to get an army without focusing. */}
+      {import.meta.env.DEV && runtimeConfig.backend.provider === 'fake' && blocked?.code === 'no_army' && <p className={`${sheetStyles.note} type-body-sm`}>{strings.testTools.noArmyHint}</p>}
       <div className={sheetStyles.actions}>
         <Button variant="secondary" onClick={() => sheet.current?.close()}>
           {strings.war.cancel}

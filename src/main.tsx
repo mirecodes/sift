@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
+import { runtimeConfig } from './app/runtimeConfig';
 import { appStore } from './store';
 import './ui/global.css';
 
@@ -14,6 +15,9 @@ if (import.meta.env.DEV && window.location.pathname === '/studio/sprites') {
 } else if (import.meta.env.DEV && window.location.pathname.startsWith('/studio')) {
   void import('./screens/studio/Studio').then(({ Studio }) => root.render(<Studio />));
 } else {
-  void appStore.getState().init();
+  const ready = appStore.getState().init();
+  // `testMode.signedIn` (dev builds with the test backend): start signed in.
+  if (import.meta.env.DEV && runtimeConfig.testMode.signedIn && runtimeConfig.backend.provider === 'fake')
+    void ready.then(() => import('./app/devSignIn')).then(({ devSignIn }) => devSignIn(appStore));
   root.render(<App />);
 }

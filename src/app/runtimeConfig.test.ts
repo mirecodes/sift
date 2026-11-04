@@ -44,6 +44,20 @@ describe('resolveRuntimeConfig', () => {
     expect(resolveRuntimeConfig({}, false, '', 'fake').backend).toEqual({ provider: 'fake' });
   });
 
+  it('development builds: mode `all` turns on everything; online features without a backend get the test one', () => {
+    const all = resolveRuntimeConfig({}, true, '', '', 'all');
+    expect(Object.values(all.features).every(Boolean)).toBe(true);
+    expect(all.backend).toEqual({ provider: 'fake' });
+    expect(all.testMode).toMatchObject({ dummyData: true, signedIn: true });
+    expect(resolveRuntimeConfig({ features: { groups: true } }, true).backend).toEqual({ provider: 'fake' });
+    expect(resolveRuntimeConfig({ features: { cosmetics: true } }, true).backend).toEqual({ provider: 'none' });
+    expect(resolveRuntimeConfig({ testMode: { signedIn: true } }, true).testMode.signedIn).toBe(true);
+    // Production builds: neither.
+    expect(resolveRuntimeConfig({}, false, '', '', 'all').backend).toEqual({ provider: 'none' });
+    expect(resolveRuntimeConfig({ features: { groups: true } }, false).backend).toEqual({ provider: 'none' });
+    expect(resolveRuntimeConfig({ testMode: { signedIn: true } }, false).testMode.signedIn).toBe(false);
+  });
+
   it('keeps unreleased flags and destructive developer switches off in the committed config', async () => {
     const { parse } = await import('yaml');
     const { readFileSync } = await import('node:fs');

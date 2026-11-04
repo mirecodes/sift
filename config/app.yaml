@@ -23,6 +23,13 @@ testMode:
   # Turn on the matching `features` flag to see a feature's screen.
   dummyData: true
 
+  # When true, the app starts signed in to the test backend as tester@example.com
+  # (only with `backend.provider: fake`; a development build with friends, groups
+  # or war on and no backend uses the test backend by itself). `npm run dev:all`
+  # turns this, `dummyData`, every feature and the test backend on without
+  # editing this file.
+  signedIn: false
+
 # Backend for accounts, sync and the social features (guidance_v2 Phase 5).
 #   none:     local only, no accounts (the app as before).
 #   fake:     the real server code running inside the browser, data kept in this browser. For trying the
