@@ -427,7 +427,9 @@ await acct.evaluate(() => {
   window.__siftFake.setOnline(true);
   window.dispatchEvent(new Event('online'));
 });
-await acct.waitForTimeout(2000);
+// The retry runs on the next online event; wait for the reveal instead of a fixed time.
+await acct.getByText('Revealing when you’re back online…').waitFor({ state: 'detached', timeout: 10_000 }).catch(() => undefined);
+await acct.waitForTimeout(500);
 check('back online, the server reveals the reward', (await acct.getByText('Revealing when you’re back online…').count()) === 0 && (await acct.getByText('Nice work.').count()) === 0);
 
 // Friends (Phase 7): a name is required first; the server assigns the tag; requests need an exact handle.
@@ -454,7 +456,9 @@ await acct.getByRole('navigation', { name: 'Main' }).getByRole('button', { name:
 await acct.waitForTimeout(1500);
 await acct.getByLabel('Group name').fill('Morning Owls');
 await acct.getByRole('button', { name: 'Create' }).click();
-await acct.waitForTimeout(1500);
+// The group screen loads after the server answers; wait for it instead of a fixed time.
+await acct.getByRole('heading', { name: 'Morning Owls' }).waitFor({ timeout: 10_000 }).catch(() => undefined);
+await acct.waitForTimeout(300);
 check('a new group shows its name and an 8-letter invite code', (await acct.getByRole('heading', { name: 'Morning Owls' }).isVisible()) && (await acct.getByRole('button', { name: /^Invite · [A-Z2-9]{8}$/ }).isVisible()));
 check('the ranking lists the creator first', await acct.getByLabel('#1').isVisible());
 await acct.getByRole('button', { name: 'Missions' }).click();

@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-11-04 · **Fixed** — E2E: the group and the back-online reward checks waited a fixed time and failed when the page was slower; they now wait for the screen they check (up to 10 s). All branches merged into `main`; work continues on `main`.
+
 - 2026-11-04 · **Changed** — Battle rework (owner request, ADR-056): attackers land on the defender island itself (no landing strip), hopping off the ship one by one in 5 waves onto random tiles; each step they pick defenders at random, weighted toward nearby ones (`landOnIsland`, `balance.war.landingWaves`, `matchFalloff`; balance version 2026-11-04.1). The replay overlaps duels all over the island (per-duel offsets, never before both are free), with lunges, red hit flashes, sparks, knock-backs, poofs for animals that left for good and dust for the rest. The airship is now a flying wooden galleon (three masts, billowed sails with a paw, stern castle, gun ports, pennant, cloud trail) docked off the far-left edge. The blurry Unicorn aura squares are replaced by rising golden motes.
 - 2026-11-04 · **Added** — Build mode, move buildings by drag and tap (owner request): drag a placed building (mouse at once, touch after a 350 ms long press) and release to place it; touch drags the ghost; with a building selected, tapping an empty tile starts moving it there. The camera holds still while dragging. DESIGN.md 7.8.
 - 2026-11-04 · **Fixed** — Stream bank at a fall: the exposed tile-side wall stopped one grid cell short of the channel, leaving a notch beside the lip (owner report). It now runs up to the channel edge.
