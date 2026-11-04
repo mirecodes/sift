@@ -32,7 +32,7 @@ export interface FakeRemote extends RemotePort {
   signInAs(userId: string, email?: string): Promise<RemoteSession>;
 }
 
-const SERVER_KEY = 'sift.fake.server';
+export const SERVER_KEY = 'sift.fake.server';
 const SESSION_KEY = 'sift.fake.session';
 
 /**

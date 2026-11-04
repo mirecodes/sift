@@ -77,6 +77,7 @@ export const strings = {
     timersButton: 'Reset',
     attack: 'A friend attacks you',
     attackButton: 'Start',
+    noArmyHint: 'Testing: Settings › Test tools › Add animals gives you an army.',
     done: {
       army: 'Added 9 animals of every tier, a Unicorn among them.',
       timers: 'Cooldowns, shields and new-member protection are over.',
