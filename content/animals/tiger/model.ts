@@ -1,32 +1,46 @@
 import { defineModel } from '../../../tools/content-build/animal';
 
-// Tiger: orange with black stripes, white muzzle and a 王-style mark on the forehead. Long body (8 deep).
-export default defineModel([5, 12, 8], {
+// Tiger: long and low, orange with black stripes, white muzzle, belly and paws, a 王-style forehead mark
+// and a tail that curls up at the tip. 12 deep (Legendary, ADR-055).
+export default defineModel([6, 10, 12], {
   1: ['body', '#F28C28'], // fur
   2: ['eye', '#1E1E1E'], // stripes, eyes, forehead mark
-  3: ['belly', '#FFFFFF'], // muzzle, belly
+  3: ['belly', '#FFFFFF'], // muzzle, belly, paws
   4: ['nose', '#F4A6B7'], // nose
 }, (b) => {
-  b.boxM(0, 0, 1, 2, 4, 2, 1); // hind legs
-  b.boxM(0, 0, 5, 2, 4, 2, 1); // front legs
-  b.boxM(0, 1, 1, 1, 1, 2, 2); // leg stripes
-  b.boxM(0, 2, 5, 1, 1, 2, 2);
-  b.box(0, 4, 1, 5, 4, 6, 1); // body
-  b.box(2, 4, 1, 1, 1, 6, 3); // belly
-  b.boxM(0, 5, 1, 1, 3, 1, 2); // body stripes
-  b.boxM(0, 5, 3, 1, 3, 1, 2);
-  b.boxM(0, 5, 5, 1, 3, 1, 2);
-  b.box(0, 7, 1, 5, 1, 1, 2); // back stripes
-  b.box(0, 7, 3, 5, 1, 1, 2);
-  b.box(2, 5, 0, 1, 4, 1, 1); // tail
-  b.set(2, 6, 0, 2);
-  b.set(2, 8, 0, 2);
-  b.box(0, 7, 5, 5, 4, 3, 1); // head
-  b.box(1, 7, 7, 3, 2, 1, 3); // muzzle
-  b.set(2, 8, 7, 4); // nose
-  b.setM(1, 9, 7, 2); // eyes
-  b.box(1, 10, 7, 3, 1, 1, 2); // forehead mark
-  b.box(2, 10, 5, 1, 1, 3, 2);
-  b.setM(0, 9, 6, 2); // cheek stripes
-  b.boxM(0, 11, 5, 1, 1, 1, 1); // ears
+  const leg = (z: number, stripeY: number) => {
+    b.box(0, 0, z, 2, 3, 2, 1);
+    b.box(0, 0, z, 2, 1, 2, 3); // paw
+    b.box(0, stripeY, z, 1, 1, 2, 2); // stripe on the outside
+  };
+  b.pair('legF', [0.5, 2.5, 8.5], () => leg(8, 2));
+  b.pair('legB', [0.5, 2.5, 2.5], () => leg(2, 1));
+  b.box(0, 3, 2, 6, 4, 8, 1); // long body
+  b.box(1, 3, 3, 4, 1, 6, 3); // belly
+  for (const z of [3, 5, 7]) {
+    b.boxM(0, 4, z, 1, 3, 1, 2); // side stripes
+    b.box(1, 6, z, 4, 1, 1, 2); // over the back
+  }
+  b.part('tail', [2.5, 5, 1.5], () => {
+    b.box(2, 5, 0, 2, 1, 2, 1);
+    b.box(2, 5, 0, 2, 1, 1, 2); // stripe
+  });
+  b.part('tail2', [2.5, 5.5, 0], () => {
+    b.box(2, 6, 0, 2, 2, 1, 1);
+    b.box(2, 7, 0, 2, 1, 1, 2); // black tip
+  });
+  b.part('head', [2.5, 5, 8], () => {
+    b.box(1, 5, 8, 4, 4, 3, 1); // head, as deep as it is wide
+    b.box(1, 5, 10, 4, 1, 1, 3); // white cheeks
+    b.box(2, 5, 11, 2, 2, 1, 3); // muzzle
+    b.box(2, 6, 11, 2, 1, 1, 4); // nose
+    b.setM(1, 7, 10, 2); // eyes, far apart
+    b.box(2, 8, 8, 2, 1, 2, 2); // 王 mark on top, clear of the eyes
+    b.box(1, 8, 8, 4, 1, 1, 2);
+    b.setM(1, 6, 8, 2); // cheek stripes on the sides
+  });
+  b.pair('ear', [1, 8.5, 9], () => {
+    b.set(1, 9, 9, 1);
+    b.set(1, 9, 8, 2); // dark back
+  });
 });

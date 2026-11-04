@@ -236,6 +236,17 @@
 
 > Defaults applied where guidance was silent. One line each: step, decision, reason.
 
+### Session 2026-11-04 (owner: re-proportion animals, articulated motion by tier)
+
+- Models · Owner chose to relax the caps (width 8, depth 8 / 12, flat wingspan 14); tier heights unchanged. · Asked first: it conflicted with ADR-025.
+- Rig · Parts are rigid bones of one `SkinnedMesh` (not separate meshes). · Keeps one draw call per animal for the 100-animal target.
+- Rig · Motion count grows with tier through `minRank` on each motion; a rig motion replaces 30/40/50/55 % of idle actions by tier. · "Higher tier, more varied motion" without per-species lists.
+- Rig · Species families share one class each (e.g. wolf, fox, dog = `canine`); Starfish has no rig, Snail only turns its head. · The owner allowed skipping animals that cannot articulate.
+- Rig · Skin overlays (none ship today) join the body bone. · Overlays are drawn on the rest pose.
+- Models · Otter sits up; Koala has no tail. · Keeps each species' known look.
+- Models · Owner review: Panda restored to its original sitting model; sitters get their own rig (`sitter`) instead of body tilts. · A sitting body tipped back by `stand`/`sit` would lie on its back.
+- Models · Sheep face changed from dark grey to soft tan (skins left as they are). · Black eyes on a near-black face read as one bar.
+
 ### Session 2026-10-27 (owner: "implement the rest, decide on your own, document briefly")
 
 - Docs · Folders by kind: `plans/ reference/ guides/ status/ logs/ process/` (ADR-044); the guidance's `server/API.md` lives at `docs/reference/API.md`. · CLAUDE.md: all docs in `docs/`.

@@ -9,7 +9,7 @@ const listed = JSON.parse(readFileSync(new URL('../../../content/presets.json', 
 
 describe('behavior presets (Step 3.2)', () => {
   it('content/presets.json lists exactly the presets the code implements', () => {
-    for (const kind of ['idle', 'part', 'particles', 'light'] as const) {
+    for (const kind of ['idle', 'rig', 'part', 'particles', 'light'] as const) {
       expect([...PRESET_IDS[kind]].sort(), kind).toEqual([...(listed[kind] ?? [])].sort());
     }
   });

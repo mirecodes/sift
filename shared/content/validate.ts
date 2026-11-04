@@ -1,3 +1,4 @@
+import { isAnimalPart } from './anatomy';
 import { voxelCount, type VoxelModel } from './model';
 import type { ContentPack, PackItem } from './pack';
 import { PALETTE_KEYS } from './palette';
@@ -46,9 +47,14 @@ export function validateContent(pack: ContentPack, opts: ValidateOptions): strin
       problems.push(`${item.id}: availableFrom is not before availableUntil`);
     }
     switch (item.kind) {
-      case 'species':
-        animalBudget(item.id, model(item.model));
+      case 'species': {
+        const m = model(item.model);
+        animalBudget(item.id, m);
+        for (const name of Object.keys(m?.parts ?? {})) {
+          if (!isAnimalPart(name)) problems.push(`${item.id}: unknown animal part ${name} (shared/content/anatomy.ts)`);
+        }
         break;
+      }
       case 'animalSkin': {
         const base = model(species.get(item.speciesId)?.model);
         for (const key of Object.keys(item.palette)) {

@@ -94,6 +94,48 @@ export function buildVoxelMesh(model: VoxelModel, voxelSize: number, override?: 
   return mesh.build();
 }
 
+/** Mesh data whose vertices each follow one bone (rigid skinning, ADR-055). */
+export interface RiggedMeshData extends MeshData {
+  /** Bone index per vertex. */
+  bones: Uint16Array;
+}
+
+/**
+ * An articulated model as one mesh with a bone per vertex: the body is bone 0, then each part in
+ * `partNames` order. Every piece is culled on its own, so a joint stays closed when the part turns.
+ */
+export function buildRiggedVoxelMesh(
+  model: VoxelModel,
+  partNames: readonly string[],
+  voxelSize: number,
+  override?: Partial<Record<PaletteKey, string>>,
+): RiggedMeshData {
+  const pieces = [model.voxels, ...partNames.map((n) => model.parts?.[n]?.voxels ?? [])].map((voxels) =>
+    buildVoxelMesh({ ...model, voxels, parts: undefined }, voxelSize, override),
+  );
+  const total = (k: 'positions' | 'indices') => pieces.reduce((n, p) => n + p[k].length, 0);
+  const out: RiggedMeshData = {
+    positions: new Float32Array(total('positions')),
+    normals: new Float32Array(total('positions')),
+    colors: new Float32Array(total('positions')),
+    indices: new Uint32Array(total('indices')),
+    bones: new Uint16Array(total('positions') / 3),
+  };
+  let v = 0;
+  let i = 0;
+  pieces.forEach((p, bone) => {
+    out.positions.set(p.positions, v * 3);
+    out.normals.set(p.normals, v * 3);
+    out.colors.set(p.colors, v * 3);
+    for (let k = 0; k < p.indices.length; k++) out.indices[i + k] = p.indices[k]! + v;
+    const n = p.positions.length / 3;
+    out.bones.fill(bone, v, v + n);
+    v += n;
+    i += p.indices.length;
+  });
+  return out;
+}
+
 /**
  * Unit terrain block centered on the origin, with a flat top color and a side color.
  * With `lowerSide`, the top quarter of each side uses `side` and the rest `lowerSide`

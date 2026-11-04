@@ -1,6 +1,7 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { memo, useEffect, useMemo, useRef } from 'react';
-import { CircleGeometry, Group, Mesh, MeshBasicMaterial, MeshLambertMaterial, BoxGeometry, PlaneGeometry } from 'three';
+import { CircleGeometry, Group, Mesh, MeshBasicMaterial, MeshLambertMaterial, BoxGeometry, PlaneGeometry, Skeleton, SkinnedMesh } from 'three';
+import type { TierRank } from '../../domain/config';
 import { IdleEffects } from '../presets';
 import { strings } from '../../ui/strings';
 import { labelTexture } from './label';
@@ -8,7 +9,8 @@ import { config } from '../../domain/config';
 import { getSpecies } from '../../domain/animals/catalog';
 import type { IslandAnimal } from '../../domain/island/model';
 import { palette } from '../palette';
-import { animalGeometry, flutterParts, skinnedModel, VOXEL_SIZE } from '../voxel/geometry';
+import { animalGeometry, animalRigGeometry, skinnedModel, VOXEL_SIZE } from '../voxel/geometry';
+import { createRig, type AnimalRig, type RigFrame } from './rigs';
 import { HUT_APPROACH, HUT_DOOR } from '../props/Camp';
 import { CAMP_RESERVED, COIN_PILE_TILE, HUT_TILE } from '../../domain/island/island';
 import type { TileInfo, TileKey } from '../../domain/island/occupancy';
@@ -32,7 +34,8 @@ const LABEL_H = 0.9;
 const FLY_Y = 2.4;
 const FLY_RANGE = 1.2;
 const FLY_SPEED = 0.8;
-const FLAP_HZ = 3;
+/** Share of idle actions that are a rig motion, by tier rank: higher tiers move in more ways (ADR-055). */
+const POSE_CHANCE = [0.3, 0.4, 0.5, 0.55] as const;
 const hitMaterial = new MeshBasicMaterial({ visible: false });
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
@@ -58,7 +61,23 @@ const angleDiff = (from: number, to: number) => {
   return d;
 };
 
-type Action = 'none' | 'turn' | 'hop' | 'shuffle' | 'flop';
+type Action = 'none' | 'turn' | 'hop' | 'shuffle' | 'flop' | 'pose';
+
+/** The animal's mesh: a `SkinnedMesh` driven by its rig when the species articulates, else one plain mesh. */
+function useAnimalBody(modelId: string, skinId: string | undefined, rigId: string | undefined, rank: TierRank) {
+  const body = useMemo(() => {
+    const geo = rigId ? animalRigGeometry(modelId, skinId) : null;
+    const rig = geo?.bones.length ? createRig(rigId, geo.bones, rank) : null;
+    if (!geo || !rig) return { rig: null as AnimalRig | null, object: new Mesh(animalGeometry(modelId, skinId), material) };
+    const mesh = new SkinnedMesh(geo.geometry, material);
+    mesh.add(rig.root);
+    mesh.bind(new Skeleton(rig.bones));
+    mesh.frustumCulled = false;
+    return { rig, object: mesh as Mesh };
+  }, [modelId, skinId, rigId, rank]);
+  useEffect(() => () => (body.object as SkinnedMesh).skeleton?.dispose(), [body]);
+  return body;
+}
 
 interface AnimState {
   /** `"x,z"` of the home tile last seen. */
@@ -123,7 +142,7 @@ export type RouteFn = (from: Spot, to: Spot) => readonly Spot[] | null;
 
 const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale, reducedMotion, spawn, routine, slot, route }: AnimalProps) {
   const species = getSpecies(animal.speciesId);
-  const geometry = useMemo(() => animalGeometry(species.modelId, animal.skinId), [species.modelId, animal.skinId]);
+  const { rig, object: bodyMesh } = useAnimalBody(species.modelId, animal.skinId, species.rig, species.tierRank);
   const model = skinnedModel(species.modelId, animal.skinId);
   const bodyW = model.size[0] * VOXEL_SIZE;
   const bodyH = model.size[1] * VOXEL_SIZE;
@@ -136,10 +155,8 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
   const inner = useRef<Group>(null);
   const bubbleRef = useRef<Group>(null);
   const hitRef = useRef<Mesh>(null);
-  const wingL = useRef<Group>(null);
-  const wingR = useRef<Group>(null);
   const flutter = species.idleAnimation === 'flutter';
-  const parts = useMemo(() => (flutter ? flutterParts(species.modelId, animal.skinId) : undefined), [flutter, species.modelId, animal.skinId]);
+  const frame = useRef<RigFrame>({ t: 0, stride: 0, walk: 0, hop: 0, lie: 0, excited: false });
   const scaleRef = useRef(timeScale);
   scaleRef.current = timeScale;
 
@@ -313,6 +330,8 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     let squashY = 1;
     let squashXZ = 1;
     let tilt = 0;
+    let hopArc = 0;
+    let shuffling = false;
 
     if (flutter && idle && !reducedMotion) {
       // Wander between random waypoints around the home tile; a poke (nextAt = 0) picks one at once.
@@ -336,9 +355,12 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
       if (s.action === 'none' && s.time >= s.nextAt) {
         const flop = species.idleAnimation === 'flop';
         const pick = Math.random();
-        s.action = flop ? 'flop' : pick < 0.4 ? 'hop' : pick < 0.75 ? 'turn' : 'shuffle';
+        const pose = rig !== null && rig.motions.length > 0 && Math.random() < POSE_CHANCE[species.tierRank];
+        s.action = pose ? 'pose' : flop ? 'flop' : pick < 0.4 ? 'hop' : pick < 0.75 ? 'turn' : 'shuffle';
         s.actionStart = s.time;
-        if (s.action === 'turn') {
+        if (s.action === 'pose') {
+          s.actionLength = rig!.play(s.time);
+        } else if (s.action === 'turn') {
           s.actionLength = 0.45;
           s.fromYaw = s.yaw;
           s.toYaw = s.yaw + (Math.random() < 0.5 ? -1 : 1) * (Math.PI / 2);
@@ -362,10 +384,12 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
             s.yaw = s.fromYaw + (s.toYaw - s.fromYaw) * easeInOut(p);
             break;
           case 'hop':
-            y = Math.sin(p * Math.PI) * 0.18;
+            hopArc = Math.sin(p * Math.PI);
+            y = hopArc * 0.18;
             break;
           case 'flop': {
             const arc = Math.sin(p * Math.PI);
+            hopArc = arc;
             y = arc * 0.28;
             squashY = 1 + arc * 0.18 - (p < 0.15 || p > 0.85 ? 0.22 : 0);
             squashXZ = 1 / Math.sqrt(squashY);
@@ -375,6 +399,11 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
           case 'shuffle':
             s.offX = s.fromX + (s.toX - s.fromX) * easeInOut(p);
             s.offZ = s.fromZ + (s.toZ - s.fromZ) * easeInOut(p);
+            s.stride += dt * scaleRef.current * 9;
+            shuffling = true;
+            break;
+          case 'pose':
+            // The rig plays the motion (update below).
             break;
         }
         if (p >= 1) {
@@ -408,15 +437,22 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
     if (moving) y = Math.abs(Math.sin(s.stride)) * 0.14;
     const lie = easeInOut(Math.min(1, Math.max(0, s.lie)));
     if (flutter) {
-      // Airborne unless asleep; wings flap, or fold up while lying down.
+      // Airborne unless asleep; the rig flaps the wings, or folds them up while lying down.
       y = (FLY_Y + (reducedMotion ? 0 : Math.sin(s.clock * 2.3) * 0.35)) * (1 - lie);
-      const flap = reducedMotion ? 0.3 : 0.15 + 0.7 * (0.5 + 0.5 * Math.sin(s.clock * Math.PI * 2 * FLAP_HZ * (s.clock < s.bubbleUntil ? 1.5 : 1)));
-      const angle = flap * (1 - lie) + lie * 1.2;
-      if (wingL.current && wingR.current) {
-        wingL.current.rotation.z = -angle;
-        wingR.current.rotation.z = angle;
-      }
       if (hitRef.current) hitRef.current.position.y = bodyH / 2 + y;
+    }
+    if (rig) {
+      if (reducedMotion) rig.still();
+      else {
+        const f = frame.current;
+        f.t = s.time;
+        f.stride = s.stride;
+        f.walk = moving || shuffling ? 1 : 0;
+        f.hop = hopArc;
+        f.lie = lie;
+        f.excited = s.clock < s.bubbleUntil;
+        rig.update(f);
+      }
     }
     // Departure: shrink away in notice order; beyond the animated cap (or reduced motion) vanish at once.
     let leave = 1;
@@ -457,19 +493,7 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
         <mesh geometry={bubbleBox} material={bubbleWhite} scale={[0.2, 0.2, 0.1]} position={[0, -0.55, 0]} />
       </group>
       <group ref={inner}>
-        {parts ? (
-          <>
-            <mesh geometry={parts.body} material={material} />
-            <group ref={wingL} position={[-VOXEL_SIZE, VOXEL_SIZE, 0]}>
-              <mesh geometry={parts.wing} material={material} position={[-VOXEL_SIZE, 0, 0]} />
-            </group>
-            <group ref={wingR} position={[VOXEL_SIZE, VOXEL_SIZE, 0]}>
-              <mesh geometry={parts.wing} material={material} position={[VOXEL_SIZE, 0, 0]} scale={[-1, 1, 1]} />
-            </group>
-          </>
-        ) : (
-          <mesh geometry={geometry} material={material} />
-        )}
+        <primitive object={bodyMesh} />
         <IdleEffects idle={species.idleAnimation} timeScale={timeScale} reducedMotion={reducedMotion} />
       </group>
     </group>

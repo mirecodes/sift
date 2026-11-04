@@ -79,7 +79,9 @@ Both paths produce the same model JSON (`{ size, keys, palette, voxels, parts? }
 
 ### 3.2 Builders (code-drawn shapes)
 
-Animals use `defineModel` (`tools/content-build/animal.ts`): a palette of `index: [key, default color]` and boxes painted by index, with mirror helpers (`boxM`, `setM`). Every existing animal's `model.ts` is an example; the rules (DESIGN.md 16) are checked by `src/domain/content/animals.test.ts`: width ≤ 6, depth ≤ 6 (8 for Epic and Legendary), height by tier (Common 3–5, Mythic 5–7, Epic 7–10, Legendary 10–12), ≤ 6 colors (Legendary 8), an `eye` of `#1E1E1E`. A `flutter` animal is drawn in its rest pose with the body in the two center columns and flat wings on both sides.
+Animals use `defineModel` (`tools/content-build/animal.ts`): a palette of `index: [key, default color]` and boxes painted by index, with mirror helpers (`boxM`, `setM`). Every existing animal's `model.ts` is an example; the rules (DESIGN.md 16) are checked by `src/domain/content/animals.test.ts`: width ≤ 8 (a `flutter` wingspan ≤ 14), depth ≤ 8 (12 for Epic and Legendary), height by tier (Common 3–5, Mythic 5–7, Epic 7–10, Legendary 10–12), ≤ 6 colors (Legendary 8), an `eye` of `#1E1E1E`.
+
+Movable parts (ADR-055): wrap voxels in `b.part(name, pivot, draw)` or, for left/right pairs, `b.pair(name, pivot, draw)` (draw the low-x side; it makes `<name>L` and the mirrored `<name>R`). Names come from `shared/content/anatomy.ts`: `head`, `earL/R` (ride on the head), `tail`, `tail2` (rides on the tail), `legFL/FR/BL/BR`, `legL/R`, `wingL/R`, `finL/R`, `clawL/R`. The pivot is the joint in voxel-center coordinates (the top face of voxel y = 2 is y = 2.5). Then pick a rig in `animal.json` (§4) whose motions use those parts.
 
 Decorations use the DSL (`tools/content-build/dsl.ts`): the item's `model.ts` (or a loose `content/models/<group>/<id>.ts`) default-exports a model:
 
@@ -109,7 +111,7 @@ The footprint must match the model: `ceil(width / 8) = w` and `ceil(depth / 8) =
 
 ## 4. Items
 
-- **Animal** (`animals/<id>/animal.json`, `kind: species`): `tierRank` (0 Common, 1 Mythic, 2 Epic, 3 Legendary), `idle` preset (`default`, `flop`, `flutter`, `sparkle`, `rainbow`), `model` (`animals/<id>`). Animals are earned, never sold: no price.
+- **Animal** (`animals/<id>/animal.json`, `kind: species`): `tierRank` (0 Common, 1 Mythic, 2 Epic, 3 Legendary), `idle` preset (`default`, `flop`, `flutter`, `sparkle`, `rainbow`), optional `rig` preset (how its parts move: `quadruped`, `canine`, `feline`, `hoofed`, `bear`, `sitter`, `reptile`, `turtle`, `bird`, `owl`, `peacock`, `penguin`, `flyer`, `bee`, `beetle`, `fish`, `crab`, `head`; omit it for an animal that does not articulate), `model` (`animals/<id>`). Higher tiers automatically get more of the rig's motions (DESIGN.md 18). Animals are earned, never sold: no price.
 - **Skin family** (`skin-families/<id>.json`): a `transform` (`hueShift`, `saturation`, `lightness: { offset, scale }`, `tint: { color, amount }`, `fixed` colors per key, `keep` keys; `eye` is kept by default) applied to every species' default palette, `priceByTierRank`, and optional `overrides[speciesId]` (`palette`, `overlay`, `price`). It becomes one skin per species, id `family:speciesId`.
 - **Handcrafted skin** (`animals/<speciesId>/skins/<id>.json`): `speciesId`, `palette` (only keys the species model uses), optional `overlay` model.
 - **Block theme** (`themes/<id>.json`): all 16 block keys, optional `cloudTint`, optional `ambient` particle preset, optional `tileTints` (2–12 colors banded diagonally over the top blocks; use a near-white `grassTop` so they show) and `finish: "glossy"` (shiny glass/metal blocks).
@@ -120,7 +122,7 @@ The footprint must match the model: `ceil(width / 8) = w` and `ceil(depth / 8) =
 
 ## 5. Presets
 
-Visual behavior is code, picked by id (list in `content/presets.json`, code in `src/world/presets/`): idle sets (`default`, `flop`, `flutter`, `sparkle`, `rainbow`), part animations (`spin`, `sway`, `bob`, `flap`), particles (`smoke`, `leaves`, `petals`, `snow`, `glints`, `fireflies`, plus the animal effects `sparkle`, `rainbow`), lights (`lantern_glow`). An item that needs a new preset waits for an app release and sets `minClientVersion` to it.
+Visual behavior is code, picked by id (list in `content/presets.json`, code in `src/world/presets/`): idle sets (`default`, `flop`, `flutter`, `sparkle`, `rainbow`), animal rigs (`src/world/animals/rigs/`, ids above), part animations (`spin`, `sway`, `bob`, `flap`), particles (`smoke`, `leaves`, `petals`, `snow`, `glints`, `fireflies`, plus the animal effects `sparkle`, `rainbow`), lights (`lantern_glow`). An item that needs a new preset waits for an app release and sets `minClientVersion` to it.
 
 ## 6. Sprites
 

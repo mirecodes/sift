@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { resolveColors, type ModelColors } from '../../../shared/content/model';
+import { resolveColors, restPose, type ModelColors } from '../../../shared/content/model';
 import { modelById } from '../../world/voxel/geometry';
 import { colors } from '../../ui/tokens';
 
@@ -21,7 +21,7 @@ export function VoxelSprite({ modelId, silhouette, size = 96, colors: override }
     const canvas = ref.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
-    const model = modelById(modelId);
+    const model = restPose(modelById(modelId));
     const palette = resolveColors(model, override);
     const [W, H] = model.size;
     const px = Math.max(1, Math.floor(size / Math.max(W, H)));

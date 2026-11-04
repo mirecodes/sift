@@ -13,6 +13,8 @@ export interface AnimalSpecies {
   modelId: string;
   /** Idle animation set preset (Step 3.2). */
   idleAnimation: 'default' | 'flop' | 'sparkle' | 'rainbow' | 'flutter';
+  /** Articulation rig preset (ADR-055), or undefined when the animal does not articulate. */
+  rig?: string;
   /** Tiles occupied, [x, z]. All species are 1×1 (ADR-005). */
   footprint: readonly [number, number];
 }
@@ -36,6 +38,7 @@ export function refreshCatalog(): void {
         tier: tierName(s.tierRank),
         modelId: s.model,
         idleAnimation: s.idle as AnimalSpecies['idleAnimation'],
+        ...(s.rig ? { rig: s.rig } : {}),
         footprint: [1, 1],
       }),
     )

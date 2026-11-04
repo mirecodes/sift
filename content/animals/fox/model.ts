@@ -1,21 +1,24 @@
 import { defineModel } from '../../../tools/content-build/animal';
 
-// Fox: orange body, white chest and tail tip, dark legs and ear tips.
-export default defineModel([3, 7, 6], {
+// Fox: slim orange body on dark legs, a white chest, a big bushy tail with a white tip, a pointed head
+// with a white muzzle and dark ears.
+export default defineModel([5, 7, 11], {
   1: ['body', '#E8702A'], // fur
   2: ['belly', '#FFFFFF'], // chest, muzzle, tail tip
   3: ['accent', '#3A2A22'], // legs, ears, nose
-  4: ['eye', '#1E1E1E'], // eye
+  4: ['eye', '#1E1E1E'], // eyes
 }, (b) => {
-  b.boxM(0, 0, 2, 1, 2, 1, 3); // hind legs
-  b.boxM(0, 0, 4, 1, 2, 1, 3); // front legs
-  b.box(0, 2, 2, 3, 2, 3, 1); // body
-  b.box(0, 2, 0, 3, 3, 2, 1); // tail
-  b.box(0, 2, 0, 3, 3, 1, 2); // tail tip
-  b.box(0, 3, 4, 3, 3, 2, 1); // head
-  b.box(0, 2, 5, 3, 1, 1, 2); // chest
-  b.box(0, 3, 5, 3, 1, 1, 2); // muzzle
-  b.set(1, 3, 5, 3); // nose
-  b.setM(0, 4, 5, 4); // eyes
-  b.boxM(0, 6, 4, 1, 1, 1, 3); // ears
+  b.pair('legF', [1, 1.5, 7], () => b.box(1, 0, 7, 1, 2, 1, 3));
+  b.pair('legB', [1, 1.5, 3], () => b.box(1, 0, 3, 1, 2, 1, 3));
+  b.box(1, 2, 3, 3, 2, 5, 1); // body
+  b.box(2, 2, 6, 1, 2, 2, 2); // chest
+  b.part('tail', [2, 3, 2.5], () => b.box(1, 2, 1, 3, 2, 2, 1));
+  b.part('tail2', [2, 3, 0.5], () => b.box(1, 2, 0, 3, 2, 1, 2)); // white tip
+  b.part('head', [2, 3.5, 7.5], () => {
+    b.box(1, 4, 7, 3, 2, 2, 1);
+    b.box(1, 4, 9, 3, 1, 1, 2); // muzzle
+    b.set(2, 4, 10, 3); // nose
+    b.setM(1, 5, 9, 4); // eyes
+  });
+  b.pair('ear', [1, 5.5, 7.5], () => b.box(1, 6, 7, 1, 1, 1, 3));
 });

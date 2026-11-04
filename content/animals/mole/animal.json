@@ -7,6 +7,7 @@
   },
   "tierRank": 0,
   "idle": "default",
+  "rig": "quadruped",
   "model": "animals/mole",
   "release": "base"
 }

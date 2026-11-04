@@ -55,7 +55,7 @@ describe('content pack (Step 3.1)', () => {
   });
 
   it('rejects unknown presets when a preset list is given', () => {
-    const presets = { idle: ['flop'], part: ['default'], particles: [], light: [] };
+    const presets = { idle: ['flop'], rig: [], part: ['default'], particles: [], light: [] };
     expect(() => buildPack({ ...source([species('a'), release], ['a']), presets })).toThrow(/a: unknown idle preset default/);
     expect(() => buildPack({ ...source([species('a'), release], ['a']), presets: { ...presets, idle: ['default'] } })).not.toThrow();
   });

@@ -1,5 +1,6 @@
 {
   "idle": ["default", "flop", "flutter", "sparkle", "rainbow"],
+  "rig": ["head", "quadruped", "canine", "feline", "hoofed", "bear", "sitter", "reptile", "turtle", "bird", "owl", "peacock", "penguin", "flyer", "bee", "beetle", "fish", "crab"],
   "part": ["spin", "sway", "bob", "flap"],
   "particles": ["sparkle", "rainbow", "smoke", "leaves", "petals", "snow", "glints", "fireflies"],
   "light": ["lantern_glow"]
