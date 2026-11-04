@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { config } from '../../domain/config';
 import { PUSH_CATEGORIES } from '../../../shared/rules/push';
 import { backupFileName, parseBackup, summarizeBackup, type Backup, type BackupError } from '../../domain/backup';
@@ -14,6 +14,9 @@ import { TopBar } from '../../ui/components/TopBar';
 import { AccountSection } from '../account/AccountSection';
 import styles from '../Screen.module.css';
 import local from './SettingsScreen.module.css';
+
+// Development builds with the fake backend only; production builds drop the module.
+const TestTools = import.meta.env.DEV && runtimeConfig.backend.provider === 'fake' ? lazy(() => import('./TestTools').then((m) => ({ default: m.TestTools }))) : null;
 
 /** Export a backup, or import one after a summary and confirmation. */
 function DataSection() {
@@ -174,6 +177,12 @@ export function SettingsScreen() {
             <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.account.section}</h2>
             <AccountSection />
           </>
+        )}
+
+        {TestTools && account === 'signedIn' && (
+          <Suspense fallback={null}>
+            <TestTools />
+          </Suspense>
         )}
 
         <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.settings.data}</h2>
