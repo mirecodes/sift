@@ -19,7 +19,19 @@ export function createRemote(backend: BackendChoice, opts: { platform: Platform;
             const fake = createFakeRemote({
               appVersion: opts.appVersion,
               latencyMs: 150,
-              store: ls && { get: (k) => ls.getItem(k), set: (k, v) => ls.setItem(k, v), remove: (k) => ls.removeItem(k) },
+              store: ls && {
+                get: (k) => ls.getItem(k),
+                set: (k, v) => {
+                  // A full `localStorage` keeps the change in this tab only; Test tools › Server check shows it.
+                  try {
+                    ls.setItem(k, v);
+                  } catch (e) {
+                    (globalThis as { __siftFakeSaveError?: string }).__siftFakeSaveError = String(e);
+                    console.warn('Sift: the test server could not save.', e);
+                  }
+                },
+                remove: (k) => ls.removeItem(k),
+              },
               // Development sample friends (`testMode.dummyData`), loaded only when asked for.
               ...(opts.sampleFriends && { onSignIn: async (f, userId) => (await import('./fakeBots')).seedFakeSocial(f, userId) }),
             });

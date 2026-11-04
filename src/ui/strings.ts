@@ -77,7 +77,18 @@ export const strings = {
     timersButton: 'Reset',
     attack: 'A friend attacks you',
     attackButton: 'Start',
-    noArmyHint: 'Testing: Settings › Test tools › Add animals gives you an army.',
+    check: 'Server check',
+    checkButton: 'Check',
+    noArmyHint: 'Testing: sample animals stay on this device and do not fight. Settings › Test tools › Add animals gives you an army.',
+    armyAdded: (added: number, canFight: number) => `Added ${added} animals. On the server ${canFight} can fight now (Unicorns stay home).`,
+    status: (s: { user: string; device: string; island: boolean; group: string | null; active: number; verified: number; canFight: number; local: number; sizeKb: number; saveError: string | null }) =>
+      [
+        `Server user: ${s.user}${s.user === s.device ? '' : ` (this device is linked to ${s.device})`}.`,
+        `Island on the server: ${s.island ? 'yes' : 'no'}. Group: ${s.group ?? 'none'}.`,
+        `Server animals: ${s.active} on the island, ${s.verified} verified, ${s.canFight} can fight.`,
+        `On this device: ${s.local} on the island.`,
+        `Test server data: ${s.sizeKb} KB${s.saveError ? `. Saving failed: ${s.saveError}` : ''}.`,
+      ].join(' '),
     done: {
       army: 'Added 9 animals of every tier, a Unicorn among them.',
       timers: 'Cooldowns, shields and new-member protection are over.',

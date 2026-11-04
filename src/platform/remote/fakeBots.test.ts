@@ -41,7 +41,8 @@ describe('sample friends for the test backend (ADR-038)', () => {
     await callApi(fake, 'group_invite_respond', { inviteId: groups.invites[0]!.id, accept: true }, { requestId: 'join' });
 
     expect((await callApi(fake, 'war_preview', { targetId: 'bot-jae' })).data.preview.blocked).toEqual({ code: 'no_army' });
-    expect(await testTools.grantArmy(fake, 'me')).toBe('ok');
+    expect(await testTools.grantArmy(fake, 'me')).toEqual({ added: 9 });
+    expect(await testTools.status(fake, 'me')).toMatchObject({ island: true, active: 9, verified: 9, canFight: 8 });
     const { data: preview } = await callApi(fake, 'war_preview', { targetId: 'bot-jae' });
     expect(preview.preview.blocked).toBeNull();
     expect(preview.preview.unicornsHome).toBe(1);

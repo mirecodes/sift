@@ -2,6 +2,7 @@ import { API_VERSION, type Op, type OpArgs } from '../../../shared/api/types';
 import { seededRng } from '../../../shared/rng';
 import { BALANCE_VERSION } from '../../../shared/balance/balance';
 import { missionTarget } from '../../../shared/rules/missions';
+import { attackArmy } from '../../../shared/rules/war';
 import { previousWeek, weekOf } from '../../../shared/rules/week';
 import { handle } from '../../../server/core/api';
 import { UserWriter } from '../../../server/core/context';
@@ -103,27 +104,45 @@ const TEST_ARMY = ['tiger', 'wolf', 'peacock', 'fox', 'cat', 'owl', 'dog', 'chic
  * server; the app then pulls the change like any other.
  */
 export const testTools = {
+  /** What the test server holds for the user (Settings › Test tools › Server check). */
+  async status(fake: FakeRemote, userId: string) {
+    return fake.env.db.transaction(async (tx) => {
+      const animals = await tx.table('animals').find({ userId });
+      const active = animals.filter((a) => a.status === 'active');
+      return {
+        island: !!(await tx.table('island_state').get(userId)),
+        group: (await tx.table('group_members').get(userId))?.groupId ?? null,
+        active: active.length,
+        verified: active.filter((a) => a.verified).length,
+        canFight: attackArmy(animals.map(({ userId: _u, updatedSeq: _s, ...a }) => a)).length,
+      };
+    });
+  },
+
   /** Verified animals on the user's island, so they can attack (and move the island) without focusing. */
-  async grantArmy(fake: FakeRemote, userId: string): Promise<'ok' | 'no_island'> {
+  async grantArmy(fake: FakeRemote, userId: string): Promise<{ added: number } | 'no_island'> {
     const env = fake.env;
     const now = env.now();
     return env.db.transaction(async (tx) => {
       const island = await tx.table('island_state').get(userId);
       if (!island) return 'no_island';
       const animals: PlacedAnimal[] = (await tx.table('animals').find({ userId })).map(({ userId: _u, updatedSeq: _s, ...a }) => a);
+      const buildings = (await tx.table('placed_buildings').find({ userId })).filter((b) => !b.deleted).map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation }));
       const w = new UserWriter(tx, userId);
       const rng = seededRng(now);
+      let added = 0;
       for (const [i, s] of TEST_ARMY.entries()) {
-        const tile = pickNewAnimalTile(island.seed, animals, rng);
+        const tile = pickNewAnimalTile(island.seed, animals, rng, buildings);
         if (!tile) break;
         const id = `test-${now}-${i}`;
         const animal = newPlacedAnimal(id, getSpecies(s), tile, now - (i + 1) * MIN, `${id}-s`);
         animals.push(animal);
         await w.put('sessions', { id: animal.sessionId, startedAt: animal.acquiredAt - 30 * MIN, plannedFocusMs: 25 * MIN, endedAt: animal.acquiredAt, effectiveFocusMs: 30 * MIN, status: 'completed', rewardAnimalId: id, togetherRoomId: null, verified: true });
         await w.put('animals', animal);
+        added++;
       }
       await w.finish();
-      return 'ok';
+      return { added };
     });
   },
 

@@ -25,7 +25,7 @@ At sign-in four sample accounts appear: friends 민지 (focusing now), Jae and �
 6. Settings → Test tools → **A friend attacks you → Start**: a sample friend attacks you (the defender's notice and Group › Wars › Replay).
 7. Home: tap the Unicorn counter to **move to a new island** (the test army's Unicorn pays).
 
-Test tools show only in `npm run dev` with the test backend; production builds do not contain them.
+Test tools show only in `npm run dev` with the test backend; production builds do not contain them. If something looks wrong, **Server check** prints what the test server holds for you (animals that can fight, group, data size, failed saves).
 
 ## 1. What you need
 
