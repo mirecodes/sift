@@ -214,6 +214,8 @@ export interface WarFighter {
   skinId?: string;
   x: number;
   z: number;
+  /** Attackers: the battle step they land in (absent in wars before 2026-11-04: all at once). */
+  landAt?: number;
 }
 
 /** A war record: everything a replay needs; decided on the server before any animation (Step 9.5). */

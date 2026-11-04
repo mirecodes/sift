@@ -592,13 +592,12 @@ Terrain, water and camp colors are one keyed record, `defaultBlocks` (`grassTop`
 ### 15.8 Champion Flag
 - A weekly winner's island (Step 8.6) flies a flag for the following week: a thin `palette` wood pole 1.2 blocks tall on the corner of the hut tile, with a 0.45 × 0.3 banner in `--color-accent-yellow` that waves gently (a 2-segment sine sway, 0.5 Hz; still with reduced motion and on Focus). Visible on visits and in the ranking's island too. When it first appears on Home it rises up the pole over 1.2 s.
 
-### 15.9 Battle Replay (Phase 9)
-- Drawn in the defender island's space, which shows without its own animals (they are the defending army).
-- **Landing strip**: a wooden deck (`#8A5A34`, 0.12 thick) off the island's front edge, as wide as the island, deep enough for the formation rows.
-- **Airship**: a voxel ship (wood hull with a darker rail and cabin, two ropes, a cream balloon with a red band) flies in from the left over 3.5 s, descending, and docks at the end of the strip; after the result it flies off to the right.
-- **Landing** (1.2 s): attackers appear with a hop on their formation spots (highest ranks nearest the island, Tigers first), facing the island.
-- **Aura**: a pale yellow square (`#FFF4B8`, 22 % opacity, 5 × 5 tiles) under each defending Unicorn.
-- **Rounds**: each pair runs to the meeting point, bumps (a quick squash and a small hop), the loser tips over and shrinks away (instanced meshes per species and skin, so no per-animal transparency); winners stay where they met. Rounds last 0.45–1 s so the battle takes at most 26 s; 2× halves it.
+### 15.9 Battle Replay (Phase 9, reworked by the owner 2026-11-04)
+- Drawn in the defender island's space, which shows without its own animals (they are the defending army). No landing strip: attackers land on the island itself.
+- **Ship**: a flying wooden sailing ship (×0.85): stepped hull `#8A5A34` with darker strakes, a gold rail line, gun ports with iron barrels, a raised stern castle with three lit windows and a lantern, a bowsprit, three masts with billowed square sails (cream, a red band on the lower ones, a red paw on the main course), a crow's nest, a long waving red pennant and a stern flag. Sails breathe and the ship bobs and rolls a little. It sails in bow first over 3.5 s, descending, leaving a puff trail, and hovers off the island's far-left edge (−x, away from the camera, so it never hides the battle); after the result it sails on and away.
+- **Landing**: the attackers ride on deck, then hop off one by one in a quick pop-pop-pop, wave after wave (5 waves, highest ranks first, Tigers lead), each in an arc onto its own random tile anywhere on the island, with a small dust puff.
+- **Unicorn aura**: no ground marking. Golden motes rise slowly over the protected 5 × 5 area of each defending Unicorn until it falls; a protected animal that falls but stays sends up a golden sparkle.
+- **Duels**: they overlap all over the island. Each starts at its step's time plus a small per-duel offset, never before both animals are free (a landing attacker fights right after it lands). A duel: both run in with bounding hops, face each other, trade two hits (lunge forward, the one hit recoils and flashes red, white-orange sparks) and a blow (a bigger burst); the loser is knocked back and tips over, then either vanishes in a poof of grey smoke and stars (left for good) or sinks away after a small dust puff (back home); the winner does a little victory hop and stays. Instanced meshes per species and skin; hit flashes use instance colors, fading is drawn as shrinking. The battle takes at most 26 s; 2× halves it.
 - Reduced motion: no replay; the result panel shows over the island.
 
 ### 15.5 Stream

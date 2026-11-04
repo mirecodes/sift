@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-11-04 · **Changed** — Battle rework (owner request, ADR-056): attackers land on the defender island itself (no landing strip), hopping off the ship one by one in 5 waves onto random tiles; each step they pick defenders at random, weighted toward nearby ones (`landOnIsland`, `balance.war.landingWaves`, `matchFalloff`; balance version 2026-11-04.1). The replay overlaps duels all over the island (per-duel offsets, never before both are free), with lunges, red hit flashes, sparks, knock-backs, poofs for animals that left for good and dust for the rest. The airship is now a flying wooden galleon (three masts, billowed sails with a paw, stern castle, gun ports, pennant, cloud trail) docked off the far-left edge. The blurry Unicorn aura squares are replaced by rising golden motes.
+
 - 2026-11-04 · **Added** — Test tools › Server check: the server user, island, group and animals (on the island, verified, able to fight), this device's animals, the test server's size and any failed save. Add animals now reports how many it added and how many can fight; a full `localStorage` no longer breaks every request.
 
 - 2026-11-04 · **Changed** — Model pass for cuteness (owner review, skins untouched): Panda back to its original sitting design (with parts, new `sitter` rig: munch, wave, clap; Otter uses it too); Butterfly gets small, thin wings (9 wide) and a round head; eyes always two separate dots (Fish, Horse, Koala, Peacock, Penguin, Otter, Raccoon, Sheep with a soft tan face, Bat, Beaver, Tiger's mark moved off its eyes); narrower, deeper heads and bodies (Cow 4 wide, Tiger head 4×4, Axolotl, Guinea pig, Bear); Red panda's tail one voxel slim. DESIGN.md 16.2 gains the cute-first, eyes and width rules; a test keeps eyes apart.

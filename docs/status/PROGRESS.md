@@ -173,7 +173,7 @@
 - [x] 9.1 Rules and config
   - `balance.war` (§9.1 values, loot brackets, cap null); armies (Unicorns stay home) tested.
 - [x] 9.2 Formation (shared)
-  - `landingFormation` (rows off the front edge, highest rank first, Tigers lead) tested; defenders use their stored tiles (pinned ones in Phase 10).
+  - Now `landOnIsland` (owner rework 2026-11-04, ADR-056): random island tiles in 5 waves, highest ranks first (Tigers lead), tested; defenders use their stored tiles (pinned ones in Phase 10).
 - [x] 9.3 Simulation (shared, deterministic)
   - `simulateBattle` in `shared/rules/war.ts` (one file instead of `war/*.ts`); determinism, invariants over 300 seeds, duel odds and 25 % / 5 % vanish over 10,000 runs each, aura boundaries tested.
 - [x] 9.4 Gold loot (shared rule `war/loot.ts`, owner decision rev 3)
@@ -181,7 +181,7 @@
 - [x] 9.5 Server: `declare_war(targetId, requestId)`
   - Checks, locks, settle, seed, one write, notices, idempotent retry; suite on memory and PGlite (protection, freeze, cooldown, shield, loot, vanished, replay from the seed, lists, access).
 - [x] 9.6 Attacker experience
-  - Attack sheet (armies by tier, loot, odds, blockers), replay (airship, landing strip, formation, aura squares, rounds, result with Watch again), Skip / 2× / Esc, reduced motion → result. Timeline tested (≤ 30 s for 100 v 100). Screenshots checked. The loot chest walk is not drawn: the gold shows in the result and the HUD.
+  - Attack sheet (armies by tier, loot, odds, blockers), replay (since the 2026-11-04 rework: sailing ship, staggered landing on the island, overlapping duels with hits and particles, golden aura motes; result with Watch again), Skip / 2× / Esc, reduced motion → result. Timeline tested (≤ 26 s of battle for 100 v 100, staggered hops, spread duel starts, older wars). Screenshots checked. The loot chest walk is not drawn: the gold shows in the result and the HUD.
 - [x] 9.7 Defender experience
   - `war_report` notice with Watch replay; vanished animals and gold arrive with the delta before the island draws.
 - [x] 9.8 Wars sub-tab
@@ -202,6 +202,7 @@
 
 > Things the agent could not verify automatically (visual checks, feel, balance). The owner reviews them at each phase gate.
 
+- War rework · Watch a few battles (`npm run dev:all`, Settings › Test tools): ship look and where it docks, the pop-pop landing pace, how busy the island gets with many animals, hit flashes and particles. The mast tops can touch the top of a wide, short window.
 - 10 · Feature flag `arrange` (off). Try it with `cosmetics` on or off: drag feel with a mouse and on a phone (long press 350 ms), the see-through ghost size (it looks small on a phone), red/green on each theme.
 - 6 · **Owner action**: build and try the apps on devices (`docs/guides/MOBILE_SETUP.md`): signing, the Live Activity widget target in Xcode (§5), Firebase + APNs for push (§7), the link domain (§8), icons/splash (§4). Check on devices: SQLite save survives app kills, the focus-end notification while locked, the lock-screen timer (overtime, break auto-removal), pinch zoom, status bar hidden in Focus, share-sheet export. The CI `ios` job assumes a `macos-26` runner with Xcode 26; adjust if GitHub names it differently.
 - 5 · **Owner action**: create the Supabase project and connect it (`docs/guides/BACKEND_SETUP.md`, ~1 hour incl. Apple/Google). Until then try everything with `backend.provider: fake` (any email, code 000000). Not verified here: real email delivery, Apple/Google sign-in, the Deno function on Supabase (the same bundle runs on Postgres in `npm run server:check`).
@@ -293,7 +294,11 @@
 - 10.2 · Signed in, a drop waits for `apply_layout` and fails with "offline" when it cannot reach the server. · The server owns the layout; no queued layout edits.
 - 9.1 · After `maxRounds` with both sides standing, the defense holds. · An attack must clearly win.
 - 9.1 · New-member protection shields the new member from attacks; they may attack others. · "Protection" is for the newcomer.
-- 9.2 · Attackers land on a wooden strip off the defender island's front edge (+z), not on its tiles. · Defender tiles are occupied; the strip reads as the airship's landing.
+- 9.2 · ~~Attackers land on a wooden strip off the defender island's front edge.~~ Replaced by the owner (2026-11-04): they land on the island in waves (ADR-056).
+- War rework · 5 landing waves; random matching weighted 1 / (1 + distance)²; per-duel offset up to ¾ of a step. · Fights spread over the island and overlap, but neighbours still meet first.
+- War rework · The ship docks off the far-left edge (−x), away from the camera. · In front (+z) it hid the battle.
+- War rework · The Unicorn aura shows as rising golden motes, not ground squares. · The owner found the squares blurry; motes mark the area without covering the island.
+- War rework · Older wars (no `landAt`) replay with all attackers landing at once on the nearest land tile. · Only test data has them; no migration needed.
 - 9.5 · Cooldown and shield are derived from the `wars` rows, not stored separately. · One source of truth.
 - 9.6 · No loot-chest walk; the result panel shows the gold and the HUD updates. · The rest of the sequence is complete; the chest is polish for later.
 - 9.6 · Losers shrink away while tipping over instead of fading. · Instancing (Step 9.9) has no per-instance transparency.

@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-28.1';
+export const BALANCE_VERSION = '2026-11-04.1';
 
 const MINUTE = 60_000;
 
@@ -149,6 +149,10 @@ export const balance = deepFreeze({
     /** No wars this close to the weekly settlement. */
     freezeBeforeSettlementMinutes: 60,
     maxRounds: 500,
+    /** Attackers land on the defender island in this many waves, one battle step apart (owner, 2026-11-04). */
+    landingWaves: 5,
+    /** Each attacker picks a defender at random, weighted 1 / (1 + distance) ^ falloff: mostly nearby ones. */
+    matchFalloff: 2,
   },
   /** Allowed shop price ranges [min, max] in gold (§8); `content:validate` enforces them. */
   prices: {

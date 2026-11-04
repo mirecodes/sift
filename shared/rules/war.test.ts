@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { balance } from '../balance/balance';
 import type { PlacedAnimal } from '../types/rows';
-import { attackArmy, defenseArmy, higherFallChance, landingFormation, lootFor, simulateBattle, type Fighter } from './war';
+import { attackArmy, defenseArmy, higherFallChance, landOnIsland, lootFor, simulateBattle, type Fighter } from './war';
 
 const f = (id: string, tierRank: number, x: number, z: number, speciesId = 'fox'): Fighter => ({ id, speciesId, tierRank, x, z });
 const army = (prefix: string, n: number, rank = 0, z = 0): Fighter[] => Array.from({ length: n }, (_, i) => f(`${prefix}${i}`, rank, i - n / 2, z));
@@ -17,11 +17,17 @@ describe('armies and formation (Steps 9.1, 9.2)', () => {
     expect(defenseArmy(all).map((a) => a.id)).toEqual(['u', 'f']);
   });
 
-  it('lines up highest ranks in front, Tigers leading, centered on the strip', () => {
-    const out = landingFormation([f('c', 0, 0, 0), f('t', 3, 0, 0, 'tiger'), f('l', 3, 0, 0, 'peacock'), f('e', 2, 0, 0)], 3);
-    expect(out.map((x) => x.id)).toEqual(['t', 'l', 'e', 'c']);
-    expect(out.map((x) => x.x)).toEqual([0, 1, -1, 2]);
-    expect(out.every((x) => x.z === 4.5)).toBe(true);
+  it('lands on the island in waves, highest ranks first (Tigers lead), on different tiles while there are enough', () => {
+    const tiles = Array.from({ length: 9 }, (_, i) => ({ x: (i % 3) - 1, z: Math.floor(i / 3) - 1 }));
+    const attackers = [f('c', 0, 0, 0), f('t', 3, 0, 0, 'tiger'), f('l', 3, 0, 0, 'peacock'), f('e', 2, 0, 0), f('m', 1, 0, 0), f('c2', 0, 0, 0)];
+    const out = landOnIsland(attackers, tiles, 7, { ...balance.war, landingWaves: 3 });
+    expect(out.map((x) => x.id)).toEqual(['t', 'l', 'e', 'm', 'c', 'c2']);
+    expect(out.map((x) => x.landAt)).toEqual([0, 0, 1, 1, 2, 2]);
+    expect(out.every((x) => tiles.some((t) => t.x === x.x && t.z === x.z))).toBe(true);
+    expect(new Set(out.map((x) => `${x.x},${x.z}`)).size).toBe(6);
+    expect(landOnIsland(attackers, tiles, 7)).toEqual(landOnIsland(attackers, tiles, 7));
+    // More attackers than tiles: they share.
+    expect(landOnIsland(army('a', 12), tiles, 1).every((x) => tiles.some((t) => t.x === x.x && t.z === x.z))).toBe(true);
   });
 });
 
@@ -70,20 +76,44 @@ describe('battle (Step 9.3)', () => {
   });
 
   it('vanishes 25 % of the fallen, 5 % inside a Unicorn aura (10,000 runs)', () => {
-    let open = 0;
-    let shielded = 0;
+    const rate = { open: [0, 0], shielded: [0, 0] };
     const N = 10_000;
     for (let seed = 0; seed < N; seed++) {
       // A Legendary attacker beats the Common defender almost always; the defender's fate is what we count.
       const far = simulateBattle([f('a', 3, 9, 9)], [f('d', 0, 9, 8), f('uni', 3, 0, 0, 'unicorn')], seed);
-      if (far.fallen.includes('d')) open += far.vanished.includes('d') ? 1 : 0;
+      if (far.fallen.includes('d')) rate.open = [rate.open[0]! + (far.vanished.includes('d') ? 1 : 0), rate.open[1]! + 1];
       const near = simulateBattle([f('a', 3, 2, 3)], [f('d', 0, 2, 2), f('uni', 3, 0, 0, 'unicorn')], seed);
-      if (near.fallen.includes('d')) shielded += near.vanished.includes('d') ? 1 : 0;
+      if (near.fallen.includes('d')) rate.shielded = [rate.shielded[0]! + (near.vanished.includes('d') ? 1 : 0), rate.shielded[1]! + 1];
     }
-    expect(open / N).toBeGreaterThan(0.23);
-    expect(open / N).toBeLessThan(0.27);
-    expect(shielded / N).toBeGreaterThan(0.035);
-    expect(shielded / N).toBeLessThan(0.065);
+    const open = rate.open[0]! / rate.open[1]!;
+    const shielded = rate.shielded[0]! / rate.shielded[1]!;
+    expect(rate.shielded[1]).toBeGreaterThan(5000);
+    expect(open).toBeGreaterThan(0.23);
+    expect(open).toBeLessThan(0.27);
+    expect(shielded).toBeGreaterThan(0.035);
+    expect(shielded).toBeLessThan(0.065);
+  });
+
+  it('lets landed attackers fight only: wave n joins in step n', () => {
+    const a = [{ ...f('a0', 3, 0, 0), landAt: 0 }, { ...f('a1', 3, 1, 0), landAt: 2 }];
+    const d = army('d', 6, 0, 1);
+    for (let seed = 0; seed < 50; seed++) {
+      const r = simulateBattle(a, d, seed);
+      r.rounds.slice(0, 2).forEach((round) => expect(round.duels.every((x) => x.a !== 'a1')).toBe(true));
+      if (r.rounds.length > 2 && !r.fallen.slice(0, 2).includes('a1')) expect(r.rounds[2]!.duels.some((x) => x.a === 'a1')).toBe(true);
+    }
+  });
+
+  it('matches at random, mostly with nearby defenders', () => {
+    const picks = new Map<string, number>();
+    for (let seed = 0; seed < 2000; seed++) {
+      const r = simulateBattle([f('a', 3, 0, 0)], [f('near', 0, 1, 0), f('mid', 0, 3, 0), f('far', 0, 9, 0)], seed);
+      const first = r.rounds[0]!.duels[0]!.d;
+      picks.set(first, (picks.get(first) ?? 0) + 1);
+    }
+    expect(picks.get('near')!).toBeGreaterThan(picks.get('mid')!);
+    expect(picks.get('mid')!).toBeGreaterThan(picks.get('far') ?? 0);
+    expect(picks.get('mid')!).toBeGreaterThan(100); // not always the nearest
   });
 
   it('draws the aura as a 5×5 square around each defending Unicorn', () => {

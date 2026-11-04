@@ -15,6 +15,8 @@ export interface WarConfig {
   lootBrackets: readonly { minGold: number; loot: number }[];
   lootLostCapPerWeek: number | null;
   maxRounds: number;
+  landingWaves: number;
+  matchFalloff: number;
 }
 type War = WarConfig;
 
@@ -23,9 +25,11 @@ export interface Fighter {
   speciesId: string;
   tierRank: number;
   skinId?: string;
-  /** Tile position (defenders: their island tile; attackers: the landing formation). */
+  /** Tile position (defenders: their island tile; attackers: where they land on it). */
   x: number;
   z: number;
+  /** Attackers: the battle step they land in (they fight from then on). Absent = step 0. */
+  landAt?: number;
 }
 
 export interface Duel {
@@ -58,17 +62,21 @@ export const byRank = (a: Pick<Fighter, 'tierRank' | 'speciesId' | 'id'>, b: Pic
   b.tierRank - a.tierRank || Number(b.speciesId === 'tiger') - Number(a.speciesId === 'tiger') || a.id.localeCompare(b.id);
 
 /**
- * The landing formation (Step 9.2): rows on a strip just off the defender island's front edge (+z),
- * `half` = the island's half width in tiles; the first row (highest ranks, Tigers first) is nearest.
+ * The landing (Step 9.2, owner change 2026-11-04): attackers hop off the ship onto the defender island
+ * itself, in `landingWaves` waves one battle step apart, highest ranks first (Tigers lead). Each takes a
+ * random tile of `tiles` (the island's standable tiles), all different while there are enough, so the
+ * battle spreads over the whole island.
  */
-export function landingFormation(attackers: readonly Omit<Fighter, 'x' | 'z'>[], half: number): Fighter[] {
-  const width = Math.max(3, 2 * half + 1);
-  return [...attackers].sort(byRank).map((a, i) => {
-    const row = Math.floor(i / width);
-    const col = i % width;
-    // Columns fill from the middle outwards: 0, +1, -1, +2, -2, …
-    const offset = col === 0 ? 0 : col % 2 ? (col + 1) / 2 : -col / 2;
-    return { ...a, x: offset, z: half + 1.5 + row * 0.8 };
+export function landOnIsland(attackers: readonly Omit<Fighter, 'x' | 'z'>[], tiles: readonly { x: number; z: number }[], seed: number, cfg: War = balance.war): Fighter[] {
+  const rng = seededRng(seed ^ 0x5eed);
+  const pool = [...tiles].sort((a, b) => a.x - b.x || a.z - b.z);
+  const order = [...attackers].sort(byRank);
+  const perWave = Math.max(1, Math.ceil(order.length / Math.max(1, cfg.landingWaves)));
+  let free: { x: number; z: number }[] = [];
+  return order.map((a, i) => {
+    if (!free.length) free = [...pool];
+    const tile = free.length ? free.splice(Math.floor(rng() * free.length), 1)[0]! : { x: 0, z: 0 };
+    return { ...a, x: tile.x, z: tile.z, landAt: Math.floor(i / perWave) };
   });
 }
 
@@ -82,8 +90,9 @@ export function higherFallChance(gap: number, cfg: War = balance.war): number {
 }
 
 /**
- * The battle (Step 9.3), deterministic for a seed: each round living attackers (seeded shuffle) pick the
- * nearest unmatched living defender (ties by id); every duel makes exactly one animal fall; the winner
+ * The battle (Step 9.3, matching changed by the owner 2026-11-04), deterministic for a seed: each step the
+ * living attackers that have landed (seeded shuffle) each pick an unmatched living defender at random,
+ * weighted toward nearby ones (`matchFalloff`); every duel makes exactly one animal fall; the winner
  * stands at the meeting point. Ends when a side is empty (or after `maxRounds`: the defense holds).
  * Then every fallen animal rolls to vanish: 25 %, or 5 % inside a defending Unicorn's aura.
  */
@@ -99,7 +108,8 @@ export function simulateBattle(attackers: readonly Fighter[], defenders: readonl
   const fallen: string[] = [];
 
   while (liveA.size && liveD.size && rounds.length < cfg.maxRounds) {
-    const order = [...liveA.keys()].sort();
+    const step = rounds.length;
+    const order = [...liveA.values()].filter((f) => (f.landAt ?? 0) <= step).map((f) => f.id).sort();
     for (let i = order.length - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
       [order[i], order[j]] = [order[j]!, order[i]!];
@@ -108,18 +118,20 @@ export function simulateBattle(attackers: readonly Fighter[], defenders: readonl
     const duels: Duel[] = [];
     for (const a of order) {
       const pa = pos.get(a)!;
-      let best: string | null = null;
-      let bestD = Infinity;
-      for (const d of [...liveD.keys()].sort()) {
-        if (taken.has(d)) continue;
+      const open = [...liveD.keys()].sort().filter((d) => !taken.has(d));
+      if (!open.length) break;
+      const weights = open.map((d) => {
         const pd = pos.get(d)!;
-        const dist = Math.hypot(pa.x - pd.x, pa.z - pd.z);
-        if (dist < bestD) {
-          bestD = dist;
-          best = d;
+        return 1 / (1 + Math.hypot(pa.x - pd.x, pa.z - pd.z)) ** cfg.matchFalloff;
+      });
+      let pick = rng() * weights.reduce((s, w) => s + w, 0);
+      let best = open[open.length - 1]!;
+      for (const [i, w] of weights.entries()) {
+        if ((pick -= w) < 0) {
+          best = open[i]!;
+          break;
         }
       }
-      if (!best) break;
       taken.add(best);
       const pd = pos.get(best)!;
       const meet: [number, number] = [(pa.x + pd.x) / 2, (pa.z + pd.z) / 2];

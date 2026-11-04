@@ -1,11 +1,11 @@
 import type { ErrorCode, WarFighter, WarPreview, WarSummary, WarView } from '../../../shared/api/types';
 import { BALANCE_VERSION, balance } from '../../../shared/balance/balance';
-import { attackArmy, defenseArmy, landingFormation, lootFor, simulateBattle } from '../../../shared/rules/war';
+import { attackArmy, defenseArmy, landOnIsland, lootFor, simulateBattle } from '../../../shared/rules/war';
 import { weekRange } from '../../../shared/rules/week';
 import type { PlacedAnimal } from '../../../shared/types/rows';
 import { skinForAnimal } from '../../../src/domain/cosmetics/inventory';
 import { LEDGER_REASON } from '../../../src/domain/economy/ledger';
-import { islandSide } from '../../../src/domain/island/island';
+import { getOccupancy, isStandable } from '../../../src/domain/island/occupancy';
 import { ApiError, type HandlerCtx } from '../context';
 import type { Tx } from '../db';
 import { membership, settleDueWeeks } from '../groups';
@@ -95,10 +95,11 @@ export const warHandlers: Handlers = {
     if (!attackers.length) throw new ApiError('no_army');
     const defenders = defenseArmy(them.animals);
     const island = await islandSnapshot(c.tx, args.targetId);
-    const half = (islandSide(island.level) - 1) / 2;
-    const formation = landingFormation(attackers.map((a) => fighter(a, skinForAnimal(a, me.equipped))), half);
-    const defense: WarFighter[] = defenders.map((a) => ({ ...fighter(a, skinForAnimal(a, them.equipped)), x: a.tileX, z: a.tileZ }));
+    const grid = getOccupancy({ seed: island.world.seed, islandLevel: island.level, animals: [], buildings: island.buildings.map((b) => ({ id: b.id, defId: b.defId, tile: { x: b.tileX, z: b.tileZ }, rotation: b.rotation })) });
+    const tiles = [...grid.values()].filter(isStandable).map((t) => ({ x: t.x, z: t.z }));
     const seed = Math.floor(c.env.random() * 2 ** 31);
+    const formation = landOnIsland(attackers.map((a) => fighter(a, skinForAnimal(a, me.equipped))), tiles, seed);
+    const defense: WarFighter[] = defenders.map((a) => ({ ...fighter(a, skinForAnimal(a, them.equipped)), x: a.tileX, z: a.tileZ }));
     const battle = simulateBattle(formation, defense, seed);
     const loot = battle.winner === 'attacker' ? lootFor(them.gold, await lostThisWeek(c.tx, args.targetId, group)) : 0;
     const id = c.env.uuid();

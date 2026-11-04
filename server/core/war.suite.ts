@@ -81,6 +81,9 @@ export function describeWar(name: string, makeDb: () => Promise<ServerDb> | Serv
       const { war } = await s.ok('a', 'declare_war', { targetId: 'd' }, { requestId: 'w1' });
       expect(war.attackers.some((f) => f.speciesId === 'unicorn')).toBe(false);
       expect(war.attackers[0]!.speciesId).toBe('tiger'); // Tigers lead
+      // They land on the defender island's own tiles, in waves.
+      const land = new Set(generateIsland(war.island.world.seed, war.island.level).tiles.filter((t) => !t.water).map((t) => `${t.x},${t.z}`));
+      expect(war.attackers.every((f) => land.has(`${f.x},${f.z}`) && typeof f.landAt === 'number')).toBe(true);
       expect(war.winner).toBe('attacker');
       expect(war.lootGold).toBe(20);
       expect([await s.gold('a'), await s.gold('d')]).toEqual([20, 100]);
