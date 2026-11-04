@@ -39,6 +39,8 @@ export const SpeciesDef = z.object({
   tierRank: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
   /** Idle animation set preset. */
   idle: PresetId,
+  /** Articulation rig preset (ADR-055); omitted = the animal does not articulate. */
+  rig: PresetId.optional(),
   model: ModelRef,
   release: Id,
 }).strict();

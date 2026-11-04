@@ -1,17 +1,23 @@
 import { defineModel } from '../../../tools/content-build/animal';
 
-// Turtle: green skin, dark shell with a light lime top pattern.
-export default defineModel([5, 3, 6], {
+// Turtle: a domed dark green shell with a light top pattern, flippers to the sides, a head that hides.
+export default defineModel([7, 3, 8], {
   1: ['body', '#8FD36B'], // skin
   2: ['shell', '#4E9A3A'], // shell
   3: ['accent', '#C5E87D'], // shell top
-  4: ['eye', '#1E1E1E'], // eye
+  4: ['eye', '#1E1E1E'], // eyes
 }, (b) => {
-  b.boxM(0, 0, 0, 1, 1, 1, 1); // hind feet
-  b.boxM(0, 0, 3, 1, 1, 2, 1); // front feet
-  b.box(0, 1, 0, 5, 1, 5, 2); // shell base
-  b.box(1, 2, 1, 3, 1, 3, 3); // shell top
-  b.set(2, 2, 2, 2);
-  b.box(1, 1, 5, 3, 2, 1, 1); // head
-  b.setM(1, 2, 5, 4); // eyes
+  b.box(2, 0, 2, 3, 1, 4, 1); // underside
+  b.box(1, 1, 1, 5, 1, 6, 2); // shell rim
+  b.box(2, 2, 2, 3, 1, 4, 2); // dome
+  b.box(3, 2, 3, 1, 1, 2, 3); // pattern
+  b.setM(2, 2, 2, 3);
+  b.setM(2, 2, 5, 3);
+  b.pair('legF', [1.5, 0.5, 5], () => b.box(0, 0, 5, 2, 1, 1, 1));
+  b.pair('legB', [1.5, 0.5, 2], () => b.box(0, 0, 2, 2, 1, 1, 1));
+  b.part('tail', [3, 0.5, 1.5], () => b.set(3, 0, 1, 1));
+  b.part('head', [3, 0.5, 6], () => {
+    b.box(2, 0, 6, 3, 2, 2, 1);
+    b.setM(2, 1, 7, 4); // eyes
+  });
 });

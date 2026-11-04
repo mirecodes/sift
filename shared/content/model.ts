@@ -85,6 +85,15 @@ export function withOverlay(base: VoxelModel, overlay: VoxelModel): VoxelModel {
   return { size, keys, palette: { ...overlay.palette, ...base.palette }, voxels: [...cells.values()] };
 }
 
+/**
+ * An articulated model with every part in place, as one plain voxel list (ADR-055): what sprites, cards
+ * and sequences draw. Models without parts come back unchanged.
+ */
+export function restPose(m: VoxelModel): VoxelModel {
+  if (!m.parts || !Object.keys(m.parts).length) return m;
+  return { size: m.size, keys: m.keys, palette: m.palette, voxels: [...m.voxels, ...Object.values(m.parts).flatMap((p) => p.voxels)] };
+}
+
 /** Number of voxels including parts. */
 export const voxelCount = (m: VoxelModel): number =>
   m.voxels.length + Object.values(m.parts ?? {}).reduce((n, p) => n + p.voxels.length, 0);

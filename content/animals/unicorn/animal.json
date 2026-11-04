@@ -7,6 +7,7 @@
   },
   "tierRank": 3,
   "idle": "rainbow",
+  "rig": "hoofed",
   "model": "animals/unicorn",
   "release": "base"
 }

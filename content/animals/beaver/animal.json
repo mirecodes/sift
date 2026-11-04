@@ -7,6 +7,7 @@
   },
   "tierRank": 1,
   "idle": "default",
+  "rig": "quadruped",
   "model": "animals/beaver",
   "release": "base"
 }

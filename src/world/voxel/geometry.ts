@@ -1,12 +1,12 @@
-import { BufferAttribute, BufferGeometry } from 'three';
-import { withOverlay, type ModelColors, type VoxelModel } from '../../../shared/content/model';
+import { BufferAttribute, BufferGeometry, Float32BufferAttribute, Uint16BufferAttribute } from 'three';
+import { partOrder, partParent, type AnimalPartName } from '../../../shared/content/anatomy';
+import { restPose, withOverlay, type ModelColors, type VoxelModel } from '../../../shared/content/model';
 import type { BlockPalette } from '../../../shared/content/palette';
 import type { AnimalSkinDef, BlockThemeDef, BuildingDef } from '../../../shared/content/schema';
 import { content } from '../../domain/content';
-import { flutterSplit } from './flutter';
 import { DEFAULT_SKIN } from '../../domain/island/model';
 import { defaultBlocks } from '../palette';
-import { buildBlockMesh, buildVoxelMesh, type MeshData } from './meshData';
+import { buildBlockMesh, buildRiggedVoxelMesh, buildVoxelMesh, type MeshData } from './meshData';
 
 /** Animal voxel = 1/6 block (DESIGN.md 16.2). */
 export const VOXEL_SIZE = 1 / 6;
@@ -30,9 +30,9 @@ export function skinDef(skinId: string | undefined): AnimalSkinDef | undefined {
   return item?.kind === 'animalSkin' ? item : undefined;
 }
 
-/** Species model with the skin's overlay voxels, if any. */
+/** Species model in its rest pose (parts in place, ADR-055) with the skin's overlay voxels, if any. */
 export function skinnedModel(modelId: string, skinId?: string): VoxelModel {
-  const base = modelById(modelId);
+  const base = restPose(modelById(modelId));
   const overlay = skinDef(skinId)?.overlay;
   const extra = overlay ? content.model(overlay) : undefined;
   return extra ? withOverlay(base, extra) : base;
@@ -53,22 +53,57 @@ export function animalGeometry(modelId: string, skinId: string = DEFAULT_SKIN): 
   return g;
 }
 
-const flutterCache = new Map<string, { body: BufferGeometry; wing: BufferGeometry }>();
+/** One bone of an articulated animal: its part, parent bone index (-1 = the body) and joint, in model units. */
+export interface RigBone {
+  name: AnimalPartName;
+  parent: number;
+  pivot: [number, number, number];
+}
 
-/** A `flutter` animal's body and one wing (mirror it for the other), so the wings can flap (ADR-024). */
-export function flutterParts(modelId: string, skinId: string = DEFAULT_SKIN) {
-  const colors = skinColors(skinId);
-  const key = `${modelId}|${colors ? skinId : DEFAULT_SKIN}`;
-  let parts = flutterCache.get(key);
-  if (!parts) {
-    const { body, wing } = flutterSplit(modelById(modelId));
-    parts = {
-      body: toGeometry(buildVoxelMesh(body, VOXEL_SIZE, colors)),
-      wing: toGeometry(buildVoxelMesh(wing, VOXEL_SIZE, colors)),
-    };
-    flutterCache.set(key, parts);
+export interface AnimalRigGeometry {
+  /** Bone 0 is the body; vertices carry `skinIndex`/`skinWeight` (one bone each). */
+  geometry: BufferGeometry;
+  /** Bones after the body, parents first. */
+  bones: readonly RigBone[];
+}
+
+const rigCache = new Map<string, AnimalRigGeometry>();
+
+/**
+ * An articulated animal for `SkinnedMesh` (ADR-055), built once per (species, skin): the body and every
+ * anatomy part as their own culled pieces, each following its bone. A skin overlay joins the body.
+ */
+export function animalRigGeometry(modelId: string, skinId: string = DEFAULT_SKIN): AnimalRigGeometry {
+  const key = `${modelId}|${skinDef(skinId) ? skinId : DEFAULT_SKIN}`;
+  let rig = rigCache.get(key);
+  if (!rig) {
+    const base = modelById(modelId);
+    const overlay = skinDef(skinId)?.overlay;
+    const extra = overlay ? content.model(overlay) : undefined;
+    const model = extra ? { ...withOverlay({ ...base, parts: undefined }, extra), parts: base.parts } : base;
+    const names = partOrder(Object.keys(model.parts ?? {}));
+    const [W, , D] = model.size;
+    const v = VOXEL_SIZE;
+    const bones = names.map((name): RigBone => {
+      const p = model.parts![name]!.pivot;
+      const parent = partParent(name);
+      return { name, parent: parent ? names.indexOf(parent) : -1, pivot: [(p[0] + 0.5 - W / 2) * v, (p[1] + 0.5) * v, (p[2] + 0.5 - D / 2) * v] };
+    });
+    const data = buildRiggedVoxelMesh(model, names, v, skinColors(skinId));
+    const geometry = toGeometry(data);
+    const count = data.bones.length;
+    const skinIndex = new Uint16Array(count * 4);
+    const skinWeight = new Float32Array(count * 4);
+    for (let i = 0; i < count; i++) {
+      skinIndex[i * 4] = data.bones[i]!;
+      skinWeight[i * 4] = 1;
+    }
+    geometry.setAttribute('skinIndex', new Uint16BufferAttribute(skinIndex, 4));
+    geometry.setAttribute('skinWeight', new Float32BufferAttribute(skinWeight, 4));
+    rig = { geometry, bones };
+    rigCache.set(key, rig);
   }
-  return parts;
+  return rig;
 }
 
 /** A model from the content registry by its ref (`animals/fox`, `buildings/windmill`). */
@@ -124,7 +159,8 @@ const buildingCache = new Map<string, BuildingMeshes | null>();
 export function clearContentGeometry(): void {
   for (const g of animalCache.values()) g.dispose();
   animalCache.clear();
-  flutterCache.clear();
+  for (const r of rigCache.values()) r.geometry.dispose();
+  rigCache.clear();
   buildingCache.clear();
 }
 

@@ -7,6 +7,7 @@
   },
   "tierRank": 0,
   "idle": "default",
+  "rig": "turtle",
   "model": "animals/turtle",
   "release": "base"
 }

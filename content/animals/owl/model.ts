@@ -1,22 +1,25 @@
 import { defineModel } from '../../../tools/content-build/animal';
 
-// Owl: brown body, cream belly, big round yellow eyes and ear tufts.
-export default defineModel([5, 6, 5], {
-  1: ['body', '#8B5E3C'], // feathers
-  2: ['belly', '#F1E2C6'], // belly, face disc
-  3: ['accent', '#FFD23F'], // eye
-  4: ['eye', '#1E1E1E'], // pupil
+// Owl: round brown body, cream belly, a big head with yellow eye discs, a little beak and ear tufts.
+export default defineModel([5, 7, 5], {
+  1: ['body', '#8B5E3C'], // plumage
+  2: ['belly', '#F1E2C6'], // belly
+  3: ['accent', '#FFD23F'], // eye discs
+  4: ['eye', '#1E1E1E'], // pupils
   5: ['beak', '#F2A93B'], // beak, feet
-  6: ['wing', '#5E3B20'], // wings, tufts
+  6: ['wing', '#5E3B20'], // wings, tail
 }, (b) => {
-  b.box(0, 0, 0, 5, 3, 4, 1); // body
-  b.box(1, 0, 3, 3, 3, 1, 2); // belly
-  b.boxM(0, 0, 0, 1, 3, 3, 6); // wings
-  b.boxM(1, 0, 4, 1, 1, 1, 5); // feet
-  b.box(0, 3, 0, 5, 2, 4, 1); // head
-  b.boxM(0, 3, 3, 2, 2, 1, 3); // eyes
-  b.box(2, 3, 3, 1, 2, 1, 2); // face disc
-  b.setM(1, 4, 3, 4); // pupils
-  b.set(2, 3, 4, 5); // beak
-  b.boxM(0, 5, 1, 1, 1, 2, 6); // ear tufts
+  b.pair('leg', [1, 0.5, 3], () => b.box(1, 0, 3, 1, 1, 1, 5));
+  b.box(1, 1, 1, 3, 3, 3, 1); // body
+  b.box(1, 1, 3, 3, 3, 1, 2); // belly
+  b.pair('wing', [0.5, 3.5, 2], () => b.box(0, 1, 1, 1, 3, 2, 6));
+  b.part('tail', [2, 1.5, 0.5], () => b.box(1, 1, 0, 3, 1, 1, 6));
+  b.part('head', [2, 3.5, 2], () => {
+    b.box(0, 4, 1, 5, 2, 3, 1); // big head
+    b.boxM(0, 4, 3, 2, 2, 1, 3); // eye discs
+    b.setM(1, 4, 3, 4); // pupils
+    b.set(2, 4, 3, 5); // beak
+    b.set(2, 5, 3, 2);
+    b.setM(0, 6, 2, 1); // ear tufts
+  });
 });

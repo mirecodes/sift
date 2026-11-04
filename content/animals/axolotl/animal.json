@@ -7,6 +7,7 @@
   },
   "tierRank": 1,
   "idle": "default",
+  "rig": "reptile",
   "model": "animals/axolotl",
   "release": "base"
 }

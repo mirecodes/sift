@@ -21,7 +21,7 @@ export interface Atlas extends AtlasIndex {
 export type PackItem = SpeciesDef | ItemDef | ReleaseDef;
 
 /** Behavior presets are code (Step 3.2); items reference them by id within one kind. */
-export type PresetKind = 'idle' | 'part' | 'particles' | 'light';
+export type PresetKind = 'idle' | 'rig' | 'part' | 'particles' | 'light';
 export type PresetIds = Readonly<Record<PresetKind, readonly string[]>>;
 
 /** A content pack (guidance_v2 Step 3.1): the app bundles a baseline pack; newer ones arrive remotely (Step 5.8). */
@@ -197,7 +197,7 @@ export function assemblePack(src: PackSource): { pack: ContentPack; problems: st
     if (ref && !src.models[ref]) bad(owner, `model ${ref} not found`);
   };
   const preset = (owner: string, kind: PresetKind, id: string | undefined) => {
-    if (id && src.presets && !src.presets[kind].includes(id)) bad(owner, `unknown ${kind} preset ${id}`);
+    if (id && src.presets && !src.presets[kind]?.includes(id)) bad(owner, `unknown ${kind} preset ${id}`);
   };
   for (const f of families) {
     if (!releaseIds.has(f.release)) bad(f.id, `unknown release ${f.release}`);
@@ -209,6 +209,7 @@ export function assemblePack(src: PackSource): { pack: ContentPack; problems: st
       case 'species':
         model(item.id, item.model);
         preset(item.id, 'idle', item.idle);
+        preset(item.id, 'rig', item.rig);
         break;
       case 'animalSkin':
         if (!speciesIds.has(item.speciesId)) bad(item.id, `unknown species ${item.speciesId}`);

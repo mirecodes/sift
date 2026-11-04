@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { isAnimalPart } from '../../../shared/content/anatomy';
+import { restPose } from '../../../shared/content/model';
 import { PALETTE_KEYS } from '../../../shared/content/palette';
 import { CATALOG } from '../animals/catalog';
 import { content } from './index';
@@ -14,12 +16,13 @@ describe('animal models (content/animals/<id>/model.ts, DESIGN.md 16)', () => {
   });
 
   describe.each(CATALOG.map((a) => [a.id, a] as const))('%s', (_id, species) => {
-    const model = content.model(species.modelId)!;
+    const raw = content.model(species.modelId)!;
+    const model = restPose(raw);
     const [W, H, D] = model.size;
 
-    it('fits inside one tile (at most 6 wide; 6 deep, or 8 for Legendary and Mythic, ADR-025)', () => {
-      expect(W).toBeLessThanOrEqual(6);
-      expect(D).toBeLessThanOrEqual(species.tier === 'legendary' || species.tier === 'epic' ? 8 : 6);
+    it('fits inside its size limits (width 8, flat wingspan 14; depth 8, or 12 for Epic and Legendary, ADR-055)', () => {
+      expect(W).toBeLessThanOrEqual(species.idleAnimation === 'flutter' ? 14 : 8);
+      expect(D).toBeLessThanOrEqual(species.tierRank >= 2 ? 12 : 8);
     });
 
     it('has a height that matches its tier', () => {
@@ -50,9 +53,29 @@ describe('animal models (content/animals/<id>/model.ts, DESIGN.md 16)', () => {
       for (const key of Object.values(model.keys)) expect(PALETTE_KEYS).toContain(key);
     });
 
-    it('has no duplicate voxel positions', () => {
+    it('has no duplicate voxel positions, parts included', () => {
       const keys = model.voxels.map((v) => `${v[0]},${v[1]},${v[2]}`);
       expect(new Set(keys).size).toBe(keys.length);
     });
+
+    it('articulates with anatomy parts when it has a rig (ADR-055)', () => {
+      const parts = Object.keys(raw.parts ?? {});
+      for (const p of parts) expect(isAnimalPart(p), p).toBe(true);
+      if (species.rig) expect(parts.length).toBeGreaterThan(0);
+      else expect(parts).toEqual([]);
+    });
+  });
+
+  it('keeps look-alikes apart: chick and duck differ in silhouette (DESIGN.md 16.2)', () => {
+    const size = (id: string) => restPose(content.model(`animals/${id}`)!).size;
+    expect(size('chick')).not.toEqual(size('duck'));
+    expect(size('duck')[2]).toBeGreaterThan(size('chick')[2]); // the duck is long
+  });
+
+  it('draws long animals longer than tall (tiger, horse, wolf, cow)', () => {
+    for (const id of ['tiger', 'wolf', 'cow', 'horse']) {
+      const [, h, d] = restPose(content.model(`animals/${id}`)!).size;
+      expect(d, id).toBeGreaterThanOrEqual(h);
+    }
   });
 });

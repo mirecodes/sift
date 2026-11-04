@@ -1,4 +1,5 @@
 import type { PresetIds } from '../../../shared/content/pack';
+import { RIGS } from '../animals/rigs';
 import { LIGHT_PRESETS } from './lights';
 import { PART_PRESETS } from './parts';
 import { FIELD_PRESETS, RainbowBursts, Sparkles } from './particles';
@@ -22,6 +23,7 @@ export type IdlePresetId = keyof typeof IDLE_PRESETS;
 
 export const PRESET_IDS: PresetIds = {
   idle: Object.keys(IDLE_PRESETS),
+  rig: Object.keys(RIGS),
   part: Object.keys(PART_PRESETS),
   particles: ['sparkle', 'rainbow', ...Object.keys(FIELD_PRESETS)],
   light: Object.keys(LIGHT_PRESETS),
