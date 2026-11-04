@@ -14,7 +14,7 @@ export function createRemote(backend: BackendChoice, opts: { platform: Platform;
   const load = () =>
     (loading ??=
       backend.provider === 'fake'
-        ? import('./fake').then(({ createFakeRemote }) => {
+        ? import('./fake').then(({ createFakeRemote, SERVER_KEY }) => {
             const ls = globalThis.localStorage;
             const fake = createFakeRemote({
               appVersion: opts.appVersion,
@@ -22,6 +22,11 @@ export function createRemote(backend: BackendChoice, opts: { platform: Platform;
               store: ls && { get: (k) => ls.getItem(k), set: (k, v) => ls.setItem(k, v), remove: (k) => ls.removeItem(k) },
               // Development sample friends (`testMode.dummyData`), loaded only when asked for.
               ...(opts.sampleFriends && { onSignIn: async (f, userId) => (await import('./fakeBots')).seedFakeSocial(f, userId) }),
+            });
+            // Every tab runs its own copy of the test server: take another tab's writes, or the next write
+            // here would undo them.
+            globalThis.addEventListener?.('storage', (e) => {
+              if (e.key === SERVER_KEY && e.newValue) fake.db.load(JSON.parse(e.newValue) as Record<string, unknown[]>);
             });
             // Development and tests: `__siftFake.setOnline(false)` simulates a lost connection.
             (globalThis as { __siftFake?: unknown }).__siftFake = fake;

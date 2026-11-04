@@ -9,7 +9,7 @@ How to connect Sift to its backend (Supabase): accounts, sync, shop, friends, gr
 1. `npm run dev:all`: every feature on, the test backend, sample data, and you start **already signed in** as `테스터` (tester@example.com). Nothing to edit in `config/app.yaml`; works on Windows, macOS and Linux.
    - Or `npm run dev` after turning on features in `config/app.yaml`: with friends, groups or war on and `backend.provider: none`, development builds use the test backend by themselves. `testMode.signedIn: true` starts signed in there too.
 2. To sign in by hand (another account, or after Sign out): Friends tab or Settings → Account. Any email, code `000000`. Apple/Google sign in at once.
-3. The "server" runs inside the browser and keeps its data in `localStorage` (clear site data to reset). In the browser console, `__siftFake.setOnline(false)` simulates a lost connection.
+3. The "server" runs inside the browser and keeps its data in `localStorage` (clear site data to reset); open tabs share it. In the browser console, `__siftFake.setOnline(false)` simulates a lost connection.
 
 This runs the same server code as production, so what works here works on Supabase.
 

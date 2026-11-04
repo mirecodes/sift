@@ -8,6 +8,8 @@
 
 ## guidance_v2
 
+- 2026-11-04 · **Fixed** — Test backend with several tabs open: each tab kept its own copy of the server, so a test army added in one tab was missing in another (and the next write there removed it). Tabs now take each other's writes. The no-army reason in the Attack sheet points to Test tools in development builds.
+
 - 2026-11-04 · **Added** — `testMode.signedIn` (dev, test backend): start signed in as `테스터`. `npm run dev:all` is now `vite --mode all` (every OS) and also turns on sample data and the signed-in start.
 - 2026-11-04 · **Fixed** — With friends or groups on and no backend, the Sign in button failed with "No connection". Development builds now use the test backend in that case; other builds say the server is not set up instead of offering Sign in.
 
