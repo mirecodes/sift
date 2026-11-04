@@ -1,0 +1,18 @@
+{
+  "kind": "building",
+  "id": "flower-bed",
+  "name": {
+    "en": "Flower Bed",
+    "ko": "꽃밭"
+  },
+  "price": 15,
+  "purchasable": true,
+  "release": "v2-launch",
+  "category": "nature",
+  "footprint": {
+    "w": 1,
+    "d": 1
+  },
+  "model": "buildings/flower-bed",
+  "rotatable": true
+}

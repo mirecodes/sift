@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "squirrel",
+  "name": {
+    "en": "Squirrel",
+    "ko": "다람쥐"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/squirrel",
+  "release": "base"
+}

@@ -139,7 +139,7 @@ const AnimalInstance = memo(function AnimalInstance({ ground, animal, timeScale,
   const wingL = useRef<Group>(null);
   const wingR = useRef<Group>(null);
   const flutter = species.idleAnimation === 'flutter';
-  const parts = useMemo(() => (flutter ? flutterParts(animal.skinId) : undefined), [flutter, animal.skinId]);
+  const parts = useMemo(() => (flutter ? flutterParts(species.modelId, animal.skinId) : undefined), [flutter, species.modelId, animal.skinId]);
   const scaleRef = useRef(timeScale);
   scaleRef.current = timeScale;
 

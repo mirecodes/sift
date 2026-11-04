@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "deer",
+  "name": {
+    "en": "Deer",
+    "ko": "사슴"
+  },
+  "tierRank": 2,
+  "idle": "default",
+  "model": "animals/deer",
+  "release": "base"
+}

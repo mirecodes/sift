@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "mouse",
+  "name": {
+    "en": "Mouse",
+    "ko": "생쥐"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/mouse",
+  "release": "base"
+}

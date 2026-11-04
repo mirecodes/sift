@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { config } from '../../domain/config';
+import { PUSH_CATEGORIES } from '../../../shared/rules/push';
 import { backupFileName, parseBackup, summarizeBackup, type Backup, type BackupError } from '../../domain/backup';
 import { platform } from '../../platform';
 import { useApp } from '../../store';
@@ -10,6 +11,7 @@ import { Segmented, SettingsRow, Stepper, Toggle } from '../../ui/components/Con
 import { CloseIcon } from '../../ui/components/Icons';
 import { FeatureCard } from '../../ui/components/Surfaces';
 import { TopBar } from '../../ui/components/TopBar';
+import { AccountSection } from '../account/AccountSection';
 import styles from '../Screen.module.css';
 import local from './SettingsScreen.module.css';
 
@@ -81,6 +83,8 @@ export function SettingsScreen() {
   const settings = useApp((s) => s.settings);
   const updateSettings = useApp((s) => s.updateSettings);
   const setView = useApp((s) => s.setView);
+  const setPushCategory = useApp((s) => s.setPushCategory);
+  const account = useApp((s) => s.account.status);
   const { focusMinutes, breakMinutes } = config.settings;
 
   return (
@@ -117,10 +121,27 @@ export function SettingsScreen() {
           />
         </SettingsRow>
 
+        {platform.name !== 'web' && runtimeConfig.features.liveProgress && (
+          <SettingsRow label={strings.settings.liveProgress}>
+            <Toggle label={strings.settings.liveProgress} checked={settings.liveProgress} onChange={(v) => void updateSettings({ liveProgress: v })} />
+          </SettingsRow>
+        )}
+
         <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.settings.sound}</h2>
         <SettingsRow label={strings.settings.chimes}>
           <Toggle label={strings.settings.chimes} checked={settings.soundEnabled} onChange={(v) => void updateSettings({ soundEnabled: v })} />
         </SettingsRow>
+
+        {platform.push.available && account === 'signedIn' && (
+          <>
+            <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.settings.notifications}</h2>
+            {PUSH_CATEGORIES.map((c) => (
+              <SettingsRow key={c} label={strings.push.categories[c]}>
+                <Toggle label={strings.push.categories[c]} checked={settings.pushCategories[c]} onChange={(v) => void setPushCategory(c, v)} />
+              </SettingsRow>
+            ))}
+          </>
+        )}
 
         {runtimeConfig.features.stats && (
           <>
@@ -136,6 +157,22 @@ export function SettingsScreen() {
                 onChange={(v) => void updateSettings({ weekStartsOn: v })}
               />
             </SettingsRow>
+          </>
+        )}
+
+        {runtimeConfig.features.presence && account === 'signedIn' && (
+          <>
+            <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.friends.section}</h2>
+            <SettingsRow label={strings.friends.showPresence}>
+              <Toggle label={strings.friends.showPresence} checked={settings.showFocusPresence} onChange={(v) => void updateSettings({ showFocusPresence: v })} />
+            </SettingsRow>
+          </>
+        )}
+
+        {account !== 'off' && (
+          <>
+            <h2 className={`${styles.eyebrow} type-eyebrow`}>{strings.account.section}</h2>
+            <AccountSection />
           </>
         )}
 

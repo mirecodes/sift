@@ -14,11 +14,21 @@ export interface BuildUi {
   tile: Tile | null;
   /** A placed building tapped while not placing. */
   selected: string | null;
+  /** Buildings, or arranging animals (Phase 10). */
+  mode: 'buildings' | 'animals';
+  /** The animal being moved, its target tile, and whether a drag is under way. */
+  picked: string | null;
+  target: Tile | null;
+  dragging: boolean;
+  /** Why the last drop failed (arrange mode). */
+  note: string | null;
 }
 
-export const buildUi = createStore<BuildUi>(() => ({ placing: null, tile: null, selected: null }));
+const EMPTY = { placing: null, tile: null, selected: null, picked: null, target: null, dragging: false, note: null };
 
-export const resetBuildUi = () => buildUi.setState({ placing: null, tile: null, selected: null });
+export const buildUi = createStore<BuildUi>(() => ({ ...EMPTY, mode: 'buildings' }));
+
+export const resetBuildUi = () => buildUi.setState({ ...EMPTY, mode: 'buildings' });
 
 export const useBuildUi = <T,>(selector: (s: BuildUi) => T): T => useStore(buildUi, selector);
 

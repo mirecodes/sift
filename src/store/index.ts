@@ -4,9 +4,10 @@ import { createDummyData } from '../app/devDummy';
 import { runtimeConfig } from '../app/runtimeConfig';
 import { APP_VERSION } from '../app/version';
 import { platform } from '../platform';
+import { createRemote } from '../platform/remote/create';
 import { createAppStore, type AppState } from './appStore';
 
-const { testMode, features } = runtimeConfig;
+const { testMode, features, backend } = runtimeConfig;
 const { animals } = testMode;
 // Every species, or a random subset chosen once per page load.
 const testSpecies = animals.enabled
@@ -26,6 +27,12 @@ export const appStore = createAppStore({
   dummy: import.meta.env.DEV && testMode.dummyData ? createDummyData(Date.now()) : undefined,
   economy: features.economy,
   clientVersion: APP_VERSION,
+  remote: createRemote(backend, { platform: platform.name, appVersion: APP_VERSION, secure: platform.secure, sampleFriends: import.meta.env.DEV && testMode.dummyData }),
+  remoteContent: features.remoteContent,
+  push: platform.push,
+  platformName: platform.name,
+  locale: typeof navigator === 'undefined' ? 'en' : navigator.language,
+  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 });
 
 export function useApp<T>(selector: (state: AppState) => T): T {

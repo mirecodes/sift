@@ -9,6 +9,7 @@ import { TopBar } from '../../ui/components/TopBar';
 import { NoticeCard } from '../NoticeCard';
 import { runtimeConfig } from '../../app/runtimeConfig';
 import { Hud } from './Hud';
+import { FriendsFocusing } from '../friends/Together';
 import layer from '../Screen.module.css';
 import styles from './HomeScreen.module.css';
 
@@ -29,7 +30,7 @@ export function HomeScreen() {
     <div className={layer.layer}>
       <div className={styles.top}>
         <TopBar start={features.economy && <Hud />}>
-          {features.cosmetics && (
+          {(features.cosmetics || features.arrange) && (
             <IconButton aria-label={strings.aria.build} onClick={() => setView('build')}>
               <BuildIcon />
             </IconButton>
@@ -48,6 +49,7 @@ export function HomeScreen() {
         <Button block onClick={start}>
           {strings.home.start}
         </Button>
+        {features.presence && <FriendsFocusing />}
       </Panel>
     </div>
   );

@@ -3,10 +3,9 @@
  * server must reproduce live in `shared/balance/balance.ts`. `domain/` imports only itself and `shared/`.
  */
 import { balance } from '../../shared/balance/balance';
-import type { TierRank } from '../../shared/rules/tier';
+import type { Tier, TierRank } from '../../shared/rules/tier';
 
-/** Stored tier label. Logic never compares it: use `TierRank` (guidance_v2 §2.8). */
-export type Tier = 'common' | 'mythic' | 'epic' | 'legendary';
+export type { Tier };
 
 /** Tier labels by rank, lowest to highest: Common, Mythic, Epic, Legendary (ADR-027). */
 export const TIERS: readonly Tier[] = ['common', 'mythic', 'epic', 'legendary'];

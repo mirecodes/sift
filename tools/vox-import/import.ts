@@ -3,7 +3,7 @@ import { PALETTE_KEYS, type PaletteKey } from '../../shared/content/palette';
 import type { VoxScene } from './vox';
 
 /**
- * Palette template (docs/CONTENT.md): color index i (1…) paints `PALETTE_KEYS[i - 1]`; its color in the
+ * Palette template (docs/guides/CONTENT.md): color index i (1…) paints `PALETTE_KEYS[i - 1]`; its color in the
  * file is that key's default color. Index 255 marks a part's pivot and is never drawn.
  */
 export const PIVOT_INDEX = 255;

@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "fish",
+  "name": {
+    "en": "Fish",
+    "ko": "물고기"
+  },
+  "tierRank": 0,
+  "idle": "flop",
+  "model": "animals/fish",
+  "release": "base"
+}

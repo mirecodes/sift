@@ -7,7 +7,11 @@ import { useHold, useNow, useSpaceKey } from '../../ui/hooks';
 import { strings } from '../../ui/strings';
 import { OvertimeBadge } from '../../ui/components/Badge';
 import { Button, HoldButton } from '../../ui/components/Button';
+import { runtimeConfig } from '../../app/runtimeConfig';
+import { TogetherLine } from '../friends/Together';
 import styles from './FocusScreen.module.css';
+
+const { features } = runtimeConfig;
 
 /**
  * Immersive: the timer, a calm dimmed island, and nothing else. Controls stay hidden
@@ -25,17 +29,15 @@ export function FocusScreen() {
   const display = timerDisplay(resolved, now);
   const overtime = resolved.kind === 'focusOvertime';
 
-  // Keep the screen awake and fullscreen for the whole session; schedule a native end alert.
+  // Keep the screen awake and fullscreen for the whole session (the end alert is scheduled by `bindPhaseEffects`).
   const startedAt = phase.kind === 'focus' ? phase.startedAt : 0;
   const plannedMs = phase.kind === 'focus' ? phase.plannedMs : 0;
   useEffect(() => {
     void platform.wakeLock.request();
     void platform.fullscreen.enter();
-    platform.notify.scheduleFocusEnd(startedAt + plannedMs);
     return () => {
       void platform.wakeLock.release();
       void platform.fullscreen.exit();
-      platform.notify.cancelScheduled();
     };
   }, [startedAt, plannedMs]);
 
@@ -92,6 +94,7 @@ export function FocusScreen() {
         <p className={`${styles.timer} type-timer`} role="timer" aria-label={strings.aria.timer}>
           {display ? formatTimer(display) : ''}
         </p>
+        {features.together && <TogetherLine />}
         <div className={styles.endSlot}>
           {overtime && (
             <Button variant="primaryInverse" onClick={() => void endFocus()}>

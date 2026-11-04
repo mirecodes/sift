@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "snail",
+  "name": {
+    "en": "Snail",
+    "ko": "달팽이"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/snail",
+  "release": "base"
+}

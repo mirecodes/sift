@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "rabbit",
+  "name": {
+    "en": "Rabbit",
+    "ko": "토끼"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/rabbit",
+  "release": "base"
+}

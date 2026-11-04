@@ -12,7 +12,7 @@ import type {
 import { v4 } from './migrations';
 
 export interface KvRow {
-  key: 'settings' | 'world' | 'phase' | 'equipped';
+  key: 'settings' | 'world' | 'phase' | 'equipped' | 'account';
   value: unknown;
 }
 

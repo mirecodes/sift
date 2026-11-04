@@ -14,6 +14,7 @@ const animal: PlacedAnimal = {
 };
 const settings: Settings = {
   focusMinutes: 30, breakMinutes: 10, soundEnabled: false, theme: 'dark', weekStartsOn: 1, showFocusPresence: true, liveProgress: true,
+  pushAsked: false, pushCategories: { friends: true, together: true, groups: true, war: true, weekly: true },
 };
 const world = { seed: 77, blockThemeId: 'default' };
 
@@ -39,7 +40,7 @@ const V4_ANIMAL_FIELDS = { status: 'active', endedAt: null, endReason: null, ver
 describe('dexie storage', () => {
   it('starts empty', async () => {
     const s = createDexieStorage(new SiftDB('empty'));
-    expect(await s.load()).toEqual({ animals: [], sessions: [], inbox: [], ledger: [], cosmetics: [], placedBuildings: [] });
+    expect(await s.load()).toEqual({ animals: [], sessions: [], inbox: [], ledger: [], cosmetics: [], placedBuildings: [], islandHistory: [], contentPacks: [] });
   });
 
   it('round-trips settings, world, and the active phase', async () => {
@@ -105,7 +106,7 @@ describe('dexie storage', () => {
     expect(await s.load()).toEqual(before);
 
     await s.importAll({ kv: [], sessions: [], animals: [] }, s.schemaVersion);
-    expect(await s.load()).toEqual({ animals: [], sessions: [], inbox: [], ledger: [], cosmetics: [], placedBuildings: [] });
+    expect(await s.load()).toEqual({ animals: [], sessions: [], inbox: [], ledger: [], cosmetics: [], placedBuildings: [], islandHistory: [], contentPacks: [] });
   });
 
   it('writes a debit and its granted item together, or neither (Step 2.1)', async () => {

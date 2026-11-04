@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { ModelColors } from '../../../shared/content/model';
-import { resolveColors } from '../../assets/voxels/types';
+import { resolveColors, type ModelColors } from '../../../shared/content/model';
 import { modelById } from '../../world/voxel/geometry';
 import { colors } from '../../ui/tokens';
 

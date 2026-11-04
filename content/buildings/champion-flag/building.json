@@ -1,0 +1,26 @@
+{
+  "kind": "building",
+  "id": "champion-flag",
+  "name": {
+    "en": "Champion Flag",
+    "ko": "우승 깃발"
+  },
+  "purchasable": false,
+  "release": "v2-launch",
+  "category": "special",
+  "footprint": {
+    "w": 1,
+    "d": 1
+  },
+  "model": "buildings/champion-flag",
+  "rotatable": false,
+  "parts": [
+    {
+      "name": "flag",
+      "preset": "sway"
+    }
+  ],
+  "tags": [
+    "group-reward"
+  ]
+}

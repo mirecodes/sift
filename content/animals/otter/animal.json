@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "otter",
+  "name": {
+    "en": "Otter",
+    "ko": "수달"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/otter",
+  "release": "base"
+}

@@ -1,0 +1,13 @@
+import { registerHandlers } from '../api';
+import { groupHandlers } from './groups';
+import { socialHandlers } from './social';
+import { warHandlers } from './war';
+
+let installed = false;
+
+/** Registers every phase's operations (core is built in). Idempotent. */
+export function installServerHandlers(): void {
+  if (installed) return;
+  installed = true;
+  registerHandlers({ ...socialHandlers, ...groupHandlers, ...warHandlers });
+}

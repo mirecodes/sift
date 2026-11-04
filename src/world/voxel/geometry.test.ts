@@ -12,25 +12,25 @@ const colorsOf = (g: ReturnType<typeof animalGeometry>) => [...(g.getAttribute('
 
 describe('skins and themes in the renderer (Step 3.8)', () => {
   it('builds one geometry per (species, skin) and reuses it', () => {
-    const plain = animalGeometry('tiger');
-    expect(animalGeometry('tiger', 'default')).toBe(plain);
-    const white = animalGeometry('tiger', 'white-tiger');
+    const plain = animalGeometry('animals/tiger');
+    expect(animalGeometry('animals/tiger', 'default')).toBe(plain);
+    const white = animalGeometry('animals/tiger', 'white-tiger');
     expect(white).not.toBe(plain);
-    expect(animalGeometry('tiger', 'white-tiger')).toBe(white);
+    expect(animalGeometry('animals/tiger', 'white-tiger')).toBe(white);
     expect(colorsOf(white)).not.toEqual(colorsOf(plain));
     // Same shape, other colors: the skin only recolors by palette key.
     expect(white.getAttribute('position').count).toBe(plain.getAttribute('position').count);
   });
 
   it('falls back to the default look for unknown or foreign skins', () => {
-    expect(animalGeometry('fox', 'no-such-skin')).toBe(animalGeometry('fox'));
+    expect(animalGeometry('animals/fox', 'no-such-skin')).toBe(animalGeometry('animals/fox'));
     expect(skinColors('cherry')).toBeUndefined(); // a theme is not a skin
   });
 
   it('family skins keep the eyes and change the body', () => {
     const golden = skinColors('golden:fox')!;
     expect(golden.eye).toBeUndefined();
-    expect(golden.body).not.toBe(skinnedModel('fox').palette.body);
+    expect(golden.body).not.toBe(skinnedModel('animals/fox').palette.body);
   });
 
   it('overlays add voxels on top of the species model', () => {

@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "raccoon",
+  "name": {
+    "en": "Raccoon",
+    "ko": "너구리"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/raccoon",
+  "release": "base"
+}

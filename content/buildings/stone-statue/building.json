@@ -1,0 +1,18 @@
+{
+  "kind": "building",
+  "id": "stone-statue",
+  "name": {
+    "en": "Stone Statue",
+    "ko": "돌 조각상"
+  },
+  "price": 50,
+  "purchasable": true,
+  "release": "v2-launch",
+  "category": "decor",
+  "footprint": {
+    "w": 1,
+    "d": 1
+  },
+  "model": "buildings/stone-statue",
+  "rotatable": true
+}

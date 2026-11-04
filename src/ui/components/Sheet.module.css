@@ -1,0 +1,66 @@
+/* `modal` sheet (DESIGN.md 6.2, 7.7): bottom sheet on phones, centered from 768px. */
+.sheet {
+  width: min(420px, calc(100% - 2 * var(--gutter)));
+  max-height: 90%;
+  margin: auto auto calc(var(--space-lg) + var(--safe-bottom));
+  padding: var(--card-padding);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  box-shadow: var(--elevation-4);
+  overflow-y: auto;
+}
+.wide {
+  width: min(560px, calc(100% - 2 * var(--gutter)));
+}
+.sheet[open] {
+  animation: sheet-in var(--motion-base) var(--ease) both;
+}
+.sheet::backdrop {
+  background: var(--color-backdrop);
+}
+.sheet p {
+  margin: var(--space-md) 0 0;
+}
+@media (min-width: 768px) {
+  .sheet {
+    margin: auto;
+  }
+}
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.head h2 {
+  margin: 0;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
+}
+.note {
+  color: var(--color-body-mid);
+}
+.error {
+  color: var(--color-accent-red);
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "panda",
+  "name": {
+    "en": "Panda",
+    "ko": "판다"
+  },
+  "tierRank": 2,
+  "idle": "default",
+  "model": "animals/panda",
+  "release": "base"
+}

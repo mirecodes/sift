@@ -2,7 +2,7 @@ import type { BlockPalette } from '../../shared/content/palette';
 import type { BlockThemeDef } from '../../shared/content/schema';
 import { content } from '../domain/content';
 
-/** Terrain and camp colors by named key (Step 3.0): the `default` block theme (`content/blockThemes/default.json`). */
+/** Terrain and camp colors by named key (Step 3.0): the `default` block theme (`content/themes/default.json`). */
 export const defaultBlocks: BlockPalette = (content.get('default') as BlockThemeDef).palette;
 
 /** World colors (DESIGN.md 14). Never shared with UI tokens. */
@@ -19,6 +19,8 @@ export const palette = {
   /** Build mode footprint tint (DESIGN.md 15.7). */
   buildOk: '#5ED67A',
   buildBad: '#FF5A5F',
+  /** Island move rainbow bridge, outer to inner stripe (DESIGN.md 18). */
+  rainbowBridge: ['#FF5A5F', '#FFA24D', '#FFE14D', '#5ED67A', '#4DA6FF', '#8E6BFF'],
 } as const;
 
 /**

@@ -1,4 +1,0 @@
-[
-  { "kind": "species", "id": "unicorn", "name": { "en": "Unicorn", "ko": "유니콘" }, "tierRank": 3, "idle": "rainbow", "model": "species/unicorn", "release": "base" },
-  { "kind": "species", "id": "tiger", "name": { "en": "Tiger", "ko": "호랑이" }, "tierRank": 3, "idle": "sparkle", "model": "species/tiger", "release": "base" }
-]

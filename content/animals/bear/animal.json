@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "bear",
+  "name": {
+    "en": "Bear",
+    "ko": "곰"
+  },
+  "tierRank": 2,
+  "idle": "default",
+  "model": "animals/bear",
+  "release": "base"
+}

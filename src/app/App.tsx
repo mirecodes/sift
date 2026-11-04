@@ -1,10 +1,21 @@
-import { useEffect, useMemo } from 'react';
-import { buildIslandModel, type IslandMode, type IslandModel } from '../domain/island/model';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { buildIslandModel } from '../domain/island/model';
 import { config } from '../domain/config';
 import { pendingDepartures } from '../domain/inbox/inbox';
 import { goldPileLevel as goldPileLevelOf } from '../domain/economy/ledger';
 import { balance } from '../../shared/balance/balance';
 import { appStore, selectIslandLevel, selectVisibleAnimals, useApp, type Tab } from '../store';
+import { platform } from '../platform';
+import { clearContentGeometry } from '../world/voxel/geometry';
+import { AccountChoiceSheet, OutdatedScreen } from '../screens/account/AccountChoiceSheet';
+import { PushPromptSheet } from '../screens/account/PushPromptSheet';
+import { FriendsScreen } from '../screens/friends/FriendsScreen';
+import { LobbySheet } from '../screens/friends/TogetherSheets';
+import { VisitBanner } from '../screens/friends/VisitBanner';
+import { GroupScreen } from '../screens/group/GroupScreen';
+import { WarScreen } from '../screens/group/WarScreen';
+import { WarReplay, type WarReplayRefs } from '../world/sequences/WarReplay';
+import { bindPhaseEffects } from './phaseEffects';
 import { usePrefersReducedMotion } from '../ui/hooks';
 import { strings } from '../ui/strings';
 import { FriendsIcon, GroupIcon, IslandIcon, StatsIcon } from '../ui/components/Icons';
@@ -20,9 +31,12 @@ import { BuildScreen } from '../screens/build/BuildScreen';
 import { useBuildUi } from '../screens/build/buildState';
 import { BuildIslandLayer } from './BuildIslandLayer';
 import { StatsScreen } from '../screens/stats/StatsScreen';
-import { TabPage } from '../screens/TabPage';
-import { Scene } from '../world/Scene';
+import { Scene, type SceneIsland, type SceneLayout } from '../world/Scene';
 import type { WorldMode } from '../world/types';
+import { IslandMoveSequence, type IslandMoveRefs } from '../world/sequences/IslandMove';
+import { REVEAL_RISE } from '../world/sequences/moveTimeline';
+import { MoveScreen } from '../screens/home/MoveScreen';
+import type { IslandMoveSequence as MoveState } from '../store';
 import { devSecondIsland, DEV_TWO_ISLANDS } from './devTwoIslands';
 import { runtimeConfig } from './runtimeConfig';
 import styles from './App.module.css';
@@ -35,6 +49,23 @@ const TABS: TabItem<Tab>[] = [
   ...(features.friends ? [{ id: 'friends' as const, label: strings.tabs.friends, icon: <FriendsIcon /> }] : []),
   ...(features.groups ? [{ id: 'group' as const, label: strings.tabs.group, icon: <GroupIcon /> }] : []),
 ];
+
+/**
+ * Refs shared by the islands and the move sequence. Reset when a move starts, before the first frame,
+ * so the new island starts below its place instead of flashing in.
+ */
+function useIslandMoveRefs(move: MoveState | null): IslandMoveRefs {
+  const refs = useRef<IslandMoveRefs>({ oldLift: { current: 0 }, newLift: { current: 0 }, oldBob: { current: 0 }, newBob: { current: 0 }, pan: { current: 0 } });
+  const seen = useRef<MoveState | null>(null);
+  if (move !== seen.current) {
+    seen.current = move;
+    const r = refs.current;
+    r.oldLift.current = 0;
+    r.newLift.current = move ? REVEAL_RISE : 0;
+    r.pan.current = 0;
+  }
+  return refs.current;
+}
 
 export function App() {
   const ready = useApp((s) => s.ready);
@@ -52,8 +83,44 @@ export function App() {
   const equipped = useApp((s) => s.equipped);
   const placedBuildings = useApp((s) => s.placedBuildings);
   const reducedMotion = usePrefersReducedMotion();
-  const building = features.cosmetics && phase.kind === 'idle' && view === 'build';
+  const building = (features.cosmetics || features.arrange) && phase.kind === 'idle' && view === 'build';
   const movingId = useBuildUi((s) => (building ? s.placing?.movingId : undefined));
+  const islandMove = useApp((s) => s.islandMove);
+  const accountChoice = useApp((s) => s.account.choice !== null);
+  const outdated = useApp((s) => s.account.outdated);
+  const pushPrompt = useApp((s) => s.pushPrompt);
+  const visit = useApp((s) => s.visit);
+  const room = useApp((s) => s.room);
+  const pendingLink = useApp((s) => s.pendingLink);
+  const visitCount = useApp((s) => s.social?.visitCount);
+  const championWeek = useApp((s) => s.championWeek);
+  const finishIslandMove = useApp((s) => s.finishIslandMove);
+  const moveRefs = useIslandMoveRefs(islandMove);
+  const moving = islandMove !== null && !reducedMotion;
+  const [crossfade, setCrossfade] = useState(0);
+
+  // War replay (Step 9.6): the defender's island with both armies; Skip/2× through shared refs.
+  const war = useApp((s) => s.war);
+  const warRefs = useMemo<WarReplayRefs>(() => ({ speed: { current: 1 }, skip: { current: false }, time: { current: 0 } }), []);
+  const [warDone, setWarDone] = useState(false);
+  const [warRun, setWarRun] = useState(0);
+  useEffect(() => {
+    if (warDone) platform.haptics.impact('medium'); // the war result (Step 6.2)
+  }, [warDone]);
+  useEffect(() => {
+    setWarDone(false);
+    warRefs.speed.current = 1;
+    warRefs.skip.current = reducedMotion; // reduced motion: straight to the result
+    warRefs.time.current = 0;
+  }, [war, warRun, warRefs, reducedMotion]);
+
+  // Reduced motion: no sequence, the new island fades in (Step 4.3).
+  useEffect(() => {
+    if (islandMove && reducedMotion) {
+      finishIslandMove();
+      setCrossfade((n) => n + 1);
+    }
+  }, [islandMove, reducedMotion, finishIslandMove]);
 
   // Overtime and break-over share the render mode of their base phase, so no clock is needed here.
   const islands = useMemo(() => {
@@ -65,26 +132,139 @@ export function App() {
     // in build mode is drawn as its ghost only.
     const buildings = placedBuildings.filter((b) => b.id !== movingId);
     const cosmetics = features.cosmetics ? { equipped, buildings } : {};
-    const own = buildIslandModel({ world, islandLevel, animals, leaving, departing, goldPileLevel, showExpiry: features.economy, ...cosmetics });
-    const list: { model: IslandModel; mode: IslandMode }[] = [{ model: own, mode: 'own' }];
+    const base = { islandLevel, leaving, departing, goldPileLevel, showExpiry: features.economy, ...cosmetics };
+    if (moving && islandMove) {
+      // Island move: both islands without their animals; the sequence draws the animals crossing.
+      const old = buildIslandModel({ ...base, world: islandMove.oldWorld, animals: [], ...(features.cosmetics && { buildings: islandMove.oldBuildings }) });
+      const next = buildIslandModel({ ...base, world, animals: [] });
+      return [
+        { model: old, mode: 'move' as const, motion: { lift: moveRefs.oldLift, bobY: moveRefs.oldBob, calm: true } },
+        { model: next, mode: 'own' as const, motion: { lift: moveRefs.newLift, bobY: moveRefs.newBob, calm: true } },
+      ];
+    }
+    // A battle: the defender's island as it stood, without its animals (they are the defending army).
+    if (war) {
+      const model = buildIslandModel({
+        ownerId: war.defender.userId,
+        world: war.island.world,
+        islandLevel: war.island.level,
+        animals: [],
+        equipped: war.island.equipped,
+        buildings: war.island.buildings,
+        goldPileLevel: war.island.goldPileLevel,
+      });
+      return [{ model, mode: 'battle' as const }];
+    }
+    // Visit mode (Step 7.4): the friend's island instead of the user's own.
+    if (visit) {
+      const model = buildIslandModel({
+        ownerId: visit.userId,
+        world: visit.world,
+        islandLevel: visit.level,
+        animals: visit.animals,
+        equipped: visit.equipped,
+        buildings: visit.buildings,
+        goldPileLevel: visit.goldPileLevel,
+        ...(visit.championWeek && { championWeek: visit.championWeek }),
+      });
+      return [{ model, mode: 'visit' as const }];
+    }
+    const own = buildIslandModel({
+      ...base,
+      world,
+      animals,
+      ...(features.visitTraceProp && visitCount !== undefined && { visitCount }),
+      ...(features.groups && championWeek && { championWeek }),
+    });
+    const list: SceneIsland[] = [{ model: own, mode: 'own' }];
     if (DEV_TWO_ISLANDS !== null) list.push({ model: devSecondIsland(own, DEV_TWO_ISLANDS), mode: 'visit' });
     return list;
-  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings, movingId]);
+  }, [world, islandLevel, allAnimals, revealPending, inbox, phase, gold, equipped, placedBuildings, movingId, moving, islandMove, moveRefs, visit, visitCount, championWeek, war]);
+
+  // Who crosses the bridge, from which old tile to which new one, in the skin they wear.
+  const crossing = useMemo(() => {
+    if (!moving || !islandMove) return null;
+    const look = buildIslandModel({ world: islandMove.oldWorld, islandLevel, animals: islandMove.oldAnimals, ...(features.cosmetics && { equipped }) }).animals;
+    const now = new Map(allAnimals.map((a) => [a.id, a]));
+    const movers = look.filter((a) => a.id !== islandMove.spentId && now.get(a.id)?.status === 'active').map((a) => {
+      const after = now.get(a.id)!;
+      return { id: a.id, speciesId: a.speciesId, skinId: a.skinId, from: a.tile, to: { x: after.tileX, z: after.tileZ } };
+    });
+    const u = look.find((a) => a.id === islandMove.spentId);
+    return { movers, unicorn: u ? { id: u.id, speciesId: u.speciesId, skinId: u.skinId, from: u.tile } : null };
+    // Fixed for the sequence: later changes (a departure) do not re-plan it.
+  }, [moving, islandMove]);
 
   const focusing = phase.kind === 'focus';
   const tab = focusing || !TABS.some((t) => t.id === activeTab) ? 'island' : activeTab;
   // The tab bar is hidden on Focus (focus rule) and on the Island tab's Settings and Collection pages.
-  const showTabs = ready && TABS.length > 1 && !focusing && !(tab === 'island' && phase.kind === 'idle' && view !== 'home');
+  const visiting = visit !== null && !focusing;
+  const fighting = war !== null && !focusing;
+  const showTabs = ready && TABS.length > 1 && !focusing && !moving && !visiting && !fighting && !(tab === 'island' && phase.kind === 'idle' && view !== 'home');
+
+  // A war link (`/war/<id>`, Step 6.5) opens its replay once signed in.
+  const signedInNow = useApp((s) => s.account.status === 'signedIn');
+  useEffect(() => {
+    if (pendingLink?.kind !== 'war' || !features.war || !ready || !signedInNow) return;
+    const link = appStore.getState().takeLink('war');
+    if (link) void appStore.getState().watchWar(link.id);
+  }, [pendingLink, ready, signedInNow]);
+
+  // A crossfade when entering or leaving a friend's island (DESIGN.md 7.12).
+  const wasVisiting = useRef(visiting);
+  useEffect(() => {
+    if (wasVisiting.current !== visiting && !reducedMotion) setCrossfade((n) => n + 1);
+    wasVisiting.current = visiting;
+  }, [visiting, reducedMotion]);
+
+  // A friend link opens the Friends tab with the request ready to send (Step 6.5).
+  useEffect(() => {
+    if (pendingLink?.kind === 'add' && features.friends && ready) setTab('friends');
+    if (pendingLink?.kind === 'join' && features.groups && ready) setTab('group');
+  }, [pendingLink, ready, setTab]);
   useEffect(() => {
     document.documentElement.toggleAttribute('data-tabs', showTabs);
   }, [showTabs]);
 
   // Expiry check every minute while not focusing (start and phase changes are handled in the store).
+  // Signed in, the same tick pulls from the server at most every 5 minutes (Step 5.6).
+  const signedIn = useApp((s) => s.account.status === 'signedIn');
   useEffect(() => {
-    if (!ready || focusing || !features.economy) return;
+    if (!ready || focusing || (!features.economy && !signedIn)) return;
     const id = setInterval(() => void appStore.getState().applyExpirations(), config.ui.expiryCheckMs);
     return () => clearInterval(id);
-  }, [ready, focusing]);
+  }, [ready, focusing, signedIn]);
+
+  // App resume (foreground or back online): pull at once and look for new content, never during Focus (the store checks).
+  useEffect(
+    () =>
+      platform.lifecycle.onResume(() => {
+        if (signedIn) void appStore.getState().sync(true);
+        void appStore.getState().checkContent();
+      }),
+    [signedIn],
+  );
+
+  // Native timer notifications and lock-screen progress follow the phase (Steps 6.3, 6.8).
+  useEffect(() => bindPhaseEffects(appStore, platform, { liveProgress: features.liveProgress }), []);
+
+  // Deep links (Step 6.5): the URL the app was opened with, universal / app links, tapped pushes.
+  useEffect(() => {
+    const open = (url: string) => appStore.getState().openLink(url);
+    const offLinks = platform.links.onOpen(open);
+    const offPush = platform.push.onOpen(open);
+    return () => {
+      offLinks();
+      offPush();
+    };
+  }, []);
+
+  // A new content pack is in use (Step 5.8): rebuild cached meshes with its models and colors.
+  const contentVersion = useApp((s) => s.contentVersion);
+  const firstContent = useRef(contentVersion);
+  useEffect(() => {
+    if (contentVersion !== firstContent.current) clearContentGeometry();
+  }, [contentVersion]);
 
   if (!ready) return <div className={styles.blank} />;
 
@@ -94,12 +274,24 @@ export function App() {
   if (focusing) {
     mode = 'focus';
     screen = <FocusScreen />;
+  } else if (moving) {
+    mode = 'sequence';
+    screen = <MoveScreen />;
+  } else if (fighting) {
+    mode = 'sequence';
+    screen = <WarScreen refs={warRefs} done={warDone} onReplay={() => setWarRun((n) => n + 1)} />;
+  } else if (visiting) {
+    mode = 'home';
+    screen = <VisitBanner />;
   } else if (tab === 'stats') {
     mode = 'paused';
     screen = <StatsScreen />;
-  } else if (tab === 'friends' || tab === 'group') {
+  } else if (tab === 'friends') {
     mode = 'paused';
-    screen = <TabPage title={strings.tabs[tab]} />;
+    screen = <FriendsScreen />;
+  } else if (tab === 'group') {
+    mode = 'paused';
+    screen = <GroupScreen />;
   } else if (phase.kind === 'break') {
     mode = 'break';
     screen = <BreakScreen />;
@@ -122,10 +314,38 @@ export function App() {
 
   return (
     <>
-      <Scene mode={mode} islands={islands} reducedMotion={reducedMotion} theme={theme}>
+      <Scene
+        mode={mode}
+        islands={islands}
+        reducedMotion={reducedMotion}
+        theme={theme}
+        {...(fighting &&
+          war && {
+            overlay: () => <WarReplay key={`${war.id}:${warRun}`} war={war} refs={warRefs} onDone={() => setWarDone(true)} />,
+          })}
+        {...(crossing && {
+          pan: moveRefs.pan,
+          overlay: ({ positions }: SceneLayout) => (
+            <IslandMoveSequence
+              oldIsland={{ seed: islandMove!.oldWorld.seed, level: islandLevel }}
+              newIsland={{ seed: world.seed, level: islandLevel }}
+              movers={crossing.movers}
+              unicorn={crossing.unicorn}
+              positions={positions}
+              refs={moveRefs}
+              onDone={finishIslandMove}
+            />
+          ),
+        })}
+      >
         {building && <BuildIslandLayer />}
       </Scene>
       {screen}
+      {crossfade > 0 && <div key={crossfade} className="scene-crossfade" aria-hidden="true" />}
+      {accountChoice && !focusing && <AccountChoiceSheet />}
+      {outdated && <OutdatedScreen />}
+      {pushPrompt && !focusing && <PushPromptSheet />}
+      {room && room.status !== 'started' && !focusing && <LobbySheet />}
       {showTabs && phase.kind === 'break' && tab !== 'island' && <BreakPill />}
       {showTabs && <TabBar tabs={TABS} active={tab} onSelect={setTab} label={strings.aria.tabs} />}
     </>

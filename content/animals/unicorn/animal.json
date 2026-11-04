@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "unicorn",
+  "name": {
+    "en": "Unicorn",
+    "ko": "유니콘"
+  },
+  "tierRank": 3,
+  "idle": "rainbow",
+  "model": "animals/unicorn",
+  "release": "base"
+}

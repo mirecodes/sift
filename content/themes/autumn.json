@@ -1,0 +1,31 @@
+{
+  "kind": "blockTheme",
+  "id": "autumn",
+  "name": {
+    "en": "Autumn",
+    "ko": "가을"
+  },
+  "price": 150,
+  "purchasable": true,
+  "release": "v2-launch",
+  "ambient": "leaves",
+  "cloudTint": "#FFF4E6",
+  "palette": {
+    "grassTop": "#D98C3A",
+    "grassSide": "#B86E2C",
+    "dirtTop": "#9B6B43",
+    "dirtSide": "#86593A",
+    "stoneTop": "#8A8F98",
+    "stoneSide": "#747983",
+    "water": "#4A90C8",
+    "waterStreak": "#8CC4EE",
+    "cabinLog": "#B98552",
+    "cabinLogDark": "#9A6A3E",
+    "cabinBeam": "#5E3B20",
+    "cabinRoof": "#A0522D",
+    "cabinRoofDark": "#7E3F22",
+    "campStone": "#9A9DA3",
+    "campStoneDark": "#6E7179",
+    "firewood": "#6B4526"
+  }
+}

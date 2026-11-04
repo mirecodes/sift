@@ -1,0 +1,18 @@
+{
+  "kind": "building",
+  "id": "small-tree",
+  "name": {
+    "en": "Small Tree",
+    "ko": "작은 나무"
+  },
+  "price": 20,
+  "purchasable": true,
+  "release": "v2-launch",
+  "category": "nature",
+  "footprint": {
+    "w": 1,
+    "d": 1
+  },
+  "model": "buildings/small-tree",
+  "rotatable": true
+}

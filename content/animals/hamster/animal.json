@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "hamster",
+  "name": {
+    "en": "Hamster",
+    "ko": "햄스터"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/hamster",
+  "release": "base"
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "parrot",
+  "name": {
+    "en": "Parrot",
+    "ko": "앵무새"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/parrot",
+  "release": "base"
+}

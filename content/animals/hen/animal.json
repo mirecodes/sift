@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "hen",
+  "name": {
+    "en": "Hen",
+    "ko": "암탉"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/hen",
+  "release": "base"
+}

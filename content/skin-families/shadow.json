@@ -1,0 +1,27 @@
+{
+  "kind": "skinFamily",
+  "id": "shadow",
+  "name": {
+    "en": "Shadow",
+    "ko": "그림자"
+  },
+  "release": "v2-launch",
+  "purchasable": true,
+  "priceByTierRank": [
+    30,
+    35,
+    45,
+    60
+  ],
+  "transform": {
+    "saturation": 0.35,
+    "lightness": {
+      "offset": 0.08,
+      "scale": 0.45
+    },
+    "tint": {
+      "color": "#3A2F5C",
+      "amount": 0.3
+    }
+  }
+}

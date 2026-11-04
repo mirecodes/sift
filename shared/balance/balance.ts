@@ -3,7 +3,7 @@
  * `BALANCE_VERSION` with every settlement so old results stay reproducible: bump it whenever a
  * value changes. Later phases add their sections here.
  */
-export const BALANCE_VERSION = '2026-10-08.3';
+export const BALANCE_VERSION = '2026-10-28.1';
 
 const MINUTE = 60_000;
 
@@ -58,6 +58,97 @@ export const balance = deepFreeze({
   shop: {
     /** Items show a New badge this long after their release date (Step 3.9). */
     newBadgeDays: 14,
+  },
+  islandMove: {
+    /** Unicorns spent per island move (F5). */
+    cost: 1,
+    /** New-island previews offered before confirming (Step 4.1). */
+    freePreviews: 3,
+  },
+  identity: {
+    /** A chosen name can change once per this many days (the first choice is free). */
+    nameChangeCooldownDays: 30,
+  },
+  social: {
+    maxFriends: 100,
+    /** Visit rows are kept this long (Step 7.5). */
+    visitRetentionDays: 30,
+    /** A visited island's snapshot is reused this long (Step 7.4). */
+    snapshotCacheMs: 60_000,
+    /** Friends' "Focusing now" is refreshed this often while visible (presence is polled, ADR-047). */
+    presencePollMs: 30_000,
+    /** Members per group, owner included (Step 8.1). */
+    maxGroupSize: 10,
+    /** After leaving a group, joining any group waits this long (anti-farming). */
+    groupRejoinCooldownHours: 24,
+    /** A weekly winner needs at least this many members for the whole week (Step 8.6). */
+    minMembersForReward: 3,
+    weeklyWinnerGold: 50,
+    /** Invite codes: letters and digits without look-alikes. */
+    inviteCodeLength: 8,
+  },
+  /** Island score (Step 8.3, owner decision rev 2). */
+  scoring: {
+    /** Points per active verified animal, by tier rank. */
+    tierPoints: [1, 3, 10, 30],
+    /** Extra points for particular species (none yet). */
+    speciesBonus: {} as Record<string, number>,
+    /** Animals lost in war count this share... */
+    vanishedWeight: 0.5,
+    /** ...until the end of the ranking week they vanished in, or until they would have expired. */
+    vanishedWindow: 'rankingWeek' as 'rankingWeek' | 'untilNaturalExpiry',
+  },
+  /** Cooperative group missions (Step 8.5). */
+  missions: {
+    perMemberMinutes: 300,
+    /** Share of `perMemberMinutes` per member by group size (bigger groups: not everyone is active every week). */
+    sizeFactor: { 2: 1.0, 3: 0.95, 4: 0.9, 5: 0.85, 6: 0.85, 7: 0.8, 8: 0.8, 9: 0.75, 10: 0.75 } as Record<number, number>,
+    /** Milestones as shares of the target, and the gold each pays every contributing member. */
+    milestones: [0.5, 1.0, 1.5],
+    milestoneGold: [10, 30, 30],
+    /** A member must have contributed this much in the week to receive milestone gold. */
+    minContributionMinutes: 25,
+  },
+  together: {
+    /** A room's lobby stays open this long; a room never started then closes. */
+    lobbyMinutes: 5,
+    /** After the start, a participant may still join this long, with their own remaining time. */
+    lateJoinMinutes: 2,
+    /** Extra reward for focusing together: none (rewards stay individual). */
+    rewardBonus: 0,
+    /** Weight of together sessions in group missions (Phase 8). */
+    missionMultiplier: 1.0,
+    /** Participants per room, host included. */
+    maxParticipants: 10,
+  },
+  /** War inside a group (Phase 9, owner decisions rev 2 and 3). */
+  war: {
+    /** Duel odds by tier gap: `byGap[gap]` if present, else `base ** gap`. The higher rank wins `odds : 1`. */
+    lossOdds: { base: 10, byGap: [1, 10, 100, 1000] },
+    /** A fallen animal leaves for good with this chance after the battle. */
+    vanishChanceOnFall: 0.25,
+    /** Defending Unicorns protect defenders within `radius` (Chebyshev): their vanish chance drops. */
+    unicornAura: { radius: 2, metric: 'chebyshev' as const, vanishChance: 0.05, appliesTo: 'defender' as const },
+    /** Never join an attack: they guard the island. */
+    attackExcludedSpecies: ['unicorn'],
+    /** Defender gold from `minGold` → gold taken on an attacker win (§8). */
+    lootBrackets: [
+      { minGold: 0, loot: 0 },
+      { minGold: 20, loot: 5 },
+      { minGold: 50, loot: 10 },
+      { minGold: 100, loot: 20 },
+      { minGold: 200, loot: 35 },
+      { minGold: 500, loot: 60 },
+      { minGold: 1000, loot: 100 },
+    ],
+    /** Most gold one defender can lose to wars in a ranking week (null: no cap). */
+    lootLostCapPerWeek: null as number | null,
+    attackerCooldownHours: 24,
+    defenderShieldHours: 12,
+    newMemberProtectionHours: 48,
+    /** No wars this close to the weekly settlement. */
+    freezeBeforeSettlementMinutes: 60,
+    maxRounds: 500,
   },
   /** Allowed shop price ranges [min, max] in gold (§8); `content:validate` enforces them. */
   prices: {

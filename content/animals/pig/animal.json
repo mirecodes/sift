@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "pig",
+  "name": {
+    "en": "Pig",
+    "ko": "돼지"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/pig",
+  "release": "base"
+}

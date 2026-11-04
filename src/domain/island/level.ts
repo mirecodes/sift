@@ -31,6 +31,25 @@ export function pickNewAnimalTile(seed: number, animals: readonly PlacedAnimal[]
   return tile ? { x: tile.x, z: tile.z } : undefined;
 }
 
+/**
+ * Places animals one after another on an island (island move, Step 4.1): each takes a free tile
+ * (center-weighted, `pickPlacementTile`) or, once none is free, shares the emptiest tile. Animals left
+ * without room keep no entry. The level is fixed: a move never grows or shrinks the island.
+ */
+export function placeAnimals(seed: number, level: number, ids: readonly string[], rng: Rng, buildings: OccupancyInput['buildings'] = []): Map<string, Tile> {
+  const placed: { id: string; tile: Tile }[] = [];
+  const out = new Map<string, Tile>();
+  for (const id of ids) {
+    const grid = getOccupancy({ seed, islandLevel: level, animals: placed, buildings });
+    const free = [...grid.values()].filter(isFreeForAnimal);
+    const tile = pickPlacementTile(free, [], rng) ?? pickPlacementTile(leastCrowded(grid), [], rng);
+    if (!tile) continue;
+    placed.push({ id, tile: { x: tile.x, z: tile.z } });
+    out.set(id, { x: tile.x, z: tile.z });
+  }
+  return out;
+}
+
 /** Tiles animals may live on that have room, the emptiest ones only. */
 export function leastCrowded(grid: ReadonlyMap<string, TileInfo>): TileInfo[] {
   const open = [...grid.values()].filter((t) => isStandable(t) && t.animalIds.length < balance.placement.maxPerTile);

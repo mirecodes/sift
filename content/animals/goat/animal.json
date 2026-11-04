@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "goat",
+  "name": {
+    "en": "Goat",
+    "ko": "염소"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/goat",
+  "release": "base"
+}

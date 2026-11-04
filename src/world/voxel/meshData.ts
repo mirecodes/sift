@@ -1,5 +1,5 @@
 import type { PaletteKey } from '../../../shared/content/palette';
-import { resolveColors, type VoxelModel } from '../../assets/voxels/types';
+import { resolveColors, type VoxelModel } from '../../../shared/content/model';
 
 /** Plain typed arrays, so geometry generation is testable without three.js. */
 export interface MeshData {

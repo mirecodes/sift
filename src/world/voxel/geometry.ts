@@ -1,11 +1,9 @@
 import { BufferAttribute, BufferGeometry } from 'three';
-import { withOverlay, type ModelColors } from '../../../shared/content/model';
+import { withOverlay, type ModelColors, type VoxelModel } from '../../../shared/content/model';
 import type { BlockPalette } from '../../../shared/content/palette';
 import type { AnimalSkinDef, BlockThemeDef, BuildingDef } from '../../../shared/content/schema';
-import { voxelModels } from '../../assets/voxels';
-import { butterflyBody, butterflyWing } from '../../assets/voxels/butterfly';
-import type { VoxelModel } from '../../assets/voxels/types';
 import { content } from '../../domain/content';
+import { flutterSplit } from './flutter';
 import { DEFAULT_SKIN } from '../../domain/island/model';
 import { defaultBlocks } from '../palette';
 import { buildBlockMesh, buildVoxelMesh, type MeshData } from './meshData';
@@ -57,23 +55,25 @@ export function animalGeometry(modelId: string, skinId: string = DEFAULT_SKIN): 
 
 const flutterCache = new Map<string, { body: BufferGeometry; wing: BufferGeometry }>();
 
-/** Butterfly body and one wing (mirror it for the other), so the wings can flap (ADR-024). */
-export function flutterParts(skinId: string = DEFAULT_SKIN) {
+/** A `flutter` animal's body and one wing (mirror it for the other), so the wings can flap (ADR-024). */
+export function flutterParts(modelId: string, skinId: string = DEFAULT_SKIN) {
   const colors = skinColors(skinId);
-  const key = colors ? skinId : DEFAULT_SKIN;
+  const key = `${modelId}|${colors ? skinId : DEFAULT_SKIN}`;
   let parts = flutterCache.get(key);
   if (!parts) {
+    const { body, wing } = flutterSplit(modelById(modelId));
     parts = {
-      body: toGeometry(buildVoxelMesh(butterflyBody, VOXEL_SIZE, colors)),
-      wing: toGeometry(buildVoxelMesh(butterflyWing, VOXEL_SIZE, colors)),
+      body: toGeometry(buildVoxelMesh(body, VOXEL_SIZE, colors)),
+      wing: toGeometry(buildVoxelMesh(wing, VOXEL_SIZE, colors)),
     };
     flutterCache.set(key, parts);
   }
   return parts;
 }
 
+/** A model from the content registry by its ref (`animals/fox`, `buildings/windmill`). */
 export function modelById(modelId: string): VoxelModel {
-  const model = voxelModels[modelId];
+  const model = content.model(modelId);
   if (!model) throw new Error(`No voxel model for ${modelId}`);
   return model;
 }

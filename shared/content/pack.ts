@@ -111,6 +111,30 @@ export function expandFamily(family: SkinFamilyDef, species: readonly SpeciesDef
 }
 
 /**
+ * Where each kind of item lives under `content/` (one folder per animal and building, one file per
+ * other item). The folder or file name is the item id, so copy-paste mistakes fail loudly.
+ */
+const LAYOUT: readonly [RegExp, ContentDef['kind'], (m: RegExpMatchArray, d: ContentDef) => string | null][] = [
+  [/^animals\/([^/]+)\/animal\.json$/, 'species', (m, d) => (d.id === m[1] ? null : `id must be ${m[1]} (the folder name)`)],
+  [/^animals\/([^/]+)\/skins\/([^/]+)\.json$/, 'animalSkin', (m, d) =>
+    d.id !== m[2] ? `id must be ${m[2]} (the file name)` : d.kind === 'animalSkin' && d.speciesId !== m[1] ? `speciesId must be ${m[1]} (the animal folder)` : null],
+  [/^buildings\/([^/]+)\/building\.json$/, 'building', (m, d) => (d.id === m[1] ? null : `id must be ${m[1]} (the folder name)`)],
+  [/^themes\/([^/]+)\.json$/, 'blockTheme', (m, d) => (d.id === m[1] ? null : `id must be ${m[1]} (the file name)`)],
+  [/^skin-families\/([^/]+)\.json$/, 'skinFamily', (m, d) => (d.id === m[1] ? null : `id must be ${m[1]} (the file name)`)],
+  [/^releases\/([^/]+)\.json$/, 'release', (m, d) => (d.id === m[1] ? null : `id must be ${m[1]} (the file name)`)],
+];
+
+/** Why an item does not belong at this path, or null. Paths outside the known layout are not checked. */
+export function layoutProblem(path: string, def: ContentDef): string | null {
+  for (const [re, kind, check] of LAYOUT) {
+    const m = path.match(re);
+    if (!m) continue;
+    return def.kind === kind ? check(m, def) : `a ${def.kind} does not belong in ${path} (expected a ${kind})`;
+  }
+  return null;
+}
+
+/**
  * Validates every file and assembles a pack: schemas, unique ids, references (species, models,
  * releases, presets), family expansion. Returns every problem; invalid entries are left out of the
  * pack (the Content Studio keeps working while a file is broken).
@@ -123,13 +147,18 @@ export function assemblePack(src: PackSource): { pack: ContentPack; problems: st
     list.forEach((entry, i) => {
       const parsed = ContentFile.safeParse(entry);
       const where = list.length > 1 ? `${path}[${i}]` : path;
-      if (parsed.success) defs.push(parsed.data);
-      else for (const issue of parsed.error.issues) problems.push(`${where}: ${issue.path.join('.') || '(root)'}: ${issue.message}`);
+      if (!parsed.success) {
+        for (const issue of parsed.error.issues) problems.push(`${where}: ${issue.path.join('.') || '(root)'}: ${issue.message}`);
+        return;
+      }
+      const misplaced = layoutProblem(path, parsed.data);
+      if (misplaced) problems.push(`${where}: ${misplaced}`);
+      else defs.push(parsed.data);
     });
   }
 
   const of = <K extends ContentDef['kind']>(kind: K) => defs.filter((d): d is Extract<ContentDef, { kind: K }> => d.kind === kind);
-  // Catalog order: by tier, then file order (stable).
+  // Catalog order: by tier, then file path (one folder per animal: by id).
   const species = of('species').sort((a, b) => a.tierRank - b.tierRank);
   const families = of('skinFamily');
   const releases = of('release');
@@ -142,7 +171,11 @@ export function assemblePack(src: PackSource): { pack: ContentPack; problems: st
       problems.push(...(e instanceof ContentError ? e.problems : [String(e)]));
     }
   }
-  const items: PackItem[] = [...species, ...skins, ...of('blockTheme'), ...of('building'), ...releases];
+  // Shop and picker order: oldest release first (the free defaults come first), then by id.
+  const released = new Map(releases.map((r) => [r.id, r.date]));
+  const byRelease = <T extends { id: string; release: string }>(list: T[]) =>
+    [...list].sort((a, b) => (released.get(a.release) ?? '').localeCompare(released.get(b.release) ?? '') || a.id.localeCompare(b.id));
+  const items: PackItem[] = [...species, ...byRelease(skins), ...byRelease(of('blockTheme')), ...byRelease(of('building')), ...releases];
 
   const invalid = new Set<string>();
   const bad = (id: string, message: string) => {

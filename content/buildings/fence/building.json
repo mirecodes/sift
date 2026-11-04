@@ -1,0 +1,18 @@
+{
+  "kind": "building",
+  "id": "fence",
+  "name": {
+    "en": "Fence",
+    "ko": "울타리"
+  },
+  "price": 10,
+  "purchasable": true,
+  "release": "v2-launch",
+  "category": "structure",
+  "footprint": {
+    "w": 1,
+    "d": 1
+  },
+  "model": "buildings/fence",
+  "rotatable": true
+}

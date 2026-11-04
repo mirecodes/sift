@@ -84,7 +84,9 @@ check('back on Island the same canvas renders again', (await draws()) > before &
 // Economy HUD (Phase 2): the label carries the number. With cosmetics (Phase 3) gold opens the Shop.
 const goldButton = page.getByRole('button', { name: /gold\. Open shop$/ });
 const goldShown = async () => Number((await goldButton.getAttribute('aria-label')).split(' ')[0]);
-check('Home shows the 30 starter gold and no Unicorns', (await goldShown()) === 30 && (await page.getByRole('img', { name: '0 Unicorns on the island' }).isVisible()));
+// The Unicorn counter is a picture, or a button with the island move on (Phase 4).
+const unicornCounter = (p, n) => p.getByLabel(new RegExp(`^${n} Unicorns?( on the island|\\. Move to a new island)$`));
+check('Home shows the 30 starter gold and no Unicorns', (await goldShown()) === 30 && (await unicornCounter(page, 0).isVisible()));
 await goldButton.click();
 await settle(500);
 check('tapping gold opens the shop', await page.getByRole('heading', { name: 'Shop' }).isVisible());
@@ -218,7 +220,7 @@ await settle(1500);
 check('settings persist across a reload', (await page.locator('p', { hasText: /30 min focus/i }).count()) > 0);
 
 // Expiry (Phase 2): a week later the animal leaves gold; it shows on Home and stays after a reload.
-const earnedUnicorn = (await page.getByRole('img', { name: '1 Unicorn on the island' }).count()) === 1;
+const earnedUnicorn = (await unicornCounter(page, 1).count()) === 1;
 await page.clock.fastForward(7 * 24 * 3600_000 + 61_000); // one 60 s check fires after the jump
 await settle(2500); // the count-up runs after the notice shows
 const departure = page.getByRole('status').getByText(/^.+ left \d+ gold\.$/);
@@ -279,6 +281,12 @@ check('the placed fence survives a reload', await page.getByText('Nothing to pla
 await page.getByRole('button', { name: 'Store Fence' }).click();
 await settle(500);
 check('a placed building goes back to the tray', (await page.getByRole('button', { name: 'Place Fence' }).isVisible()) && (await page.getByText('On the island').count()) === 0);
+// Arrange mode (Phase 10): the Animals segment swaps the tray for the arrange hint.
+await page.getByRole('button', { name: 'Animals' }).click();
+await settle(300);
+check('the Animals segment shows the arrange hint', await page.getByRole('status').getByText('Drag an animal to a new spot', { exact: false }).isVisible());
+await page.getByRole('button', { name: 'Buildings' }).click();
+await settle(300);
 await page.keyboard.press('Escape');
 await settle(300);
 check('Esc leaves build mode', await page.getByRole('button', { name: 'Start focus' }).isVisible());
@@ -295,6 +303,8 @@ const { readFile } = await import('node:fs/promises');
 const backupFile = await exportFrom(page);
 const original = JSON.parse(await readFile(backupFile, 'utf8'));
 check('export downloads a sift-backup v1 file', original.format === 'sift-backup' && original.version === 1);
+// The first page is done; closing it frees the shared software GPU so the fresh page can paint.
+await page.close();
 
 const fresh = await (await browser.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true })).newPage();
 fresh.on('pageerror', (e) => errors.push(e.message));
@@ -343,6 +353,116 @@ await fresh.waitForTimeout(400);
 await fresh.reload();
 await fresh.waitForTimeout(1500);
 check('dismissed notices stay gone after a reload', (await fresh.getByRole('status').count()) === 0);
+
+// Island move (Phase 4): a Unicorn pays for a new island; the move survives a reload.
+const withUnicorn = structuredClone(original);
+const [first] = withUnicorn.data.animals;
+withUnicorn.data.inbox = [];
+withUnicorn.data.animals.push({
+  ...first,
+  id: 'e2e-unicorn',
+  speciesId: 'unicorn',
+  tier: 'legendary',
+  tierRank: 3,
+  acquiredAt: Date.now() - 60_000,
+  status: 'active',
+  endedAt: null,
+  endReason: null,
+  tileX: first.tileX === 1 ? 2 : 1,
+  tileZ: 2,
+});
+const unicornFile = `${backupFile}.unicorn.json`;
+await writeFile(unicornFile, JSON.stringify(withUnicorn));
+await fresh.getByRole('button', { name: 'Open settings' }).click();
+const [chooser3] = await Promise.all([fresh.waitForEvent('filechooser'), fresh.getByRole('button', { name: 'Import…' }).click()]);
+await chooser3.setFiles(unicornFile);
+await fresh.waitForTimeout(300);
+await fresh.getByRole('button', { name: 'Replace data' }).click();
+await fresh.waitForTimeout(300);
+await fresh.getByRole('button', { name: 'Close' }).click();
+await fresh.waitForTimeout(700);
+const seedOf = async () => JSON.parse(await readFile(await exportFrom(fresh), 'utf8')).data.kv.find((r) => r.key === 'world').value.seed;
+const seedBefore = await seedOf();
+await fresh.getByRole('button', { name: '1 Unicorn. Move to a new island' }).click();
+await fresh.waitForTimeout(800);
+check('the move sheet shows the cost and the Unicorn count', await fresh.getByText('You have 1 Unicorn.').isVisible());
+await fresh.getByRole('button', { name: 'Move', exact: true }).click();
+await fresh.waitForTimeout(1500);
+check('the move sequence plays with a Skip button', await fresh.getByRole('button', { name: 'Skip' }).isVisible());
+await fresh.getByRole('button', { name: 'Skip' }).click();
+await fresh.waitForTimeout(500);
+check('after the move the Unicorn is spent', await fresh.getByRole('button', { name: '0 Unicorns. Move to a new island' }).isVisible());
+await fresh.reload();
+await fresh.waitForTimeout(1500);
+check('the new island survives a reload', (await seedOf()) !== seedBefore);
+await fresh.close();
+
+// Accounts (Phase 5) with the fake backend: sign in with a code, then a focus rewarded by the server,
+// including the offline wait at the end.
+const acct = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+acct.on('pageerror', (e) => errors.push(e.message));
+await acct.clock.install({ time: morning });
+await acct.goto(URL);
+await acct.waitForTimeout(1500);
+await acct.getByRole('button', { name: 'Open settings' }).click();
+await acct.getByRole('button', { name: 'Sign in', exact: true }).click();
+await acct.getByLabel('Email').fill('mina@example.com');
+await acct.getByRole('button', { name: 'Send code' }).click();
+await acct.waitForTimeout(800);
+await acct.getByLabel('Code').fill('000000');
+await acct.getByRole('button', { name: 'Sign in', exact: true }).last().click();
+await acct.waitForTimeout(1500);
+check('signing in with the emailed code links the device', await acct.getByText('Signed in as mina@example.com').isVisible());
+await acct.getByRole('button', { name: 'Close' }).click();
+await acct.waitForTimeout(500);
+await acct.getByRole('button', { name: 'Start focus' }).click();
+await acct.waitForTimeout(1500); // the server confirms the start in the background
+await acct.clock.fastForward(26 * 60_000);
+await acct.waitForTimeout(500);
+await acct.evaluate(() => window.__siftFake.setOnline(false));
+await acct.getByRole('button', { name: 'End focus' }).click();
+await acct.waitForTimeout(3000); // two quick retries, then the break waits
+check('offline at the end, the break waits for the server', await acct.getByText('Revealing when you’re back online…').isVisible());
+await acct.evaluate(() => {
+  window.__siftFake.setOnline(true);
+  window.dispatchEvent(new Event('online'));
+});
+await acct.waitForTimeout(2000);
+check('back online, the server reveals the reward', (await acct.getByText('Revealing when you’re back online…').count()) === 0 && (await acct.getByText('Nice work.').count()) === 0);
+
+// Friends (Phase 7): a name is required first; the server assigns the tag; requests need an exact handle.
+await acct.getByRole('button', { name: 'Home' }).click();
+await acct.waitForTimeout(500);
+await acct.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Friends' }).click();
+await acct.waitForTimeout(1500);
+check('the Friends tab asks for a name first', await acct.getByRole('heading', { name: 'Choose your name' }).isVisible());
+await acct.getByLabel('Name').fill('ㄱㄴ');
+check('the shared name rule answers at once', await acct.getByText('Letters and numbers only.').isVisible());
+await acct.getByLabel('Name').fill('Mina');
+await acct.getByRole('button', { name: 'Save' }).click();
+await acct.waitForTimeout(1500);
+check('the chosen name gets a 4-digit tag', (await acct.getByText('Mina', { exact: true }).isVisible()) && (await acct.getByText(/^#\d{4}$/).first().isVisible()));
+await acct.getByRole('button', { name: 'Add friend' }).click();
+await acct.getByLabel('name#tag').fill('Nobody#0001');
+await acct.getByRole('button', { name: 'Send request' }).click();
+await acct.waitForTimeout(1000);
+check('a request to an unknown handle says so', await acct.getByText('No one with that name#tag.').isVisible());
+await acct.getByRole('button', { name: 'Close' }).click();
+
+// Groups (Phase 8): create one; the ranking lists the creator; the mission shows its target.
+await acct.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Group' }).click();
+await acct.waitForTimeout(1500);
+await acct.getByLabel('Group name').fill('Morning Owls');
+await acct.getByRole('button', { name: 'Create' }).click();
+await acct.waitForTimeout(1500);
+check('a new group shows its name and an 8-letter invite code', (await acct.getByRole('heading', { name: 'Morning Owls' }).isVisible()) && (await acct.getByRole('button', { name: /^Invite · [A-Z2-9]{8}$/ }).isVisible()));
+check('the ranking lists the creator first', await acct.getByLabel('#1').isVisible());
+await acct.getByRole('button', { name: 'Missions' }).click();
+check('the mission target is frozen at the size of a 2-person group', await acct.getByText(/ \/ 600 min$/).isVisible());
+// War (Phase 9): the Wars sub-tab starts empty; nobody else is in the group to attack.
+await acct.getByRole('button', { name: 'Wars' }).click();
+check('the Wars sub-tab starts empty', await acct.getByText('No battles yet.').isVisible());
+await acct.close();
 
 check('no page errors', errors.length === 0);
 if (errors.length) console.log(errors.join('\n'));

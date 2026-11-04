@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "ferret",
+  "name": {
+    "en": "Ferret",
+    "ko": "페럿"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/ferret",
+  "release": "base"
+}

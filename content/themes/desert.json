@@ -1,0 +1,30 @@
+{
+  "kind": "blockTheme",
+  "id": "desert",
+  "name": {
+    "en": "Desert",
+    "ko": "사막"
+  },
+  "price": 120,
+  "purchasable": true,
+  "release": "v2-launch",
+  "cloudTint": "#FFF8EC",
+  "palette": {
+    "grassTop": "#E8C987",
+    "grassSide": "#D4AF6A",
+    "dirtTop": "#C8955A",
+    "dirtSide": "#B07D48",
+    "stoneTop": "#B89C7A",
+    "stoneSide": "#9E8263",
+    "water": "#3FB7C9",
+    "waterStreak": "#9BE3EC",
+    "cabinLog": "#D2A574",
+    "cabinLogDark": "#B6875A",
+    "cabinBeam": "#7A5230",
+    "cabinRoof": "#C8803E",
+    "cabinRoofDark": "#A6652E",
+    "campStone": "#C9B596",
+    "campStoneDark": "#A08B6C",
+    "firewood": "#6B4526"
+  }
+}

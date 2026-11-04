@@ -14,3 +14,7 @@ coverage
 .vscode
 .idea
 graphify-out
+# Built by `npm run server:build` before `supabase functions deploy api`.
+server/supabase/functions/api/sift.js
+server/supabase/.temp
+server/supabase/.branches

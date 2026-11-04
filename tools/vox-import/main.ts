@@ -5,8 +5,8 @@ import { PALETTE_KEYS } from '../../shared/content/palette';
 import { PIVOT_INDEX, voxToModel } from './import';
 import { readVox, writeVox, type VoxScene } from './vox';
 
-const ROOT = 'content/models';
-export const TEMPLATE = join(ROOT, 'palette-template.vox');
+const ROOT = 'content';
+export const TEMPLATE = join(ROOT, 'models', 'palette-template.vox');
 
 /** One swatch voxel per palette key in a row (index i at x = i - 1), plus the pivot marker. */
 export function templateScene(): VoxScene {
@@ -27,7 +27,8 @@ const voxFiles = (dir: string): string[] =>
   });
 
 /**
- * `npm run content:vox`: converts every `content/models/**\/*.vox` to model JSON next to it.
+ * `npm run content:vox`: converts every `content/**\/*.vox` (an item folder's `model.vox`, or a loose
+ * model under `content/models/`) to model JSON next to it.
  * `npm run content:vox -- --template` (re)writes the palette template.
  */
 export function main(args: string[]): number {

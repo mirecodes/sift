@@ -1,0 +1,18 @@
+{
+  "kind": "building",
+  "id": "well",
+  "name": {
+    "en": "Well",
+    "ko": "우물"
+  },
+  "price": 40,
+  "purchasable": true,
+  "release": "v2-launch",
+  "category": "structure",
+  "footprint": {
+    "w": 1,
+    "d": 1
+  },
+  "model": "buildings/well",
+  "rotatable": true
+}

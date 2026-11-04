@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "hedgehog",
+  "name": {
+    "en": "Hedgehog",
+    "ko": "고슴도치"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/hedgehog",
+  "release": "base"
+}

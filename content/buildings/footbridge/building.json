@@ -1,0 +1,19 @@
+{
+  "kind": "building",
+  "id": "footbridge",
+  "name": {
+    "en": "Footbridge",
+    "ko": "나무다리"
+  },
+  "price": 30,
+  "purchasable": true,
+  "release": "v2-launch",
+  "category": "structure",
+  "footprint": {
+    "w": 1,
+    "d": 1
+  },
+  "model": "buildings/footbridge",
+  "rotatable": true,
+  "allowOnWater": true
+}

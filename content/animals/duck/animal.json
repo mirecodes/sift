@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "duck",
+  "name": {
+    "en": "Duck",
+    "ko": "오리"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/duck",
+  "release": "base"
+}

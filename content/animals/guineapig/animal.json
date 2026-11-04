@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "guineapig",
+  "name": {
+    "en": "Guinea Pig",
+    "ko": "기니피그"
+  },
+  "tierRank": 0,
+  "idle": "default",
+  "model": "animals/guineapig",
+  "release": "base"
+}

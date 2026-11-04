@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "tiger",
+  "name": {
+    "en": "Tiger",
+    "ko": "호랑이"
+  },
+  "tierRank": 3,
+  "idle": "sparkle",
+  "model": "animals/tiger",
+  "release": "base"
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "koala",
+  "name": {
+    "en": "Koala",
+    "ko": "코알라"
+  },
+  "tierRank": 1,
+  "idle": "default",
+  "model": "animals/koala",
+  "release": "base"
+}

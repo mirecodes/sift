@@ -1,0 +1,12 @@
+{
+  "kind": "species",
+  "id": "butterfly",
+  "name": {
+    "en": "Butterfly",
+    "ko": "나비"
+  },
+  "tierRank": 0,
+  "idle": "flutter",
+  "model": "animals/butterfly",
+  "release": "base"
+}

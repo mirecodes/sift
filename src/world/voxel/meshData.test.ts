@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { VoxelModel } from '../../assets/voxels/types';
+import type { VoxelModel } from '../../../shared/content/model';
 import { buildBlockMesh, buildVoxelMesh, hexToLinearRgb } from './meshData';
 
 const model = (voxels: VoxelModel['voxels'], size: VoxelModel['size'] = [2, 2, 2]): VoxelModel => ({

@@ -65,8 +65,9 @@ describe('pickSpecies', () => {
   });
 
   it('legendary (the top tier) is the unicorn or the tiger', () => {
-    expect(pickSpecies(LEGENDARY, () => 0).id).toBe('unicorn');
-    expect(pickSpecies(LEGENDARY, () => 0.99).id).toBe('tiger');
+    // Catalog order inside a tier is by id (one folder per animal).
+    expect(pickSpecies(LEGENDARY, () => 0).id).toBe('tiger');
+    expect(pickSpecies(LEGENDARY, () => 0.99).id).toBe('unicorn');
     expect(getSpecies('fish').tierRank).toBe(COMMON);
   });
 });

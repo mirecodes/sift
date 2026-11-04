@@ -10,6 +10,14 @@ import { Panel } from '../../ui/components/Surfaces';
 import { TopBar } from '../../ui/components/TopBar';
 import { ItemSprite } from '../collection/ItemSprite';
 import { buildUi, nextRotation, resetBuildUi, useBuildUi } from './buildState';
+import { runtimeConfig } from '../../app/runtimeConfig';
+import { dropPickedAnimal } from './arrange';
+import { arrangeProblem } from '../../domain/island/arrange';
+import { getSpecies } from '../../domain/animals/catalog';
+import { selectIslandLevel } from '../../store';
+import { Segmented } from '../../ui/components/Controls';
+
+const { features } = runtimeConfig;
 import layer from '../Screen.module.css';
 import styles from './Build.module.css';
 
@@ -34,6 +42,39 @@ function selectOccupancyMemo(s: Parameters<typeof selectOccupancy>[0]) {
   return last.grid;
 }
 
+/** Arrange mode (Step 10.1): the hint, the picked animal, why it does not fit, Cancel and Place. */
+function ArrangePanel() {
+  const { picked, target, note } = useBuildUi((s) => s);
+  const s = useApp((x) => x);
+  const animal = picked ? s.animals.find((a) => a.id === picked) : undefined;
+  const problem = picked && target ? arrangeProblem({ seed: s.world.seed, islandLevel: selectIslandLevel(s), animals: s.animals, buildings: s.placedBuildings }, picked, target) : null;
+  const shown = note ?? (problem ? strings.build.arrangeProblems[problem] : null);
+  if (!animal)
+    return (
+      <p className={`${styles.status} type-body-sm`} role="status">
+        {note ?? strings.build.arrangeHint}
+      </p>
+    );
+  return (
+    <>
+      <p className={`${styles.name} type-body-md-strong`}>{getSpecies(animal.speciesId).name}</p>
+      {shown && (
+        <p className={`${styles.status} type-body-sm`} role="status">
+          {shown}
+        </p>
+      )}
+      <div className={styles.actions}>
+        <Button variant="secondary" onClick={() => buildUi.setState({ picked: null, target: null, note: null })}>
+          {strings.build.cancel}
+        </Button>
+        <Button disabled={!target || !!problem} onClick={() => void dropPickedAnimal()}>
+          {strings.build.place}
+        </Button>
+      </div>
+    </>
+  );
+}
+
 /** Build mode panel (guidance_v2 Step 3.11, DESIGN.md 7.8). The island layer lives in `world/build`. */
 export function BuildScreen() {
   const setView = useApp((s) => s.setView);
@@ -42,9 +83,12 @@ export function BuildScreen() {
   const placeBuilding = useApp((s) => s.placeBuilding);
   const storeBuilding = useApp((s) => s.storeBuilding);
   const grid = useApp(selectOccupancyMemo);
-  const { placing, tile, selected } = useBuildUi((s) => s);
+  const { placing, tile, selected, mode: buildMode } = useBuildUi((s) => s);
   const problem = useGhostProblem();
   const [message, setMessage] = useState<string | null>(null);
+  useEffect(() => {
+    if (!features.cosmetics) buildUi.setState({ mode: 'animals' });
+  }, []);
   const tray = useMemo(() => [...unplacedBuildings(cosmetics, placed)], [cosmetics, placed]);
 
   const exit = () => {
@@ -109,6 +153,8 @@ export function BuildScreen() {
 
   const selectedBuilding = selected ? placed.find((b) => b.id === selected) : undefined;
   const status = message ?? (problem === undefined ? null : problem ? strings.build.problems[problem] : strings.build.fits);
+  // Without cosmetics there are no buildings: build mode is for arranging only.
+  const mode = features.cosmetics ? buildMode : 'animals';
 
   return (
     <div className={layer.layer}>
@@ -120,7 +166,20 @@ export function BuildScreen() {
         </TopBar>
       </div>
       <Panel className={styles.panel}>
-        {placing ? (
+        {features.arrange && features.cosmetics && (
+          <Segmented
+            label={strings.build.title}
+            options={[
+              { value: 'buildings' as const, label: strings.build.modeBuildings },
+              { value: 'animals' as const, label: strings.build.modeAnimals },
+            ]}
+            value={mode}
+            onChange={(m) => buildUi.setState({ mode: m, placing: null, tile: null, selected: null, picked: null, target: null, note: null })}
+          />
+        )}
+        {mode === 'animals' ? (
+          <ArrangePanel />
+        ) : placing ? (
           <>
             <p className={`${styles.name} type-body-md-strong`}>{nameOf(placing.defId)}</p>
             <p className={`${styles.status} type-body-sm`} role="status">

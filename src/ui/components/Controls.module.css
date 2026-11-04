@@ -31,6 +31,16 @@
   line-height: 25.6px;
   font-variant-numeric: tabular-nums;
 }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-lg);
+}
+.text {
+  width: 100%;
+  text-align: left;
+}
 .input:focus {
   border-color: var(--color-primary);
   outline: none;
@@ -57,6 +67,17 @@
   border-radius: var(--radius-xs);
   background: transparent;
   color: var(--color-ink);
+}
+@media (pointer: coarse) {
+  .segmented button {
+    min-height: 44px;
+  }
+  /* A 44px-tall hit area around the 24px toggle. */
+  .toggle::before {
+    content: '';
+    position: absolute;
+    inset: -10px 0;
+  }
 }
 .segmented button[aria-pressed='true'] {
   background: var(--color-primary);

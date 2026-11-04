@@ -1,0 +1,21 @@
+# Supabase CLI project for Sift (run the CLI with `--workdir server`). Setup: docs/guides/BACKEND_SETUP.md.
+# If your CLI version rejects a key, run `supabase init --workdir server --force` and copy the values below.
+project_id = "sift"
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173", "https://sift.app"]
+
+[auth.email]
+enable_signup = true
+# Six-digit one-time codes instead of magic links (Step 5.4): the email shows {{ .Token }}.
+otp_length = 6
+otp_expiry = 900
+
+[auth.email.template.magic_link]
+subject = "Your Sift code"
+content_path = "./supabase/templates/code.html"
+
+[functions.api]
+# The function verifies tokens itself (JWKS) and serves signed-out calls (content manifest).
+verify_jwt = false

@@ -1,0 +1,31 @@
+{
+  "kind": "blockTheme",
+  "id": "winter",
+  "name": {
+    "en": "Winter",
+    "ko": "겨울"
+  },
+  "price": 160,
+  "purchasable": true,
+  "release": "themes-oct-2026",
+  "ambient": "snow",
+  "cloudTint": "#E6EDF5",
+  "palette": {
+    "grassTop": "#CFE6F0",
+    "grassSide": "#9FC4D8",
+    "dirtTop": "#5E6B7A",
+    "dirtSide": "#4E5966",
+    "stoneTop": "#6F8296",
+    "stoneSide": "#5C6E82",
+    "water": "#A8DDF0",
+    "waterStreak": "#E8F8FF",
+    "cabinLog": "#6B4A32",
+    "cabinLogDark": "#55392A",
+    "cabinBeam": "#3A2A20",
+    "cabinRoof": "#E8F0F8",
+    "cabinRoofDark": "#C8D6E4",
+    "campStone": "#8C9AAB",
+    "campStoneDark": "#6A788A",
+    "firewood": "#4A3224"
+  }
+}
