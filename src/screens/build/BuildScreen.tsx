@@ -83,7 +83,7 @@ export function BuildScreen() {
   const placeBuilding = useApp((s) => s.placeBuilding);
   const storeBuilding = useApp((s) => s.storeBuilding);
   const grid = useApp(selectOccupancyMemo);
-  const { placing, tile, selected, mode: buildMode } = useBuildUi((s) => s);
+  const { placing, tile, selected, mode: buildMode, note } = useBuildUi((s) => s);
   const problem = useGhostProblem();
   const [message, setMessage] = useState<string | null>(null);
   useEffect(() => {
@@ -98,7 +98,7 @@ export function BuildScreen() {
   const start = (defId: string, movingId?: string, rotation = buildUi.getState().placing?.rotation ?? 0) => {
     const from = suggestTile(grid, { defId, rotation, minFreeTiles: balance.build.minFreeTiles, ...(movingId && { movingId }) });
     const moving = movingId ? placed.find((b) => b.id === movingId) : undefined;
-    buildUi.setState({ placing: { defId, rotation: moving?.rotation ?? rotation, ...(movingId && { movingId }) }, tile: moving ? { x: moving.tileX, z: moving.tileZ } : from, selected: null });
+    buildUi.setState({ placing: { defId, rotation: moving?.rotation ?? rotation, ...(movingId && { movingId }) }, tile: moving ? { x: moving.tileX, z: moving.tileZ } : from, selected: null, note: null });
     setMessage(from || moving ? null : strings.build.noRoom);
   };
   const place = async () => {
@@ -122,7 +122,7 @@ export function BuildScreen() {
     }
   };
   const cancel = () => {
-    buildUi.setState({ placing: null, tile: null, selected: null });
+    buildUi.setState({ placing: null, tile: null, selected: null, note: null });
     setMessage(null);
   };
 
@@ -152,7 +152,8 @@ export function BuildScreen() {
   useEffect(() => () => resetBuildUi(), []);
 
   const selectedBuilding = selected ? placed.find((b) => b.id === selected) : undefined;
-  const status = message ?? (problem === undefined ? null : problem ? strings.build.problems[problem] : strings.build.fits);
+  // `note`: why the last drag-and-drop could not place the building (beyond the live fit check).
+  const status = message ?? (placing && note) ?? (problem === undefined ? null : problem ? strings.build.problems[problem] : strings.build.fits);
   // Without cosmetics there are no buildings: build mode is for arranging only.
   const mode = features.cosmetics ? buildMode : 'animals';
 

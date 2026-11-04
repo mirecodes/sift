@@ -8,6 +8,9 @@
 
 ## guidance_v2
 
+- 2026-11-04 · **Added** — Build mode, move buildings by drag and tap (owner request): drag a placed building (mouse at once, touch after a 350 ms long press) and release to place it; touch drags the ghost; with a building selected, tapping an empty tile starts moving it there. The camera holds still while dragging. DESIGN.md 7.8.
+- 2026-11-04 · **Fixed** — Stream bank at a fall: the exposed tile-side wall stopped one grid cell short of the channel, leaving a notch beside the lip (owner report). It now runs up to the channel edge.
+
 - 2026-11-04 · **Added** — Test tools › Server check: the server user, island, group and animals (on the island, verified, able to fight), this device's animals, the test server's size and any failed save. Add animals now reports how many it added and how many can fight; a full `localStorage` no longer breaks every request.
 
 - 2026-11-04 · **Changed** — Model pass for cuteness (owner review, skins untouched): Panda back to its original sitting design (with parts, new `sitter` rig: munch, wave, clap; Otter uses it too); Butterfly gets small, thin wings (9 wide) and a round head; eyes always two separate dots (Fish, Horse, Koala, Peacock, Penguin, Otter, Raccoon, Sheep with a soft tan face, Bat, Beaver, Tiger's mark moved off its eyes); narrower, deeper heads and bodies (Cow 4 wide, Tiger head 4×4, Axolotl, Guinea pig, Bear); Red panda's tail one voxel slim. DESIGN.md 16.2 gains the cute-first, eyes and width rules; a test keeps eyes apart.
